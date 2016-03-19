@@ -1,0 +1,20 @@
+# == Schema Information
+#
+# Table name: travels
+#
+#  id         :integer          not null, primary key
+#  date       :datetime
+#  location   :string
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  date: 2016-03-14 13:43:17
+  location: MyString
+
+two:
+  date: 2016-03-14 13:43:17
+  location: MyString

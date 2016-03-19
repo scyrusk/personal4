@@ -1,0 +1,23 @@
+# == Schema Information
+#
+# Table name: awards
+#
+#  id         :integer          not null, primary key
+#  year       :integer
+#  body       :text
+#  paper_id   :integer
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  year: 1
+  body: MyText
+  paper_id_id: 
+
+two:
+  year: 1
+  body: MyText
+  paper_id_id: 

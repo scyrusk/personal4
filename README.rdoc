@@ -1,0 +1,11 @@
+== README
+Upgraded version of my personal webpage. This document is, for now, just a list of todos.
+
+Basic info: Rails 4.2 backend, HAML + React front-end.
+
+# Issues
+* Figure out why download counts are double incrementing
+
+# Future
+* Paper media kits (paper show actions)
+* Filtering papers by author / tag / year

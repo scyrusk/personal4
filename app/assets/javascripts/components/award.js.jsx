@@ -1,0 +1,140 @@
+var AwardContainer = React.createClass({
+  loadAwardsFromServer: function() {
+    $.ajax({
+      url: this.props.url,
+      dataType: 'json',
+      cache: false,
+      success: function(data) {
+        this.setState({data: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+        this.setState({error: true});
+      }.bind(this)
+    });
+  },
+
+  getInitialState: function() {
+    return {data: [], error: false};
+  },
+
+  componentDidMount: function() {
+    this.loadAwardsFromServer();
+  },
+
+  render: function() {
+    if (this.state.error) {
+      <p className="error">
+        Sorry, something seems to have gone wrong. Try refreshing your page?
+      </p>
+    } else {
+      return (
+        <div className="award-container">
+          <p className="award-header">Honors & Awards</p>
+          <div className="award-list-container">
+            <AwardList data={this.state.data} />
+          </div>
+        </div>
+      );
+    }
+  }
+});
+
+var AwardList = React.createClass({
+  render: function() {
+    var awardNodes = this.props.data.sort(function(a, b) {
+      return b.year - a.year;
+    }).map(function(award) {
+      return (
+        <Award
+          year={award.year}
+          text={award.body}
+          paper={award.paper}
+          key={award.id} />
+      );
+    });
+    return (
+      <div className="award-list">
+        {awardNodes}
+      </div>
+    );
+  }
+});
+
+var Award = React.createClass({
+  render: function() {
+    var paperTitle = this.props.paper ?
+      <span className="help-block paper-award-paper-title">{this.props.paper.title}</span> :
+      <span className="help-block"/>
+    return (
+      <div className="award row well well-sm">
+        <div className="award-year col-xs-1">
+          {this.props.year}
+        </div>
+        <div className="award-text col-xs-offset-1 col-xs-10">
+          <span className="award-body">{this.props.text}</span>
+          {paperTitle}
+        </div>
+      </div>
+    );
+  }
+});
+
+var PaperAward = React.createClass({
+  render: function() {
+    return (
+      <div className="paper-award">
+        <span className="paper-award-name">{this.props.name}</span>
+      </div>
+    );
+  }
+});
+
+var AwardForm = React.createClass({
+  _handleSubmit: function(e) {
+    e.preventDefault();
+    var award = {
+      award: {
+        year: this.refs.year.getValue(),
+        body: this.refs.body.getValue(),
+        paper_id: this.refs.paperID.getValue()
+      }
+    };
+
+    $.ajax({
+      url: this.props.url,
+      dataType: 'json',
+      type: this.props.action,
+      data: award,
+      success: function(data) {
+        window.location.href = "/"
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+
+    return false;
+  },
+
+  _awardPaperOptions: function() {
+    return this.props.papers.map(function(paper) {
+      return { "value": paper.id, "rendered": paper.title }
+    });
+  },
+
+  getInitialState: function() {
+    return this.props.award;
+  },
+
+  render: function() {
+    return (
+      <form className="paper-form" onSubmit={this._handleSubmit} className="form-horizontal">
+        <InputField name="Year" type="number" value={this.state.year} ref="year" />
+        <InputField type="text" name="Body" value={this.state.body} ref="body" />
+        <SelectField name="Paper" options={this._awardPaperOptions()} value={this.state.paper.id} ref="paperID" />
+        <SubmitButton/>
+      </form>
+    );
+  }
+});

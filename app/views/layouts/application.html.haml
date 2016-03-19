@@ -1,0 +1,16 @@
+!!!
+%html
+  %head
+    %meta{:content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
+    %title Personal4
+    = stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true
+    = javascript_include_tag 'application', 'data-turbolinks-track' => true
+    = csrf_meta_tags
+  %body
+    #content.container-fluid.fill
+      .row
+        #navigation.col-lg-2.col-md-3.col-sm-3
+          = render partial: "layouts/navigation"
+        .col-lg-2.col-md-3.col-sm-3
+        #main.col-lg-10.col-md-9.col-sm-9.fill
+          = yield
