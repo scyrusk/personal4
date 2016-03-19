@@ -147,6 +147,7 @@ var PaperForm = React.createClass({
         backing_type: this.refs.type.getValue(),
         thumbnail: this.refs.thumbnail.getValue(),
         pdf: this.refs.pdf.getValue(),
+        downloads: this.refs.downloads.getValue(),
         slides: this.refs.slides.getValue(),
         html_slides_url: this.refs.htmlSlides.getValue(),
         summary: this.refs.summary.getValue()
@@ -204,6 +205,7 @@ var PaperForm = React.createClass({
         <FileField name="Slides" ref="slides" />
         <InputField type="text" name="HTML Slides" value={this.state.html_slides_url} ref="htmlSlides" />
         <InputField type="text" name="Summary" value={this.state.summary} ref="summary" />
+        <InputField name="Downloads" type="number" value={this.state.downloads} ref="downloads" />
         <SubmitButton/>
       </form>
     );

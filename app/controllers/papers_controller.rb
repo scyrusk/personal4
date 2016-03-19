@@ -110,6 +110,7 @@ class PapersController < ApplicationController
           :awards,
           :backing_type,
           :thumbnail,
+          :downloads,
           :pdf,
           :slides,
           :html_slides_url,
