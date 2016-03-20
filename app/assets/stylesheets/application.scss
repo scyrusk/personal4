@@ -201,7 +201,13 @@ a.personal-name-link:hover {
 }
 
 .paper-thumbnail-img {
+  display: block;
   max-width: 100%;
+  max-height: 150px;
+  border: thin solid #000000;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .paper-title-line {
