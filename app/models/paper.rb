@@ -79,7 +79,7 @@ class Paper < ActiveRecord::Base
       selfOrder: self.self_order.to_i,
       title: self.title,
       authors: self.authors.map { |a| a.as_json(options) },
-      awards: self.awards.map { |a| { id: a.id, body: a.body } },
+      awards: self.awards.map { |a| { id: a.id, body: a.body, year: a.year } },
       venue: self.venue,
       year: self.year,
       downloads: self.downloads,

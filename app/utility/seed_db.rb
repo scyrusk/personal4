@@ -19,10 +19,11 @@ class SeedDB
   def self.seed_updates
     updates = self::updates_json
     updates.each do |u|
+      y,m,d = u["wireDate"].split("-")
       update = Update.find_or_create_by(
-        date: u["date"],
-        text: u["body"],
-        backing_type: u["type"]
+        date: Date.new(y.to_i, m.to_i, d.to_i),
+        text: u["text"],
+        backing_type: Update::Type.which(u["type"]).to_i
       )
     end
   end
@@ -87,7 +88,7 @@ class SeedDB
   end
 
   def self.updates_json
-    file = File.read(Rails.root.join('tmp', 'updates.json'))
+    file = File.read(Rails.root.join('tmp', 'updates4.json'))
     JSON.parse file
   end
 end
