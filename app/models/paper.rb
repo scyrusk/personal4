@@ -89,7 +89,7 @@ class Paper < ActiveRecord::Base
       pdf: self.pdf_url,
       slides: self.slides_url,
       html_slides_url: self.html_slides_url,
-      thumbnail: self.thumbnail_url(:thumb)
+      thumbnail: self.thumbnail_url
     }
   end
 end
