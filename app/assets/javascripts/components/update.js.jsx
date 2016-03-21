@@ -13,8 +13,17 @@ var UpdateContainer = React.createClass({
     });
   },
 
+  _handleClick: function() {
+    this.setState({
+      scrollable: !this.state.scrollable
+    });
+  },
+
   getInitialState: function() {
-    return {data: []};
+    return {
+      data: [],
+      scrollable: false
+    };
   },
 
   componentDidMount: function() {
@@ -22,10 +31,16 @@ var UpdateContainer = React.createClass({
   },
 
   render: function() {
+    var containerClass = this.state.scrollable ?
+      "update-list-container scrollable" :
+      "update-list-container not-scrollable";
     return (
-      <div className="update-container">
-        <p className="update-header">News & Updates</p>
-        <div className="update-list-container">
+      <div className="update-container" onClick={this._handleClick}>
+        <p className="update-header">
+          News & Updates
+          <span className="header-help"> (click to toggle scroll)</span>
+        </p>
+        <div className={containerClass}>
           <UpdateList data={this.state.data} assets={this.props.assets} />
         </div>
       </div>

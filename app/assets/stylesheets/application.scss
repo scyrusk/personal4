@@ -149,7 +149,19 @@ a.personal-name-link:hover {
 
 .update-list-container, .award-list-container {
   height: 395px;
+}
+
+.scrollable {
   overflow-y: scroll;
+}
+
+.not-scrollable {
+  overflow-y: hidden;
+}
+
+.header-help {
+  color: #888888;
+  font-size: 10px;
 }
 
 .update-header, .award-header, .paper-header {

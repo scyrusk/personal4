@@ -14,8 +14,18 @@ var AwardContainer = React.createClass({
     });
   },
 
+  _handleClick: function() {
+    this.setState({
+      scrollable: !this.state.scrollable
+    });
+  },
+
   getInitialState: function() {
-    return {data: [], error: false};
+    return {
+      data: [],
+      error: false,
+      scrollable: false
+    };
   },
 
   componentDidMount: function() {
@@ -23,15 +33,22 @@ var AwardContainer = React.createClass({
   },
 
   render: function() {
+    var containerClass = this.state.scrollable ?
+      "award-list-container scrollable" :
+      "award-list-container not-scrollable";
+
     if (this.state.error) {
       <p className="error">
         Sorry, something seems to have gone wrong. Try refreshing your page?
       </p>
     } else {
       return (
-        <div className="award-container">
-          <p className="award-header">Honors & Awards</p>
-          <div className="award-list-container">
+        <div className="award-container"  onClick={this._handleClick}>
+          <p className="award-header">
+            Honors & Awards
+            <span className="header-help"> (click to toggle scroll)</span>
+          </p>
+          <div className={containerClass}>
             <AwardList data={this.state.data} />
           </div>
         </div>
