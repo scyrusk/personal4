@@ -22,6 +22,7 @@
 
 body {
   font-family: 'Roboto', sans-serif;
+  padding-bottom: 30px;
 }
 
 /* Let's get this party started */
@@ -280,4 +281,15 @@ a.personal-name-link:hover {
 .unselected {
   color: gray;
   opacity: 0.25;
+}
+
+#footer {
+  position:fixed;
+  text-align:center;
+  left:0px;
+  bottom:0px;
+  padding-top:5px;
+  height:30px;
+  width:100%;
+  background:rgba(240,240,240,1.0);
 }
