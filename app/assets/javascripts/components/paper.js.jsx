@@ -50,21 +50,27 @@ var PaperList = React.createClass({
     var assets = this.props.assets;
     var papersLength = this.props.data.length;
 
-    var paperNodes = this.props.data.sort(function(a, b) {
-      var yearComp = b.year - a.year;
-      return yearComp == 0 ? b.id - a.id : yearComp;
-    }).map(function(paper, index) {
-      var selected = (
+    var paperNodes = this.props.data.map(function(paper) {
+      paper.selected = (
         stateRef.filterText === "" ||
         paper.title.toLowerCase().search(stateRef.filterText) >= 0 ||
         paper.venue.toLowerCase().search(stateRef.filterText) >= 0 ||
         paper.authors.some(function(e,i,a) { return e.name.toLowerCase().search(stateRef.filterText) >= 0 }) ||
         paper.awards.some(function(e,i,a) { return e.body.toLowerCase().search(stateRef.filterText) >= 0 })
       );
-
+      return paper;
+    }).sort(function(a, b) {
+      var selectedComp = b.selected - a.selected;
+      var yearComp = b.year - a.year;
+      if (selectedComp == 0) {
+        return yearComp == 0 ? b.id - a.id : yearComp;
+      } else {
+        return selectedComp;
+      }
+    }).map(function(paper, index) {
       return (
         <Paper
-          selected={selected}
+          selected={paper.selected}
           type={paper.type}
           thumbnail={paper.thumbnail || noThumb}
           selfOrder={paper.selfOrder}
@@ -102,7 +108,11 @@ var PaperFilter = React.createClass({
   render: function() {
     return (
       <div className="paper-list-search col-xs-12">
-        <input type="text" placeholder="Search" className="form-control" onChange={this.handleTextChanged} />
+        <input
+          type="text"
+          placeholder="Search by title, author, venue or award"
+          className="form-control"
+          onChange={this.handleTextChanged} />
       </div>
     );
   }
