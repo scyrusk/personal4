@@ -73,12 +73,14 @@ class Paper < ActiveRecord::Base
   end
 
   def as_json(options)
+    pauthors = self.authors.map { |a| a.as_json(options) }
+    pauthors.insert(self.self_order.to_i - 1, { id: 0, name: "Sauvik Das", self: true })
     {
       id: self.id,
       citation: self.citation,
       selfOrder: self.self_order.to_i,
       title: self.title,
-      authors: self.authors.map { |a| a.as_json(options) },
+      authors: pauthors,
       awards: self.awards.map { |a| { id: a.id, body: a.body, year: a.year } },
       venue: self.venue,
       year: self.year,

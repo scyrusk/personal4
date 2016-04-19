@@ -34,14 +34,37 @@ var PaperContainer = React.createClass({
 });
 
 var PaperList = React.createClass({
+  getInitialState: function() {
+    return {
+      filterText: ""
+    }
+  },
+
+  _handleFilterTextChanged: function(ft) {
+    this.setState({ filterText: ft.toLowerCase() })
+  },
+
   render: function() {
+    var stateRef = this.state;
     var noThumb = this.props.assets["noThumb"];
     var assets = this.props.assets;
+    var papersLength = this.props.data.length;
+
     var paperNodes = this.props.data.sort(function(a, b) {
-      return b.year - a.year;
-    }).map(function(paper) {
+      var yearComp = b.year - a.year;
+      return yearComp == 0 ? b.id - a.id : yearComp;
+    }).map(function(paper, index) {
+      var selected = (
+        stateRef.filterText === "" ||
+        paper.title.toLowerCase().search(stateRef.filterText) >= 0 ||
+        paper.venue.toLowerCase().search(stateRef.filterText) >= 0 ||
+        paper.authors.some(function(e,i,a) { return e.name.toLowerCase().search(stateRef.filterText) >= 0 }) ||
+        paper.awards.some(function(e,i,a) { return e.body.toLowerCase().search(stateRef.filterText) >= 0 })
+      );
+
       return (
         <Paper
+          selected={selected}
           type={paper.type}
           thumbnail={paper.thumbnail || noThumb}
           selfOrder={paper.selfOrder}
@@ -57,12 +80,29 @@ var PaperList = React.createClass({
           downloads={paper.downloads}
           assets={assets}
           id={paper.id}
-          key={paper.id} />
+          key={Utility.randomString(8)} />
       );
     });
     return (
       <div className="paper-list">
+        <div className="paper-filter row">
+          <PaperFilter onFilter={this._handleFilterTextChanged} />
+        </div>
         {paperNodes}
+      </div>
+    );
+  }
+});
+
+var PaperFilter = React.createClass({
+  handleTextChanged: function(e) {
+    this.props.onFilter(e.target.value);
+  },
+
+  render: function() {
+    return (
+      <div className="paper-list-search col-xs-12">
+        <input type="text" placeholder="Search" className="form-control" onChange={this.handleTextChanged} />
       </div>
     );
   }
@@ -71,13 +111,13 @@ var PaperList = React.createClass({
 var Paper = React.createClass({
   // Create author nodes here
   render: function() {
-    var authors = this.props.authors;
-    authors.splice(this.props.selfOrder - 1, 0, { name: "Sauvik Das", id: 0, self: true });
-    var authorNodes = authors.map(function(author) {
+    // var authors = this.props.authors;
+    // authors.splice(this.props.selfOrder - 1, 0, { name: "Sauvik Das", id: 0, self: true });
+    var authorNodes = this.props.authors.map(function(author) {
       return (
         <Author
           name={author.name}
-          key={author.id}
+          key={Utility.randomString(8)}
           self={author.self || false} />
       );
     });
@@ -86,7 +126,7 @@ var Paper = React.createClass({
       return (
         <PaperAward
           name={award.body}
-          key={award.id} />
+          key={Utility.randomString(8)} />
       );
     });
 
@@ -108,8 +148,10 @@ var Paper = React.createClass({
       </div> :
       <div className="paper-media-link"/>
 
+    var paperClassName = this.props.selected ? "paper row well well-sm" : "paper row well well-sm unselected";
+
     return (
-      <div className="paper row well well-sm">
+      <div className={paperClassName}>
         <div className="paper-thumbnail col-xs-3">
           <img className="paper-thumbnail-img" src={this.props.thumbnail} />
         </div>
