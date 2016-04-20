@@ -223,6 +223,10 @@ a.personal-name-link:hover {
   margin-right: auto;
 }
 
+.paper-year {
+  cursor: pointer;
+}
+
 .paper-title-line {
   font-size: 16px;
 }
@@ -233,6 +237,7 @@ a.personal-name-link:hover {
 
 .paper-venue {
   font-style: italic;
+  cursor: pointer;
 }
 
 .author {
@@ -240,6 +245,7 @@ a.personal-name-link:hover {
   margin-right: 5px;
   margin-bottom: 5px;
   background-color: #cccccc;
+  cursor: pointer;
 }
 
 .author-name {
@@ -257,6 +263,7 @@ a.personal-name-link:hover {
   padding: 5px;
   margin-right: 5px;
   margin-bottom: 5px;
+  cursor: pointer;
 }
 
 .paper-award-name {

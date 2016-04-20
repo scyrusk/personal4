@@ -100,7 +100,7 @@ var Award = React.createClass({
 var PaperAward = React.createClass({
   render: function() {
     return (
-      <div className="paper-award">
+      <div className="paper-award" onClick={this.props.handleAwardClick}>
         <span className="paper-award-name">{this.props.name}</span>
       </div>
     );

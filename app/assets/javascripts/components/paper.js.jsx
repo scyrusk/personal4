@@ -40,23 +40,29 @@ var PaperList = React.createClass({
     }
   },
 
+  _handleFilterClick: function(e) {
+    this.setState({ filterText: e.target.innerText })
+  },
+
   _handleFilterTextChanged: function(ft) {
-    this.setState({ filterText: ft.toLowerCase() })
+    this.setState({ filterText: ft })
   },
 
   render: function() {
     var stateRef = this.state;
     var noThumb = this.props.assets["noThumb"];
     var assets = this.props.assets;
-    var papersLength = this.props.data.length;
+    var filterClickListener = this._handleFilterClick;
 
     var paperNodes = this.props.data.map(function(paper) {
+      var ft = stateRef.filterText.toLowerCase();
       paper.selected = (
-        stateRef.filterText === "" ||
-        paper.title.toLowerCase().search(stateRef.filterText) >= 0 ||
-        paper.venue.toLowerCase().search(stateRef.filterText) >= 0 ||
-        paper.authors.some(function(e,i,a) { return e.name.toLowerCase().search(stateRef.filterText) >= 0 }) ||
-        paper.awards.some(function(e,i,a) { return e.body.toLowerCase().search(stateRef.filterText) >= 0 })
+        ft === "" ||
+        paper.title.toLowerCase().search(ft) >= 0 ||
+        paper.venue.toLowerCase().indexOf(ft) >= 0 ||
+        paper.year.toString().indexOf(ft) >= 0 ||
+        paper.authors.some(function(e,i,a) { return e.name.toLowerCase().search(ft) >= 0 }) ||
+        paper.awards.some(function(e,i,a) { return e.body.toLowerCase().search(ft) >= 0 })
       );
       return paper;
     }).sort(function(a, b) {
@@ -70,6 +76,7 @@ var PaperList = React.createClass({
     }).map(function(paper, index) {
       return (
         <Paper
+          handleFilterClick={filterClickListener}
           selected={paper.selected}
           type={paper.type}
           thumbnail={paper.thumbnail || noThumb}
@@ -92,7 +99,7 @@ var PaperList = React.createClass({
     return (
       <div className="paper-list">
         <div className="paper-filter row">
-          <PaperFilter onFilter={this._handleFilterTextChanged} />
+          <PaperFilter onFilter={this._handleFilterTextChanged} initialText={this.state.filterText} />
         </div>
         {paperNodes}
       </div>
@@ -112,6 +119,7 @@ var PaperFilter = React.createClass({
           type="text"
           placeholder="Search by title, author, venue or award"
           className="form-control"
+          value={this.props.initialText}
           onChange={this.handleTextChanged} />
       </div>
     );
@@ -121,6 +129,7 @@ var PaperFilter = React.createClass({
 var Paper = React.createClass({
   // Create author nodes here
   render: function() {
+    var filterClickListener = this.props.handleFilterClick;
     // var authors = this.props.authors;
     // authors.splice(this.props.selfOrder - 1, 0, { name: "Sauvik Das", id: 0, self: true });
     var authorNodes = this.props.authors.map(function(author) {
@@ -128,6 +137,7 @@ var Paper = React.createClass({
         <Author
           name={author.name}
           key={Utility.randomString(8)}
+          handleAuthorClick={filterClickListener}
           self={author.self || false} />
       );
     });
@@ -136,6 +146,7 @@ var Paper = React.createClass({
       return (
         <PaperAward
           name={award.body}
+          handleAwardClick={filterClickListener}
           key={Utility.randomString(8)} />
       );
     });
@@ -168,11 +179,11 @@ var Paper = React.createClass({
         <div className="paper-citation col-xs-7">
           <p className="paper-title-line">
             <span className="paper-title">{this.props.title}</span>
-            <span className="paper-year"> ({this.props.year})</span>
+            <span className="paper-year" onClick={filterClickListener}> ({this.props.year})</span>
           </p>
           <div className="paper-author-list">{authorNodes}</div>
           <p className="paper-venue-line">
-            <span className="paper-venue">{this.props.venue}</span>
+            <span className="paper-venue" onClick={filterClickListener}>{this.props.venue}</span>
           </p>
           <div className="paper-award-list">{awardNodes}</div>
         </div>
