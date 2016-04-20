@@ -42,6 +42,7 @@ var PaperList = React.createClass({
 
   _handleFilterClick: function(e) {
     this.setState({ filterText: e.target.innerText })
+    $('html,body').animate({scrollTop: $('.paper-container').offset().top });
   },
 
   _handleFilterTextChanged: function(ft) {
