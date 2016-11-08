@@ -141,8 +141,26 @@ a.personal-name-link:hover {
   padding-top: 10px;
 }
 
-.about-me-container {
+.about-me-container, .on-the-market {
   margin: 15px;
+}
+
+.on-the-market {
+  padding: 10px;
+}
+
+.job-icon {
+  max-height: 20px;
+  max-width: 20px;
+}
+
+.job-link {
+  padding-right: 5px;
+}
+
+.job-link:hover {
+  text-decoration: none;
+  color: #3c763d;
 }
 
 .update-container, .award-container {

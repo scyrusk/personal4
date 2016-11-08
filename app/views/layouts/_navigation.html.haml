@@ -10,9 +10,9 @@
     %p
       %strong Email:
       [firstname]@cmu.edu
-    = link_to "View my CV", "cv.pdf", class: "personal-link"
+    = link_to "View my CV", asset_path("cv.pdf"), class: "personal-link"
     = link_to "Browse my Google Scholar", "https://scholar.google.com/citations?user=laPvCf4AAAAJ&hl=en&oi=ao", class: "personal-link"
-    = link_to "Read my blog", "http://makewritelearn.com", class: "personal-link"
+    / = link_to "Read my blog", "http://makewritelearn.com", class: "personal-link"
   .personal-social-icons
     %p
       %strong Connect with me on:
