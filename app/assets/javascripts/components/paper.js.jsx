@@ -153,8 +153,12 @@ var Paper = React.createClass({
     });
 
     var pdfServeLink = "/papers/" + this.props.id + "/serve";
+    var pdfEventTracking = function(id) {
+      return () => gaSendEvent('Publications', 'PDFDownload', id);
+    };
+
     var pdfNode = this.props.pdf ?
-      <div className="paper-media-link">
+      <div className="paper-media-link" onClick={pdfEventTracking(this.props.id)}>
         <a href={pdfServeLink}>
           <img className="paper-pdf-icon" src={this.props.assets["pdfDL"]}/>
         </a>
@@ -162,8 +166,12 @@ var Paper = React.createClass({
       <div className="paper-media-link"/>
 
     var slidesServeLink = this.props.slides || this.props.html_slides_url;
+    var slidesEventTracking = function(id) {
+      return () => gaSendEvent('Publications', 'SlidesDownload', id);
+    };
+
     var slidesNode = slidesServeLink ?
-      <div className="paper-media-link">
+      <div className="paper-media-link" onClick={slidesEventTracking}>
         <a href={slidesServeLink}>
           <img className="paper-slides-icon" src={this.props.assets["slidesDL"]}/>
         </a>
