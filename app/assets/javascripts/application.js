@@ -18,3 +18,7 @@
 //= require react_ujs
 //= require components
 //= require_tree .
+
+window.gaSendEvent = function(cat, action, label) {
+  ga('send', 'event', cat, action, label);
+}

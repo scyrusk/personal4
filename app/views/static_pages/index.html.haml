@@ -5,15 +5,15 @@
       %strong I am on the academic job market this year!
       Please find my materials below and feel free to contact me for additional information.
     %p
-      %a{href: asset_path("research.pdf"), class: "job-link"}
+      %a#market-rs{href: asset_path("research.pdf"), class: "job-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'Research Statement');"}
         %span.glyphicon.glyphicon-tasks{"aria-hidden" => "true"}
         Research Statement
       |
-      %a{href: asset_path("teaching.pdf"), class: "job-link"}
+      %a#market-ts{href: asset_path("teaching.pdf"), class: "job-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'Teaching Statement');"}
         %span.glyphicon.glyphicon-blackboard{"aria-hidden" => "true"}
         Teaching Statement
       |
-      %a{href: asset_path("cv.pdf"), class: "job-link"}
+      %a#cv-ts{href: asset_path("cv.pdf"), class: "job-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'CV');"}
         %span.glyphicon.glyphicon-education{"aria-hidden" => "true"}
         Curriculum Vitae
 .row
