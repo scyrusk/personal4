@@ -15,8 +15,12 @@ var AwardContainer = React.createClass({
   },
 
   _handleClick: function() {
+    if (!this.state.scrollable && this.state.clickCount === 0) {
+      gaSendEvent("Interaction", "ToggleScroll", "AwardContainer");
+    }
     this.setState({
-      scrollable: !this.state.scrollable
+      scrollable: !this.state.scrollable,
+      clickCount: this.state.clickCount + 1
     });
   },
 
@@ -24,7 +28,8 @@ var AwardContainer = React.createClass({
     return {
       data: [],
       error: false,
-      scrollable: false
+      scrollable: false,
+      clickCount: 0
     };
   },
 

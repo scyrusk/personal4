@@ -36,17 +36,31 @@ var PaperContainer = React.createClass({
 var PaperList = React.createClass({
   getInitialState: function() {
     return {
-      filterText: ""
+      filterText: "",
+      timeoutVar: null
     }
   },
 
   _handleFilterClick: function(e) {
     this.setState({ filterText: e.target.innerText })
+    gaSendEvent("Interaction", "Search", e.target.innerText);
     $('html,body').animate({scrollTop: $('.paper-container').offset().top });
   },
 
   _handleFilterTextChanged: function(ft) {
-    this.setState({ filterText: ft })
+    if (this.state.timeoutVar != null) {
+      clearTimeout(this.state.timeoutVar);
+    }
+
+    var tv = null;
+    if (ft != "") {
+      tv = setTimeout(() => { gaSendEvent("Interaction", "Search", ft); }, 5000);
+    }
+
+    this.setState({
+      filterText: ft,
+      timeoutVar: tv
+    })
   },
 
   render: function() {
