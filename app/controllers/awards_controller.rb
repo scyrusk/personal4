@@ -74,7 +74,7 @@ class AwardsController < ApplicationController
     end
 
     def award_params
-      params.require(:award).permit(:year, :body, :paper_id)
+      params.require(:award).permit(:year, :body, :pinned, :paper_id)
     end
 
     def get_paper_opts

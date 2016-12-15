@@ -8,6 +8,7 @@
 #  paper_id   :integer
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
+#  pinned     :boolean
 #
 
 require 'test_helper'

@@ -130,3 +130,42 @@ var SubmitButton = React.createClass({
     );
   }
 });
+
+
+let Checkbox = React.createClass({
+  getInitialState: function () {
+    return {
+      isChecked: this.props.checked
+    };
+  },
+
+  getChecked: function() {
+    return this.state.isChecked;
+  },
+
+  toggleCheckbox: function () {
+    this.setState({
+      isChecked: ! this.state.isChecked
+    });
+
+    // this.props.handleCheckboxChange(this.props.label);
+  },
+
+  render: function () {
+    return (
+      <div className="form-group">
+        <label htmlFor={this.props.name} className="col-xs-1 control-label">
+          {this.props.label}
+        </label>
+        <div className="col-xs-offset-1 col-xs-10">
+            <input
+              type="checkbox"
+              value={this.props.label}
+              checked={this.state.isChecked}
+              ref={this.props.name}
+              onChange={this.toggleCheckbox} />
+        </div>
+      </div>
+    );
+  }
+});

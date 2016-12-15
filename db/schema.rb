@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160319195116) do
+ActiveRecord::Schema.define(version: 20161215214221) do
 
   create_table "authors", force: :cascade do |t|
     t.string   "name"
@@ -33,6 +33,7 @@ ActiveRecord::Schema.define(version: 20160319195116) do
     t.integer  "paper_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean  "pinned"
   end
 
   add_index "awards", ["paper_id"], name: "index_awards_on_paper_id"

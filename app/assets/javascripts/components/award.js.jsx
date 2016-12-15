@@ -66,12 +66,22 @@ var AwardList = React.createClass({
   render: function() {
     var awardNodes = this.props.data.sort(function(a, b) {
       return b.year - a.year;
+    }).sort(function(a, b) {
+      console.log(a.pinned - b.pinned);
+      var pinnedComp = b.pinned - a.pinned;
+      var yearComp = b.year - a.year;
+      if (pinnedComp == 0) {
+        return yearComp == 0 ? b.id - a.id : yearComp;
+      } else {
+        return pinnedComp;
+      }
     }).map(function(award) {
       return (
         <Award
           year={award.year}
           text={award.body}
           paper={award.paper}
+          pinned={award.pinned}
           key={award.id} />
       );
     });
@@ -88,8 +98,9 @@ var Award = React.createClass({
     var paperTitle = this.props.paper ?
       <span className="help-block paper-award-paper-title">{this.props.paper.title}</span> :
       <span className="help-block"/>
+    var divClass = "award row well well-sm" + (this.props.pinned ? " pinned" : "")
     return (
-      <div className="award row well well-sm">
+      <div className={divClass}>
         <div className="award-year col-xs-1">
           {this.props.year}
         </div>
@@ -119,6 +130,7 @@ var AwardForm = React.createClass({
       award: {
         year: this.refs.year.getValue(),
         body: this.refs.body.getValue(),
+        pinned: this.refs.pinned.getChecked(),
         paper_id: this.refs.paperID.getValue()
       }
     };
@@ -155,6 +167,7 @@ var AwardForm = React.createClass({
         <InputField name="Year" type="number" value={this.state.year} ref="year" />
         <InputField type="text" name="Body" value={this.state.body} ref="body" />
         <SelectField name="Paper" options={this._awardPaperOptions()} value={this.state.paper.id} ref="paperID" />
+        <Checkbox name="Pinned" label="Pinned?" ref="pinned" checked={this.state.pinned} />
         <SubmitButton/>
       </form>
     );
