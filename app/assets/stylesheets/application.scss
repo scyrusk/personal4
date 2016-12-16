@@ -201,7 +201,7 @@ a.personal-name-link:hover {
   min-height: 50px;
 }
 
-.update:hover, .award:hover, .paper:hover, .about-me-container:hover {
+.paper:hover, .about-me-container:hover {
   background-color: #eeeeee;
 }
 
@@ -224,8 +224,19 @@ a.personal-name-link:hover {
   margin-bottom: 1px;
 }
 
+.firstPinned {
+}
+
 .pinned {
-  background-color: #dff0d8;
+  font-weight: bold;
+}
+
+.lastPinned {
+  border-bottom: 5px solid #eeeeee;
+  margin-bottom: 5px;
+}
+
+.firstUnpinned {
 }
 
 .paper-award-paper-title {

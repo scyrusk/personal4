@@ -75,13 +75,19 @@ var AwardList = React.createClass({
       } else {
         return pinnedComp;
       }
-    }).map(function(award) {
+    }).map(function(award, index, arr) {
+      var firstPinned = award.pinned && index === 0;
+      var lastPinned = award.pinned && (index < (arr.length - 1)) && !arr[index+1].pinned;
+      var firstUnpinned = !award.pinned && index > 0 && arr[index-1].pinned;
       return (
         <Award
           year={award.year}
           text={award.body}
           paper={award.paper}
           pinned={award.pinned}
+          firstPinned={firstPinned}
+          lastPinned={lastPinned}
+          firstUnpinned={firstUnpinned}
           key={award.id} />
       );
     });
@@ -98,7 +104,12 @@ var Award = React.createClass({
     var paperTitle = this.props.paper ?
       <span className="help-block paper-award-paper-title">{this.props.paper.title}</span> :
       <span className="help-block"/>
-    var divClass = "award row well well-sm" + (this.props.pinned ? " pinned" : "")
+    var divClass =
+      "award row well well-sm" +
+      (this.props.pinned ? " pinned" : "") +
+      (this.props.firstUnpinned ? " firstUnpinned" : "") +
+      (this.props.firstPinned ? " firstPinned" : "") +
+      (this.props.lastPinned ? " lastPinned" : "");
     return (
       <div className={divClass}>
         <div className="award-year col-xs-1">
