@@ -184,7 +184,7 @@ a.personal-name-link:hover {
   font-size: 10px;
 }
 
-.update-header, .award-header, .paper-header {
+.update-header, .award-header, .paper-header, .travel-header {
   font-size: 20px;
   font-weight: bold;
   margin-top: 10px;
@@ -333,4 +333,26 @@ a.personal-name-link:hover {
   height:30px;
   width:100%;
   background:rgba(240,240,240,1.0);
+}
+
+.upcoming-travel-date {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: bold;
+  padding-right: 5px;
+}
+
+.upcoming-travel-location {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: lighter;
+  text-transform: uppercase;
+}
+
+.upcoming-travel-venue {
+  font-size: 12px;
+}
+
+.upcoming-travel {
+  max-height: 75px;
 }
