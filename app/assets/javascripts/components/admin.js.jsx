@@ -19,7 +19,8 @@ var AdminContainer = React.createClass({
     return {
       papers: [],
       updates: [],
-      awards: []
+      awards: [],
+      travels: []
     };
   },
 
@@ -27,6 +28,7 @@ var AdminContainer = React.createClass({
     this._loadDataFromServer(this.props.papersURL, "papers");
     this._loadDataFromServer(this.props.awardsURL, "awards");
     this._loadDataFromServer(this.props.updatesURL, "updates");
+    this._loadDataFromServer(this.props.travelsURL, "travels");
   },
 
   render: function() {
@@ -43,6 +45,10 @@ var AdminContainer = React.createClass({
         <div className="admin-awards-container">
           <h1>Awards</h1>
           <AwardsAdminList data={this.state.awards} />
+        </div>
+        <div className="admin-travels-container">
+          <h1>Travels</h1>
+          <TravelsAdminList data={this.state.travels} />
         </div>
       </div>
     );
@@ -146,6 +152,40 @@ var AwardsAdminList = React.createClass({
         </thead>
         <tbody>
           {awardNodes}
+        </tbody>
+      </table>
+    );
+  }
+});
+
+var TravelsAdminList = React.createClass({
+  render: function() {
+    var travelNodes = this.props.data.map(function(travel) {
+      return (
+        <tr>
+          <td>{travel.id}</td>
+          <td>{travel.title}</td>
+          <td>
+            <div className="btn-group" role="group" aria-label="...">
+              <a href={"/travels/" + travel.id + "/edit"} className="btn btn-default">Edit</a>
+              <a href={"/travels/" + travel.id} data-confirm="Are you sure?" data-method="delete" className="btn btn-danger">Destroy</a>
+            </div>
+          </td>
+        </tr>
+      );
+    });
+
+    return (
+      <table className="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Description</th>
+            <th>Administrate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {travelNodes}
         </tbody>
       </table>
     );

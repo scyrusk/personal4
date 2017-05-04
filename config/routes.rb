@@ -8,6 +8,7 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :travels, except: :show
   resources :updates
   resources :awards
   resources :authors, only: :index
