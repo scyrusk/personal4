@@ -17,6 +17,7 @@
 #  summary         :text
 #  slides          :string
 #  html_slides_url :string
+#  html_paper_url  :string
 #
 
 class Paper < ActiveRecord::Base
@@ -91,6 +92,7 @@ class Paper < ActiveRecord::Base
       pdf: self.pdf_url,
       slides: self.slides_url,
       html_slides_url: self.html_slides_url,
+      html_paper_url: self.html_paper_url,
       thumbnail: self.thumbnail_url
     }
   end

@@ -114,6 +114,7 @@ class PapersController < ApplicationController
           :pdf,
           :slides,
           :html_slides_url,
+          :html_paper_url,
           :summary
         )
     end

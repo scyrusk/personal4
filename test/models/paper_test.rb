@@ -17,6 +17,7 @@
 #  summary         :text
 #  slides          :string
 #  html_slides_url :string
+#  html_paper_url  :string
 #
 
 require 'test_helper'

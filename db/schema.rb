@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170504035037) do
+ActiveRecord::Schema.define(version: 20170506210820) do
 
   create_table "authors", force: :cascade do |t|
     t.string   "name"
@@ -53,6 +53,7 @@ ActiveRecord::Schema.define(version: 20170504035037) do
     t.text     "summary"
     t.string   "slides"
     t.string   "html_slides_url"
+    t.string   "html_paper_url"
   end
 
   create_table "travels", force: :cascade do |t|

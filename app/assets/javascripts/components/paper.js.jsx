@@ -105,6 +105,7 @@ var PaperList = React.createClass({
           awards={paper.awards}
           slides={paper.slides}
           html_slides_url={paper.html_slides_url}
+          html_paper_url={paper.html_paper_url}
           downloads={paper.downloads}
           assets={assets}
           id={paper.id}
@@ -166,12 +167,12 @@ var Paper = React.createClass({
       );
     });
 
-    var pdfServeLink = "/papers/" + this.props.id + "/serve";
+    var pdfServeLink = this.props.html_paper_url || "/papers/" + this.props.id + "/serve";
     var pdfEventTracking = function(id) {
       return () => gaSendEvent('Publications', 'PDFDownload', id);
     };
 
-    var pdfNode = this.props.pdf ?
+    var pdfNode = (this.props.pdf || this.props.html_paper_url) ?
       <div className="paper-media-link" onClick={pdfEventTracking(this.props.id)}>
         <a href={pdfServeLink}>
           <img className="paper-pdf-icon" src={this.props.assets["pdfDL"]}/>
@@ -236,6 +237,7 @@ var PaperForm = React.createClass({
         downloads: this.refs.downloads.getValue(),
         slides: this.refs.slides.getValue(),
         html_slides_url: this.refs.htmlSlides.getValue(),
+        html_paper_url: this.refs.htmlPaper.getValue(),
         summary: this.refs.summary.getValue()
       }
     };
@@ -290,6 +292,7 @@ var PaperForm = React.createClass({
         <FileField name="PDF" ref="pdf" />
         <FileField name="Slides" ref="slides" />
         <InputField type="text" name="HTML Slides" value={this.state.html_slides_url} ref="htmlSlides" />
+        <InputField type="text" name="HTML Paper" value={this.state.html_paper_url} ref="htmlPaper" />
         <InputField type="text" name="Summary" value={this.state.summary} ref="summary" />
         <InputField name="Downloads" type="number" value={this.state.downloads} ref="downloads" />
         <SubmitButton/>
