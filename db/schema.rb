@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170506210820) do
+ActiveRecord::Schema.define(version: 20170509174849) do
 
   create_table "authors", force: :cascade do |t|
     t.string   "name"
@@ -37,6 +37,14 @@ ActiveRecord::Schema.define(version: 20170506210820) do
   end
 
   add_index "awards", ["paper_id"], name: "index_awards_on_paper_id"
+
+  create_table "paper_author_links", force: :cascade do |t|
+    t.integer  "paper_id"
+    t.integer  "author_id"
+    t.integer  "author_order"
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
+  end
 
   create_table "papers", force: :cascade do |t|
     t.integer  "self_order"

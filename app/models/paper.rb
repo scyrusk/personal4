@@ -21,6 +21,8 @@
 #
 
 class Paper < ActiveRecord::Base
+  # has_many :paper_author_links
+
   has_and_belongs_to_many :authors
   has_many :awards
 
@@ -33,6 +35,23 @@ class Paper < ActiveRecord::Base
     :JOURNAL,
     :WORKSHOP
   )
+
+  # def authors
+  #   self.paper_author_links.sort { |a,b| a.author_order - b.author_order }.map do |pal|
+  #     pal.author
+  #   end
+  # end
+
+  # def authors= auths
+  #   auths.each.each_with_index do |author, index|
+  #     pal = PaperAuthorLink.find_or_create_by(
+  #       paper_id: self.id,
+  #       author_id: author.id
+  #     )
+  #     pal.author_order = index
+  #     pal.save
+  #   end
+  # end
 
   # Type methods
   def type
@@ -75,7 +94,7 @@ class Paper < ActiveRecord::Base
 
   def as_json(options)
     pauthors = self.authors.map { |a| a.as_json(options) }
-    pauthors.insert(self.self_order.to_i - 1, { id: 0, name: "Sauvik Das", self: true })
+    pauthors.insert(self.self_order.to_i - 1, { id: 0, name: "Sauvik Das", self: true }) unless (options && options[:form])
     {
       id: self.id,
       citation: self.citation,

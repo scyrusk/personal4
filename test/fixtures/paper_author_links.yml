@@ -1,0 +1,23 @@
+# == Schema Information
+#
+# Table name: paper_author_links
+#
+#  id           :integer          not null, primary key
+#  paper_id     :integer
+#  author_id    :integer
+#  author_order :integer
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#
+
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  paper_id: 1
+  author_id: 1
+  author_order: 1
+
+two:
+  paper_id: 1
+  author_id: 1
+  author_order: 1
