@@ -9,10 +9,8 @@
 #
 
 class Author < ActiveRecord::Base
-  # has_many :paper_author_links
-  # has_many :papers, through: :paper_author_links
-
-  has_and_belongs_to_many :papers
+  has_many :paper_author_links
+  has_many :papers, through: :paper_author_links
 
   def as_json options
     {

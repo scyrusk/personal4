@@ -21,9 +21,8 @@
 #
 
 class Paper < ActiveRecord::Base
-  # has_many :paper_author_links
+  has_many :paper_author_links
 
-  has_and_belongs_to_many :authors
   has_many :awards
 
   mount_base64_uploader :pdf, PdfUploader
@@ -36,22 +35,22 @@ class Paper < ActiveRecord::Base
     :WORKSHOP
   )
 
-  # def authors
-  #   self.paper_author_links.sort { |a,b| a.author_order - b.author_order }.map do |pal|
-  #     pal.author
-  #   end
-  # end
+  def authors
+    self.paper_author_links.sort { |a,b| a.author_order - b.author_order }.map do |pal|
+      pal.author
+    end
+  end
 
-  # def authors= auths
-  #   auths.each.each_with_index do |author, index|
-  #     pal = PaperAuthorLink.find_or_create_by(
-  #       paper_id: self.id,
-  #       author_id: author.id
-  #     )
-  #     pal.author_order = index
-  #     pal.save
-  #   end
-  # end
+  def authors= auths
+    auths.each.each_with_index do |author, index|
+      pal = PaperAuthorLink.find_or_create_by(
+        paper_id: self.id,
+        author_id: author.id
+      )
+      pal.author_order = index
+      pal.save
+    end
+  end
 
   # Type methods
   def type
