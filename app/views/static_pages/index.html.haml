@@ -1,34 +1,8 @@
 = react_component('TravelContainer', url: travels_url(format: :json), pollInterval: 10000)
 
 .row
-  .on-the-market.alert-success
-    %p
-      %span.glyphicon.glyphicon-exclamation-sign{"aria-hidden" => "true"}
-      %strong I am on the academic job market this year!
-      Please find my materials below and feel free to contact me for additional information.
-    %p
-      %a#market-rs{href: asset_path("research.pdf"), class: "job-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'Research Statement');"}
-        %span.glyphicon.glyphicon-tasks{"aria-hidden" => "true"}
-        Research Statement
-      |
-      %a#market-ts{href: asset_path("teaching.pdf"), class: "job-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'Teaching Statement');"}
-        %span.glyphicon.glyphicon-blackboard{"aria-hidden" => "true"}
-        Teaching Statement
-      |
-      %a#cv-ts{href: asset_path("cv.pdf"), class: "job-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'CV');"}
-        %span.glyphicon.glyphicon-education{"aria-hidden" => "true"}
-        Curriculum Vitae
-
-.row
   .about-me-container.well.well-sm
     %p
-      I am a Ph.D. student at
-      = link_to "CMU's", "https://cmu.edu"
-      = link_to "HCII", "http://hcii.cmu.edu"
-      where I am advised by
-      = link_to "Jason Hong", "http://cs.cmu.edu/~jasonh"
-      and
-      = link_to "Laura Dabbish.", "http://lauradabbish.com"
       My work intersects HCI, data science and cybersecurity to
       %strong invent novel, more socially compatible security tools
       that make end-user security less isolating and more likely to spread through social channels.
@@ -36,6 +10,14 @@
       game personalization, mobile authentication, friendsourcing, and ubiquitous computing.
     %p
       I am a NDSEG fellow, a Qualcomm Innovation Fellow, a NSF EAPSI fellow, and a Facebook Fellowship finalist. My work has won a best paper award at UbiComp, two best paper honorable mentions at CHI, and an honorable mention for the NSA's Best Scientific Cybersecurity Paper. My work has also been covered by the popular press, including features on The Atlantic, The Huffington Post, The Financial Times, Slate and other media outlets.
+    %p
+      I received my Ph.D. from
+      = link_to "CMU's", "https://cmu.edu"
+      = link_to "HCII", "http://hcii.cmu.edu"
+      where I was advised by
+      = link_to "Jason Hong", "http://cs.cmu.edu/~jasonh"
+      and
+      = link_to "Laura Dabbish.", "http://lauradabbish.com"
 %hr
 
 .row
