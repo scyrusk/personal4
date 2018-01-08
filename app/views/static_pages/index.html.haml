@@ -1,14 +1,19 @@
 .alert.alert-info
   %p
-    I will be joining
-    %a{href: 'https://www.gatech.edu', target: '_blank' } Georgia Tech's
-    %a{href: 'https://www.ic.gatech.edu', target: '_blank' } School of Interactive Computing
-    as an Assistant Professor starting January 2018!
+    I am seeking exceptional Ph.D., Master's, and undergraduate students at Georgia Tech to work
+    with me on research related to usable privacy and security, interactive systems, and ubiquitous computing.
+    If that sounds interesting to you, please send me an email briefly detailing your background and interests.
 
 = react_component('TravelContainer', url: travels_url(format: :json), pollInterval: 10000)
 
 .row
   .about-me-container.well.well-sm
+    %p
+      I am an Assistant Professor of
+      =link_to "Interactive Computing", "https://ic.gatech.edu"
+      at
+      =link_to "Georgia Tech's", "https://gatech.edu"
+      =link_to "College of Computing.", "https://cc.gatech.edu"
     %p
       My work intersects HCI, data science and cybersecurity to
       %strong invent novel, more socially compatible security tools
@@ -25,6 +30,12 @@
       = link_to "Jason Hong", "http://cs.cmu.edu/~jasonh"
       and
       = link_to "Laura Dabbish.", "http://lauradabbish.com"
+%hr
+.row
+  .col.col-md-12
+    %p
+      I am teaching CS4001 in the Spring semester of 2018. Students may access the course website
+      =link_to "here.", "http://cs4001.sauvik.me", target: '_blank'
 %hr
 
 .row
