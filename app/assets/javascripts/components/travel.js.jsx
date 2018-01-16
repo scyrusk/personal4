@@ -42,7 +42,7 @@ var TravelList = React.createClass({
   render: function() {
     var startingIndex = this.props.data.length > 6 ? this.props.data.length - 6 : 0;
     var travelNodes = this.props.data.sort(function(a, b) {
-      return Date.parse(a.date) - Date.parse(b.date);
+      return Date.parse(a.wireDate) - Date.parse(b.wireDate);
     }).slice(startingIndex).map(function(travel) {
       return (
         <Travel
