@@ -1,8 +1,21 @@
 class SeedDB
   def self.seed_db
     self::seed_papers
-    self::seed_updates
     self::seed_awards
+    self::seed_updates
+    self::seed_travels
+  end
+
+  def self.seed_travels
+    travels = self::travels_json
+    travels.each do |t|
+      travel = Travel.find_or_create_by(
+        date: DateTime.strptime(t["wireDate"], "%Y-%m-%d"),
+        location: t["location"],
+        title: t["title"],
+        link: t["link"]
+      )
+    end
   end
 
   def self.seed_awards
@@ -11,7 +24,8 @@ class SeedDB
       update = Award.find_or_create_by(
         year: u["year"],
         body: u["body"],
-        paper_id: u["paper_id"]
+        pinned: u["pinned"],
+        paper_id: u["paper"]["id"]
       )
     end
   end
@@ -19,9 +33,8 @@ class SeedDB
   def self.seed_updates
     updates = self::updates_json
     updates.each do |u|
-      y,m,d = u["wireDate"].split("-")
       update = Update.find_or_create_by(
-        date: Date.new(y.to_i, m.to_i, d.to_i),
+        date: DateTime.strptime(u["wireDate"], "%Y-%m-%d"),
         text: u["text"],
         backing_type: Update::Type.which(u["type"]).to_i
       )
@@ -37,37 +50,39 @@ class SeedDB
 
   def self.seed_papers
     papers = self::papers_json
-    paper_authors = self::paper_authors_json
     papers.each do |hash|
       paper = Paper.find_or_initialize_by(
+        self_order: hash["selfOrder"].to_i,
         title: hash["title"],
         venue: hash["venue"],
-        self_order: hash["self_author_order"],
         year: hash["year"],
         downloads: hash["downloads"].to_i,
-        likes: 0,
-        backing_type: hash["papertype"].to_i - 1
+        summary: hash["summary"],
+        likes: hash["likes"],
+        backing_type: hash["type"].to_i,
+        html_slides_url: hash["html_slides_url"],
+        html_paper_url: hash["html_paper_url"]
       )
 
-      paper.remote_pdf_url = "http://sauvik.me/papers/serve?id=#{hash["id"]}"
+      paper.remote_pdf_url = "http://sauvik.me#{hash['pdf']}" unless hash["pdf"].nil?
+      paper.save!
+      paper.remote_thumbnail_url = "http://sauvik.me#{hash['thumbnail']}" unless hash["thumbnail"].nil?
+      paper.save!
+      paper.remote_slides_url = "http://sauvik.me#{hash['slides']}" unless hash["slides"].nil?
+      paper.save!
 
-      paper.authors = paper_authors.select { |ahash|
-        ahash["paper_title"] == hash["title"]
-      }.first["authors"].map do |ahash|
-        Author.find_or_create_by(name: ahash["name"])
-      end
-
-      paper.save
+      paper.authors = hash["authors"].map { |ahash| Author.find_or_create_by(name: ahash["name"]) }
+      paper.save!
     end
   end
 
   def self.papers_json
-    file = File.read(Rails.root.join('tmp', 'papers.json'))
+    file = File.read(Rails.root.join('tmp', 'new_json', 'papers.json'))
     JSON.parse file
   end
 
   def self.awards_json
-    file = File.read(Rails.root.join('tmp', 'awards.json'))
+    file = File.read(Rails.root.join('tmp', 'new_json', 'awards.json'))
     JSON.parse file
   end
 
@@ -88,7 +103,12 @@ class SeedDB
   end
 
   def self.updates_json
-    file = File.read(Rails.root.join('tmp', 'updates4.json'))
+    file = File.read(Rails.root.join('tmp', 'new_json', 'updates.json'))
+    JSON.parse file
+  end
+
+  def self.travels_json
+    file = File.read(Rails.root.join('tmp', 'new_json', 'travels.json'))
     JSON.parse file
   end
 end

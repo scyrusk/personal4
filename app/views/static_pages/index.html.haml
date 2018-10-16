@@ -1,13 +1,15 @@
 .alert.alert-info
   %p
-    I am seeking exceptional Ph.D., Master's, and undergraduate students at Georgia Tech to work
-    with me on research related to usable privacy and security, interactive systems, and ubiquitous computing.
-    If that sounds interesting to you, please send me an email briefly detailing your background and interests.
+    I am seeking exceptional Ph.D. students to work with me on research related to usable privacy and security, interactive systems, and ubiquitous computing. For more detailed information about the GT SPUD Lab and the problems we're interested in, please consult
+    =link_to "the following document.", "https://docs.google.com/document/d/1PBbSl4Z6KlVOq1iQMS5JxqCNTtKyoPip3ufWlwvmBr0/edit#heading=h.mcasuwmagdgf"
+    If you'd like to work with me,
+    =link_to "apply to the Ph.D. program in Computer Science or Human-Centered Computing at the School of Interactive Computing.", "https://www.ic.gatech.edu/node/6371"
+    The deadline is December 15th.
 
 = react_component('TravelContainer', url: travels_url(format: :json), pollInterval: 10000)
 
 .row
-  .about-me-container.well.well-sm
+  .about-me-container
     %p
       I am an Assistant Professor of
       =link_to "Interactive Computing", "https://ic.gatech.edu"
@@ -15,13 +17,29 @@
       =link_to "Georgia Tech's", "https://gatech.edu"
       =link_to "College of Computing.", "https://cc.gatech.edu"
     %p
-      My work intersects HCI, data science and cybersecurity to
-      %strong invent novel, more socially compatible security tools
-      that make end-user security less isolating and more likely to spread through social channels.
-      I also occasionally work on other interesting topics broadly within HCI: including
-      game personalization, mobile authentication, friendsourcing, and ubiquitous computing.
+      I direct the GT SPUD (Security, Privacy, Usability and Design) Lab. Our work, at the intersection of HCI, data science and cybersecurity, is oriented around answering the question:
+      %strong How can we design systems that encourage better cybersecurity and privacy behaviors?
+      A few directions of particular interest to us at the moment include: making cybersecurity and privacy systems that are social; designing AI assistants for security and privacy; exploring AR/VR to make security and privacy more engaging and accessible; and, making more usable developer tools that facilitate secure development.
     %p
-      I am a NDSEG fellow, a Qualcomm Innovation Fellow, a NSF EAPSI fellow, and a Facebook Fellowship finalist. My work has won a best paper award at UbiComp, two best paper honorable mentions at CHI, and an honorable mention for the NSA's Best Scientific Cybersecurity Paper. My work has also been covered by the popular press, including features on The Atlantic, The Huffington Post, The Financial Times, Slate and other media outlets.
+      =link_to "Here's a short (2.5 minute) video", "https://www.youtube.com/watch?v=c9NkYEAfKK8"
+      filmed by the CCC describing my social cybersecurity work. If you're interested in a more in-depth discussion,
+      =link_to "here's my 20-minute presentation at USENIX Enigma.", "https://www.youtube.com/watch?v=jcIlE4dGdWY"
+      If you want an even more in-depth discussion,
+      =link_to "here's my 45-minute job talk.", "https://www.youtube.com/watch?v=f7S6teBu3c8"
+    %p
+      I am currently serving as an
+      =link_to "associate editor for PACM IMWUT", "https://imwut.acm.org/editorial.cfm"
+      and am serving a second term as an
+      =link_to "associate chair for ACM SIGCHI", "http://chi2019.acm.org/authors/papers/selecting-a-subcommittee/#TOC-Engineering-Interactive-Systems-and-Technologies"
+      on the Engineering Interative Systems and Technologies (EIST) subcommittee.
+    %p
+      I am a NDSEG fellow, a Qualcomm Innovation Fellow and a NSF EAPSI fellow. My work has won a best paper award at UbiComp, two best paper honorable mentions at CHI, and an honorable mention for the NSA's Best Scientific Cybersecurity Paper. My work has also been covered by the popular press, including features on The Atlantic, The Huffington Post, Forbes, The Financial Times, Slate and other media outlets.
+    %p
+      I have a
+      =link_to "blog", "https://medium.com/@scyrus89"
+      and a
+      =link_to "vlog", "https://www.youtube.com/channel/UCn4ZcBS7p7N4KwVmJwy3bzQ?view_as=subscriber"
+      covering topics on academia and research in HCI and cybersecurity.
     %p
       I received my Ph.D. from
       = link_to "CMU's", "https://cmu.edu"
@@ -30,11 +48,12 @@
       = link_to "Jason Hong", "http://cs.cmu.edu/~jasonh"
       and
       = link_to "Laura Dabbish.", "http://lauradabbish.com"
+      Prior to that, I obtained my Bachelor's degree in Computer Science from Georgia Tech.
 %hr
 .row
   .col.col-md-12
     %p
-      I am teaching CS4001 in the Spring semester of 2018. Students may access the course website
+      I am teaching CS4001 in the fall semester of 2019. Students may access the course website
       =link_to "here.", "http://cs4001.sauvik.me", target: '_blank'
 %hr
 
