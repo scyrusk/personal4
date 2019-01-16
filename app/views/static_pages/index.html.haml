@@ -1,11 +1,3 @@
-.alert.alert-info
-  %p
-    I am seeking exceptional Ph.D. students to work with me on research related to usable privacy and security, interactive systems, and ubiquitous computing. For more detailed information about the GT SPUD Lab and the problems we're interested in, please consult
-    =link_to "the following document.", "https://docs.google.com/document/d/1PBbSl4Z6KlVOq1iQMS5JxqCNTtKyoPip3ufWlwvmBr0/edit#heading=h.mcasuwmagdgf"
-    If you'd like to work with me,
-    =link_to "apply to the Ph.D. program in Computer Science or Human-Centered Computing at the School of Interactive Computing.", "https://www.ic.gatech.edu/node/6371"
-    The deadline is December 15th.
-
 = react_component('TravelContainer', url: travels_url(format: :json), pollInterval: 10000)
 
 .row
@@ -17,7 +9,9 @@
       =link_to "Georgia Tech's", "https://gatech.edu"
       =link_to "College of Computing.", "https://cc.gatech.edu"
     %p
-      I direct the GT SPUD (Security, Privacy, Usability and Design) Lab. Our work, at the intersection of HCI, data science and cybersecurity, is oriented around answering the question:
+      I direct the
+      =link_to "GT SPUD (Security, Privacy, Usability and Design) Lab.", "https://gtspuds.com"
+      Our work, at the intersection of HCI, data science and cybersecurity, is oriented around answering the question:
       %strong How can we design systems that encourage better cybersecurity and privacy behaviors?
       A few directions of particular interest to us at the moment include: making cybersecurity and privacy systems that are social; designing AI assistants for security and privacy; exploring AR/VR to make security and privacy more engaging and accessible; and, making more usable developer tools that facilitate secure development.
     %p
@@ -33,13 +27,14 @@
       =link_to "associate chair for ACM SIGCHI", "http://chi2019.acm.org/authors/papers/selecting-a-subcommittee/#TOC-Engineering-Interactive-Systems-and-Technologies"
       on the Engineering Interative Systems and Technologies (EIST) subcommittee.
     %p
-      I am a NDSEG fellow, a Qualcomm Innovation Fellow and a NSF EAPSI fellow. My work has won a best paper award at UbiComp, two best paper honorable mentions at CHI, and an honorable mention for the NSA's Best Scientific Cybersecurity Paper. My work has also been covered by the popular press, including features on The Atlantic, The Huffington Post, Forbes, The Financial Times, Slate and other media outlets.
+      I am a NDSEG fellow, a Qualcomm Innovation Fellow and a NSF EAPSI fellow. My work has won a best paper award at UbiComp, two best paper honorable mentions at CHI, and an honorable mention for the NSA's Best Scientific Cybersecurity Paper. My work has also been covered by the popular press, including features on The Atlantic, The Huffington Post, Forbes, The Financial Times, Slate and other significant media outlets. I am also very fortunate to have been awarded a NSF CRII grant to support my
+      work as a new investigator.
     %p
       I have a
       =link_to "blog", "https://medium.com/@scyrus89"
       and a
       =link_to "vlog", "https://www.youtube.com/channel/UCn4ZcBS7p7N4KwVmJwy3bzQ?view_as=subscriber"
-      covering topics on academia and research in HCI and cybersecurity.
+      covering topics on academia and research in HCI and cybersecurity. Both are infrequently updated, sadly.
     %p
       I received my Ph.D. from
       = link_to "CMU's", "https://cmu.edu"
@@ -53,8 +48,8 @@
 .row
   .col.col-md-12
     %p
-      I am teaching CS4001 in the fall semester of 2019. Students may access the course website
-      =link_to "here.", "http://cs4001.sauvik.me", target: '_blank'
+      I am teaching a new course on Usable Privacy & Security Research in the spring semester of 2019. Students may access the course website
+      =link_to "here.", "https://cs8803.sauvik.me", target: '_blank'
 %hr
 
 .row
