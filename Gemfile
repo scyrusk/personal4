@@ -49,7 +49,7 @@ end
 gem 'react-rails', '~> 1.6.0'
 gem 'haml'
 gem 'haml-rails'
-gem 'bootstrap-sass', '~> 3.3.6'
+gem 'bootstrap-sass', '~> 3.4.1'
 
 gem 'annotate'
 
