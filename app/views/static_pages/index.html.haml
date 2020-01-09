@@ -1,7 +1,8 @@
-= react_component('TravelContainer', url: travels_url(format: :json), pollInterval: 10000)
-
+-# = react_component('TravelContainer', url: travels_url(format: :json), pollInterval: 10000)
 .row
-  .about-me-container
+  .col-md-6
+    %p{class: "about-header"}
+      About
     %p
       I am an Assistant Professor of
       =link_to "Interactive Computing", "https://ic.gatech.edu"
@@ -22,10 +23,13 @@
       =link_to "here's my 45-minute job talk.", "https://www.youtube.com/watch?v=f7S6teBu3c8"
     %p
       I am currently serving as an
-      =link_to "associate editor for PACM IMWUT", "https://imwut.acm.org/editorial.cfm"
-      and am serving a second term as an
-      =link_to "associate chair for ACM SIGCHI", "http://chi2019.acm.org/authors/papers/selecting-a-subcommittee/#TOC-Engineering-Interactive-Systems-and-Technologies"
-      on the Engineering Interative Systems and Technologies (EIST) subcommittee.
+      =link_to "associate editor for PACM IMWUT.", "https://imwut.acm.org/editorial.cfm"
+      I have also served as an associate chair for
+      = link_to "ACM SIGCHI", "https://chi2020.acm.org/"
+      three times:
+      twice on the Engineering Interactive Systems and Technologies (2019, 2020) subcomittee,
+      and once on the Privacy, Security & Visualization subcommittee (2018).
+      For a full list of my professional service, please refer to my CV.
     %p
       I am a NDSEG fellow, a Qualcomm Innovation Fellow and a NSF EAPSI fellow. My work has won a best paper award at UbiComp, two best paper honorable mentions at CHI, and an honorable mention for the NSA's Best Scientific Cybersecurity Paper. My work has also been covered by the popular press, including features on The Atlantic, The Huffington Post, Forbes, The Financial Times, Slate and other significant media outlets. I am also very fortunate to have been awarded a NSF CRII grant to support my
       work as a new investigator.
@@ -34,29 +38,19 @@
       =link_to "blog", "https://medium.com/@scyrus89"
       and a
       =link_to "vlog", "https://www.youtube.com/channel/UCn4ZcBS7p7N4KwVmJwy3bzQ?view_as=subscriber"
-      covering topics on academia and research in HCI and cybersecurity. Both are infrequently updated, sadly.
-    %p
-      I received my Ph.D. from
-      = link_to "CMU's", "https://cmu.edu"
-      = link_to "HCII", "http://hcii.cmu.edu"
-      where I was advised by
-      = link_to "Jason Hong", "http://cs.cmu.edu/~jasonh"
-      and
-      = link_to "Laura Dabbish.", "http://lauradabbish.com"
-      Prior to that, I obtained my Bachelor's degree in Computer Science from Georgia Tech.
-%hr
-.row
-  .col.col-md-12
-    %p
-      I am teaching a new course on Usable Privacy & Security Research in the spring semester of 2019. Students may access the course website
-      =link_to "here.", "https://cs8803.sauvik.me", target: '_blank'
-%hr
-
-.row
-  .col-md-6
-    = react_component('UpdateContainer', url: updates_url(format: :json), assets: @updateAssetMap, pollInterval: 10000)
+      covering topics on academia and research in HCI and cybersecurity.
   .col-md-6
     = react_component('AwardContainer', url: awards_url(format: :json))
+%hr
+= react_component('CoursesContainer', data: @courses)
+%hr
+= react_component('StudentsContainer', students: @students)
+
+-# .row
+-#   .col-md-6
+-#     = react_component('UpdateContainer', url: updates_url(format: :json), assets: @updateAssetMap, pollInterval: 10000)
+-#   .col-md-6
+-#     = react_component('AwardContainer', url: awards_url(format: :json))
 %hr
 .row
   .col-md-12

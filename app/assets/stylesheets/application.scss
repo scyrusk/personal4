@@ -75,9 +75,6 @@ body {
   }
 }
 
-.personal-image-conatiner {
-}
-
 .personal-image {
   display: block;
   max-width: 100%;
@@ -86,7 +83,39 @@ body {
   margin-right: auto;
 }
 
-.personal-name-container {
+.rounded {
+  object-fit:cover;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+img.student-img {
+  width: 50px;
+  height: auto;
+  border: 1px black solid;
+  -webkit-border-radius: 50%;
+  -moz-border-radius: 50%;
+  -ms-border-radius: 50%;
+  -o-border-radius: 50%;
+  border-radius: 50%;
+}
+
+a.student-link {
+  color: black;
+}
+
+a:hover.student-link {
+  color: rgb(51,122,183);
+}
+.student-info {
+  display: inline-block;
+  font-size: small;
+}
+
+p.student-name {
+  font-size: small;
+  text-transform: uppercase;
+  font-weight: bold;
 }
 
 p.personal-name {
@@ -163,11 +192,12 @@ a.personal-name-link:hover {
   color: #3c763d;
 }
 
-.update-container, .award-container {
+.update-list-container {
+  height: 395px;
 }
 
-.update-list-container, .award-list-container {
-  height: 395px;
+.award-list-container {
+  height: 450px;
 }
 
 .scrollable {
@@ -181,13 +211,14 @@ a.personal-name-link:hover {
 
 .header-help {
   color: #888888;
-  font-size: 10px;
+  font-size: x-small;
 }
 
-.update-header, .award-header, .paper-header {
+.update-header, .award-header, .paper-header, .about-header, .teaching-header, .student-header {
   font-size: 20px;
   font-weight: bold;
   margin-top: 10px;
+  text-transform: uppercase;
 }
 
 .update, .award, .paper {
@@ -378,4 +409,10 @@ a.personal-name-link:hover {
   text-transform: uppercase;
   padding-bottom: 2px;
   margin-bottom: -2px;
+}
+
+.course-semester {
+  font-size: smaller;
+  color: gray;
+  text-transform: uppercase;
 }

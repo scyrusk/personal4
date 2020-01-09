@@ -16,6 +16,44 @@ class StaticPagesController < ApplicationController
       "pdfDL" => ActionController::Base.helpers.asset_url("pdf.png"),
       "slidesDL" => ActionController::Base.helpers.asset_url("slides.png")
     }
+
+    @courses = [{
+      courseCode: "CS4001",
+      courseName: "Computing, Society & Professionalism",
+      semester: "Spring 2018",
+      link: "http://cs4001.sauvik.me"
+    }, {
+      courseCode: "CS4001",
+      courseName: "Computing, Society & Professionalism",
+      semester: "Fall 2018",
+      link: "http://cs4001.sauvik.me"
+    }, {
+      courseCode: "CS4/8803 UPS",
+      courseName: "Usable Privacy & Security",
+      semester: "Spring 2019",
+      link: "http://cs8803.sauvik.me"
+    }].reverse
+
+    @students = [
+      {
+        name: "Youngwook Do",
+        link: "http://www.youngwookdo.me/",
+        image: ActionController::Base.helpers.asset_url("ywd.png"),
+        info: "Tangible & Haptic Cybersecurity"
+      },
+      {
+        name: "Yuxi Wu",
+        link: "https://yuxi-wu.github.io/",
+        image: ActionController::Base.helpers.asset_url("yw.jpg"),
+        info: "Large-Scale Collective Action in Online Privacy"
+      },
+      {
+        name: "Jacob Logas",
+        link: "http://www.rocketcode.xyz/",
+        image: ActionController::Base.helpers.asset_url("pjl.jpg"),
+        info: "Intelligent Assistants for End-User Security"
+      }
+    ]
   end
 
   def admin
