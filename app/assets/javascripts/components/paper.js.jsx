@@ -106,6 +106,8 @@ var PaperList = React.createClass({
           slides={paper.slides}
           html_slides_url={paper.html_slides_url}
           html_paper_url={paper.html_paper_url}
+          presentation_url={paper.presentation_url}
+          video_url={paper.video_url}
           downloads={paper.downloads}
           assets={assets}
           id={paper.id}
@@ -193,6 +195,33 @@ var Paper = React.createClass({
       </div> :
       <div className="paper-media-link"/>
 
+    var prezServeLink = this.props.presentation_url;
+    var prezEventTracking = function(id) {
+      return () => gaSendEvent('Publications', 'PrezLink', id);
+    };
+
+    var prezNode = prezServeLink ?
+      <div className="paper-media-link" onClick={prezEventTracking}>
+        <a href={prezServeLink} target="_blank">
+          <img className="paper-slides-icon" src={this.props.assets["prezDL"]}/>
+        </a>
+      </div> :
+      <div className="paper-media-link"/>
+
+    var videoServeLink = this.props.video_url;
+    var videoEventTracking = function(id) {
+      return () => gaSendEvent('Publications', 'VideoLink', id);
+    };
+
+    var videoNode = videoServeLink ?
+      <div className="paper-media-link" onClick={videoEventTracking}>
+        <a href={videoServeLink} target="_blank">
+          <img className="paper-slides-icon" src={this.props.assets["videoDL"]}/>
+        </a>
+      </div> :
+      <div className="paper-media-link"/>
+
+
     var paperClassName = this.props.selected ? "paper row well well-sm" : "paper row well well-sm unselected";
 
     return (
@@ -214,6 +243,8 @@ var Paper = React.createClass({
         <div className="paper-media col-xs-2">
           {pdfNode}
           {slidesNode}
+          {prezNode}
+          {videoNode}
         </div>
       </div>
     );
@@ -238,6 +269,8 @@ var PaperForm = React.createClass({
         slides: this.refs.slides.getValue(),
         html_slides_url: this.refs.htmlSlides.getValue(),
         html_paper_url: this.refs.htmlPaper.getValue(),
+        presentation_url: this.refs.presentation.getValue(),
+        video_url: this.refs.video.getValue(),
         summary: this.refs.summary.getValue()
       }
     };
@@ -293,6 +326,8 @@ var PaperForm = React.createClass({
         <FileField name="Slides" ref="slides" />
         <InputField type="text" name="HTML Slides" value={this.state.html_slides_url} ref="htmlSlides" />
         <InputField type="text" name="HTML Paper" value={this.state.html_paper_url} ref="htmlPaper" />
+        <InputField type="text" name="Presentation URL" value={this.state.presentation_url} ref="presentation" />
+        <InputField type="text" name="Video URL" value={this.state.video_url} ref="video" />
         <InputField type="text" name="Summary" value={this.state.summary} ref="summary" />
         <InputField name="Downloads" type="number" value={this.state.downloads} ref="downloads" />
         <SubmitButton/>

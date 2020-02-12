@@ -14,7 +14,9 @@ class StaticPagesController < ApplicationController
     @paperAssetMap = {
       "noThumb" => ActionController::Base.helpers.asset_url("no-image.png"),
       "pdfDL" => ActionController::Base.helpers.asset_url("pdf.png"),
-      "slidesDL" => ActionController::Base.helpers.asset_url("slides.png")
+      "slidesDL" => ActionController::Base.helpers.asset_url("slides.png"),
+      "prezDL" => ActionController::Base.helpers.asset_url("presentation.png"),
+      "videoDL" => ActionController::Base.helpers.asset_url("video.png")
     }
 
     @courses = [{

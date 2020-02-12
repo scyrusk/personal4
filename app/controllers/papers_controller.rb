@@ -49,7 +49,6 @@ class PapersController < ApplicationController
   # PUT /papers/1.json
   def update
     params = paper_params
-    p paper_params
 
     @paper.authors = params.delete(:authors).split(",").map do |aname|
       Author.find_or_create_by(name: aname.strip)
@@ -117,7 +116,9 @@ class PapersController < ApplicationController
           :slides,
           :html_slides_url,
           :html_paper_url,
-          :summary
+          :summary,
+          :presentation_url,
+          :video_url
         )
     end
 end

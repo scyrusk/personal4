@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170509174849) do
+ActiveRecord::Schema.define(version: 20200212210149) do
 
   create_table "authors", force: :cascade do |t|
     t.string   "name"
@@ -52,8 +52,8 @@ ActiveRecord::Schema.define(version: 20170509174849) do
     t.text     "venue"
     t.integer  "downloads"
     t.integer  "likes"
-    t.datetime "created_at",      null: false
-    t.datetime "updated_at",      null: false
+    t.datetime "created_at",       null: false
+    t.datetime "updated_at",       null: false
     t.string   "title"
     t.integer  "backing_type"
     t.string   "pdf"
@@ -62,6 +62,8 @@ ActiveRecord::Schema.define(version: 20170509174849) do
     t.string   "slides"
     t.string   "html_slides_url"
     t.string   "html_paper_url"
+    t.string   "presentation_url"
+    t.string   "video_url"
   end
 
   create_table "travels", force: :cascade do |t|

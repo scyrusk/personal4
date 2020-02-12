@@ -2,22 +2,24 @@
 #
 # Table name: papers
 #
-#  id              :integer          not null, primary key
-#  self_order      :integer
-#  year            :integer
-#  venue           :text
-#  downloads       :integer
-#  likes           :integer
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  title           :string
-#  backing_type    :integer
-#  pdf             :string
-#  thumbnail       :string
-#  summary         :text
-#  slides          :string
-#  html_slides_url :string
-#  html_paper_url  :string
+#  id               :integer          not null, primary key
+#  self_order       :integer
+#  year             :integer
+#  venue            :text
+#  downloads        :integer
+#  likes            :integer
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  title            :string
+#  backing_type     :integer
+#  pdf              :string
+#  thumbnail        :string
+#  summary          :text
+#  slides           :string
+#  html_slides_url  :string
+#  html_paper_url   :string
+#  presentation_url :string
+#  video_url        :string
 #
 
 class Paper < ActiveRecord::Base
@@ -111,7 +113,9 @@ class Paper < ActiveRecord::Base
       slides: self.slides_url,
       html_slides_url: self.html_slides_url,
       html_paper_url: self.html_paper_url,
-      thumbnail: self.thumbnail_url
+      thumbnail: self.thumbnail_url,
+      presentation_url: self.presentation_url,
+      video_url: self.video_url
     }
   end
 end
