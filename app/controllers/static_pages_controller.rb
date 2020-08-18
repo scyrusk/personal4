@@ -34,6 +34,11 @@ class StaticPagesController < ApplicationController
       courseName: "Usable Privacy & Security",
       semester: "Spring 2019",
       link: "http://cs8803.sauvik.me"
+    }, { 
+      courseCode: "CS4873",
+      courseName: "Computing, Society & Professionalism",
+      semester: "Fall 2020",
+      link: "http://cs4873c.sauvik.me"
     }].reverse
 
     @students = [
