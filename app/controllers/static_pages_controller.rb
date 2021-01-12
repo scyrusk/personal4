@@ -63,6 +63,11 @@ class StaticPagesController < ApplicationController
     ]
   end
 
+  def dktest
+    @params = params
+    p params
+  end
+
   def admin
   end
 

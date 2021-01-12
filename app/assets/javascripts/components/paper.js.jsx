@@ -136,7 +136,7 @@ var PaperFilter = React.createClass({
         <input
           type="text"
           placeholder="Search by title, author, venue or award"
-          className="form-control"
+          className="form-control paperFilter"
           value={this.props.initialText}
           onChange={this.handleTextChanged} />
       </div>
