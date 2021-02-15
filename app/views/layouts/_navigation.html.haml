@@ -10,8 +10,9 @@
     %p
       %strong Email:
       [firstname]@gatech.edu
-    = link_to "View my CV", asset_path("cv.pdf"), class: "personal-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'CV');"
-    = link_to "Browse my Google Scholar", "https://scholar.google.com/citations?user=laPvCf4AAAAJ&hl=en&oi=ao", class: "personal-link", onclick: "gaSendEvent('JobMarket', 'LinkClick', 'Google Scholar');"
+    = link_to "Peruse my CV", asset_path("cv.pdf"), class: "personal-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'CV');"
+    = link_to "View my Google Scholar", "https://scholar.google.com/citations?user=laPvCf4AAAAJ&hl=en&oi=ao", class: "personal-link", onclick: "gaSendEvent('JobMarket', 'LinkClick', 'Google Scholar');"
+    = link_to "Read my expert / consulting blog", "https://consult.sauvik.me", class: "personal-link", onclick: "gaSendEvent('JobMarket', 'LinkClick', 'Consult');"
     / = link_to "Read my blog", "http://makewritelearn.com", class: "personal-link"
   .personal-social-icons
     %p
