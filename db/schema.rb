@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20200212210149) do
+ActiveRecord::Schema.define(version: 20210221194356) do
 
   create_table "authors", force: :cascade do |t|
     t.string   "name"
@@ -64,6 +64,8 @@ ActiveRecord::Schema.define(version: 20200212210149) do
     t.string   "html_paper_url"
     t.string   "presentation_url"
     t.string   "video_url"
+    t.text     "tags"
+    t.string   "tweets"
   end
 
   create_table "travels", force: :cascade do |t|

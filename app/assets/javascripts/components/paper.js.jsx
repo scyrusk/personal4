@@ -77,7 +77,8 @@ var PaperList = React.createClass({
         paper.venue.toLowerCase().indexOf(ft) >= 0 ||
         paper.year.toString().indexOf(ft) >= 0 ||
         paper.authors.some(function(e,i,a) { return e.name.toLowerCase().search(ft) >= 0 }) ||
-        paper.awards.some(function(e,i,a) { return e.body.toLowerCase().search(ft) >= 0 })
+        paper.awards.some(function(e,i,a) { return e.body.toLowerCase().search(ft) >= 0 }) ||
+        (paper.tags || "").toLowerCase().search(ft) >= 0
       );
       return paper;
     }).sort(function(a, b) {
@@ -109,6 +110,8 @@ var PaperList = React.createClass({
           presentation_url={paper.presentation_url}
           video_url={paper.video_url}
           downloads={paper.downloads}
+          tags={paper.tags || ""}
+          tweets={paper.tweets}
           assets={assets}
           id={paper.id}
           key={Utility.randomString(8)} />
@@ -169,6 +172,20 @@ var Paper = React.createClass({
       );
     });
 
+    var tagEls = this.props.tags !== "" ? this.props.tags.split(";").map(function(tag) {
+      return (
+        <span className="paper-tag" onClick={filterClickListener}>{ tag }</span>
+      );
+    }) : null;
+
+    var tagNodes = tagEls ? (
+      <div className="paper-tags">
+        <b>Tags: </b>
+        { tagEls }
+      </div>
+    ) : null;
+
+
     var pdfServeLink = this.props.html_paper_url || "/papers/" + this.props.id + "/serve";
     var pdfEventTracking = function(id) {
       return () => gaSendEvent('Publications', 'PDFDownload', id);
@@ -220,7 +237,14 @@ var Paper = React.createClass({
         </a>
       </div> :
       <div className="paper-media-link"/>
-
+    
+    var tweetsNode = this.props.tweets ?
+      <div className="paper-media-link" onClick={videoEventTracking}>
+        <a href={this.props.tweets} target="_blank">
+          <img className="paper-tweets-icon" src={this.props.assets["tweetsDL"]}/>
+        </a>
+      </div> :
+      <div className="paper-media-link"/>
 
     var paperClassName = this.props.selected ? "paper row well well-sm" : "paper row well well-sm unselected";
 
@@ -239,12 +263,14 @@ var Paper = React.createClass({
             <span className="paper-venue" onClick={filterClickListener}>{this.props.venue}</span>
           </p>
           <div className="paper-award-list">{awardNodes}</div>
+          <div className="paper-tags">{tagNodes}</div>
         </div>
         <div className="paper-media col-xs-2">
           {pdfNode}
           {slidesNode}
           {prezNode}
           {videoNode}
+          {tweetsNode}
         </div>
       </div>
     );
@@ -271,7 +297,9 @@ var PaperForm = React.createClass({
         html_paper_url: this.refs.htmlPaper.getValue(),
         presentation_url: this.refs.presentation.getValue(),
         video_url: this.refs.video.getValue(),
-        summary: this.refs.summary.getValue()
+        summary: this.refs.summary.getValue(),
+        tweets: this.refs.tweets.getValue(),
+        tags: this.refs.tags.getValue()
       }
     };
 
@@ -328,7 +356,9 @@ var PaperForm = React.createClass({
         <InputField type="text" name="HTML Paper" value={this.state.html_paper_url} ref="htmlPaper" />
         <InputField type="text" name="Presentation URL" value={this.state.presentation_url} ref="presentation" />
         <InputField type="text" name="Video URL" value={this.state.video_url} ref="video" />
+        <InputField type="text" name="Tweet URL" value={this.state.tweets} ref="tweets" />
         <InputField type="text" name="Summary" value={this.state.summary} ref="summary" />
+        <InputField type="text" name="Tags" value={this.state.tags} ref="tags" />
         <InputField name="Downloads" type="number" value={this.state.downloads} ref="downloads" />
         <SubmitButton/>
       </form>
