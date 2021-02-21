@@ -197,7 +197,8 @@ var Paper = React.createClass({
           <img className="paper-pdf-icon" src={this.props.assets["pdfDL"]}/>
         </a>
       </div> :
-      <div className="paper-media-link"/>
+      null;
+
 
     var slidesServeLink = this.props.slides || this.props.html_slides_url;
     var slidesEventTracking = function(id) {
@@ -210,7 +211,7 @@ var Paper = React.createClass({
           <img className="paper-slides-icon" src={this.props.assets["slidesDL"]}/>
         </a>
       </div> :
-      <div className="paper-media-link"/>
+      null;
 
     var prezServeLink = this.props.presentation_url;
     var prezEventTracking = function(id) {
@@ -223,12 +224,16 @@ var Paper = React.createClass({
           <img className="paper-slides-icon" src={this.props.assets["prezDL"]}/>
         </a>
       </div> :
-      <div className="paper-media-link"/>
+      null;
 
     var videoServeLink = this.props.video_url;
     var videoEventTracking = function(id) {
       return () => gaSendEvent('Publications', 'VideoLink', id);
     };
+
+    var tweetEventTracking = function(id) {
+      return () => gaSendEvent('Publications', 'TweetLink', id);
+    }
 
     var videoNode = videoServeLink ?
       <div className="paper-media-link" onClick={videoEventTracking}>
@@ -236,15 +241,15 @@ var Paper = React.createClass({
           <img className="paper-slides-icon" src={this.props.assets["videoDL"]}/>
         </a>
       </div> :
-      <div className="paper-media-link"/>
+      null;
     
     var tweetsNode = this.props.tweets ?
-      <div className="paper-media-link" onClick={videoEventTracking}>
+      <div className="paper-media-link" onClick={tweetEventTracking}>
         <a href={this.props.tweets} target="_blank">
           <img className="paper-tweets-icon" src={this.props.assets["tweetsDL"]}/>
         </a>
       </div> :
-      <div className="paper-media-link"/>
+      null;
 
     var paperClassName = this.props.selected ? "paper row well well-sm" : "paper row well well-sm unselected";
 
