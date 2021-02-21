@@ -118,7 +118,9 @@ class PapersController < ApplicationController
           :html_paper_url,
           :summary,
           :presentation_url,
-          :video_url
+          :video_url,
+          :tweets,
+          :tags
         )
     end
 end

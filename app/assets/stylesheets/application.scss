@@ -336,6 +336,14 @@ a.personal-name-link:hover {
   cursor: pointer;
 }
 
+.paper-tag {
+  padding: 2px;
+  margin-right: 5px;
+  background-color: rgb(51, 122, 183);
+  color: white;
+  cursor: pointer;
+}
+
 .paper-award-name {
   color: white;
   font-weight: bold;
@@ -351,7 +359,7 @@ a.personal-name-link:hover {
   margin-bottom: 5px;
 }
 
-.paper-pdf-icon, .paper-slides-icon {
+.paper-pdf-icon, .paper-slides-icon, .paper-tweets-icon {
   max-height: 48px;
 }
 

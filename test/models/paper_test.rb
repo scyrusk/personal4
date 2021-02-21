@@ -20,6 +20,8 @@
 #  html_paper_url   :string
 #  presentation_url :string
 #  video_url        :string
+#  tags             :text
+#  tweets           :string
 #
 
 require 'test_helper'

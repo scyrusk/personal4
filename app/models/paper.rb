@@ -20,6 +20,8 @@
 #  html_paper_url   :string
 #  presentation_url :string
 #  video_url        :string
+#  tags             :text
+#  tweets           :string
 #
 
 class Paper < ActiveRecord::Base
@@ -115,7 +117,9 @@ class Paper < ActiveRecord::Base
       html_paper_url: self.html_paper_url,
       thumbnail: self.thumbnail_url,
       presentation_url: self.presentation_url,
-      video_url: self.video_url
+      video_url: self.video_url,
+      tweets: self.tweets,
+      tags: self.tags
     }
   end
 end
