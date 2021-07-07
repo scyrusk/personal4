@@ -53,13 +53,19 @@ class StaticPagesController < ApplicationController
         name: "Yuxi Wu",
         link: "https://yuxi-wu.github.io/",
         image: ActionController::Base.helpers.asset_url("yw.jpg"),
-        info: "Large-Scale Collective Action in Online Privacy"
+        info: "Collective Action in Online Privacy"
       },
       {
         name: "Jacob Logas",
-        link: "http://www.rocketcode.xyz/",
+        link: "https://logas.me/",
         image: ActionController::Base.helpers.asset_url("pjl.jpg"),
-        info: "Intelligent Assistants for End-User Security"
+        info: "Subversive AI"
+      },
+      {
+        name: "Hao-Ping (Hank) Lee",
+        link: "https://hankhplee.com/",
+        image: ActionController::Base.helpers.asset_url("hhpl.jpg"),
+        info: "Explainable Security"
       }
     ]
   end

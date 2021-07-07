@@ -2,7 +2,7 @@ var StudentsContainer = React.createClass({
   render: function() {
     const studentNodes = this.props.students.map(function(student, i) {
       return (
-        <div className="col-md-4">
+        <div className="col-md-3">
           <div className="row">
             <div className="col-md-2">
               <img src={student.image} alt={`Profile photo of ${student.name}`} className="student-img" />
