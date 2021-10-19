@@ -8,9 +8,9 @@
     %p
       %strong Email:
       [firstname]@gatech.edu
-    = link_to "Peruse my CV", asset_path("cv.pdf"), class: "personal-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'CV');"
-    = link_to "View my Google Scholar", "https://scholar.google.com/citations?user=laPvCf4AAAAJ&hl=en&oi=ao", class: "personal-link", onclick: "gaSendEvent('JobMarket', 'LinkClick', 'Google Scholar');"
-    = link_to "Read my expert / consulting blog", "https://consult.sauvik.me", class: "personal-link", onclick: "gaSendEvent('JobMarket', 'LinkClick', 'Consult');"
+    = link_to "Curriculum vitae", asset_path("cv.pdf"), class: "personal-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'CV');"
+    = link_to "Academic blog", "https://sauvik-das.medium.com/", class: "personal-link", onclick: "gaSendEvent('JobMarket', 'LinkClick', 'Blog');"
+    = link_to "Expert blog", "https://consult.sauvik.me", class: "personal-link", onclick: "gaSendEvent('JobMarket', 'LinkClick', 'Consult');"
   .personal-social-icons
     %p
       %strong Connect with me on:
@@ -19,6 +19,6 @@
     .social-icon
       = link_to(image_tag("ln.png", class: "social-icon-img"), "https://www.linkedin.com/in/sauvik-das-71b66a1b")
     .social-icon
-      = link_to(image_tag("gh.png", class: "social-icon-img"), "https://github.com/scyrusk")
+      = link_to(image_tag("gs.png", class: "social-icon-img"), "https://scholar.google.com/citations?user=laPvCf4AAAAJ&hl=en&oi=ao", onclick: "gaSendEvent('JobMarket', 'LinkClick', 'Google Scholar');")
     .social-icon
       = link_to(image_tag("ss.png", class: "social-icon-img"), "http://www.slideshare.net/SauvikDas2")

@@ -47,13 +47,13 @@ class StaticPagesController < ApplicationController
         name: "Youngwook Do",
         link: "http://www.youngwookdo.me/",
         image: ActionController::Base.helpers.asset_url("ywd.png"),
-        info: "Tangible & Haptic Cybersecurity"
+        info: "Tangible Cybersecurity"
       },
       {
         name: "Yuxi Wu",
         link: "https://yuxi-wu.github.io/",
         image: ActionController::Base.helpers.asset_url("yw.jpg"),
-        info: "Collective Action in Online Privacy"
+        info: "Privacy Collective Action"
       },
       {
         name: "Jacob Logas",
@@ -65,7 +65,7 @@ class StaticPagesController < ApplicationController
         name: "Hao-Ping (Hank) Lee",
         link: "https://hankhplee.com/",
         image: ActionController::Base.helpers.asset_url("hhpl.jpg"),
-        info: "Explainable Security"
+        info: "Privacy through Design"
       }
     ]
   end
