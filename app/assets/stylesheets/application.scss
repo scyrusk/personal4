@@ -108,11 +108,12 @@ a:hover.student-link {
   color: rgb(51,122,183);
 }
 .student-info {
-  display: inline-block;
   font-size: small;
+  margin-top:-5px;
 }
 
 p.student-name {
+  margin-top: 10px;
   font-size: small;
   text-transform: uppercase;
   font-weight: bold;

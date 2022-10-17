@@ -40,7 +40,19 @@ class StaticPagesController < ApplicationController
       courseName: "Computing, Society & Professionalism",
       semester: "Fall 2020",
       link: "http://cs4873c.sauvik.me"
-    }].reverse
+    }, {
+      courseCode: "CS4/8803 UPS",
+      courseName: "Computing, Society & Professionalism",
+      semester: "Spring 2022",
+      link: "http://cs8803.sauvik.me"
+    },
+    { 
+      courseCode: "05-120 A1",
+      courseName: "Intro to HCI",
+      semester: "Fall 2022",
+      link: "https://canvas.cmu.edu/courses/31234"
+    },
+    ].reverse
 
     @students = [
       {
@@ -66,6 +78,12 @@ class StaticPagesController < ApplicationController
         link: "https://hankhplee.com/",
         image: ActionController::Base.helpers.asset_url("hhpl.jpg"),
         info: "Privacy through Design"
+      },
+      {
+        name: "Ezra Awumey",
+        link: "https://www.linkedin.com/in/ezra-awumey-52405017b/",
+        image: ActionController::Base.helpers.asset_url("ea.jpg"),
+        info: "Workplace privacy / surveillance"
       }
     ]
   end

@@ -2,7 +2,7 @@ var BioPic = React.createClass({
   _handleMouseOver: function(e) {
     e.preventDefault();
     this.setState({
-      upsideDown: true
+      // upsideDown: true
     });
   },
 
