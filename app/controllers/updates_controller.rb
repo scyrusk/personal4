@@ -1,6 +1,6 @@
 class UpdatesController < ApplicationController
   before_action :set_update, only: [:edit, :update, :destroy]
-  before_filter :authenticate, :except => [:index]
+  before_action :authenticate, :except => [:index]
 
   def index
     @updates = Update.all

@@ -1,19 +1,22 @@
-var InputField = React.createClass({
-  getInitialState: function() {
-   return { value: this.props.value };
-  },
+class InputField extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { value: this.props.value };
+    this.getValue = this.getValue.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+  }
 
-  getValue: function() {
+  getValue() {
     return this.state.value;
-  },
+  }
 
-  handleChange: function() {
+  handleChange() {
     this.setState({
       value: this.refs[this.props.name].value
     });
-  },
+  }
 
-  render: function() {
+  render() {
     return (
       <div className="form-group">
         <label htmlFor={this.props.name} className="col-xs-1 control-label">
@@ -30,20 +33,21 @@ var InputField = React.createClass({
       </div>
     );
   }
-});
+};
 
-var FileField = React.createClass({
-  getInitialState: function() {
-    return {
-      value: null,
-    };
-  },
+class FileField extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { value: this.props.value };
+    this.getValue = this.getValue.bind(this);
+    this.handleFile = this.handleFile.bind(this);
+  }
 
-  getValue: function() {
+  getValue() {
     return this.state.value;
-  },
+  }
 
-  handleFile: function(e) {
+  handleFile(e) {
     var self = this;
     var reader = new FileReader();
     var file = e.target.files[0];
@@ -55,9 +59,9 @@ var FileField = React.createClass({
     }
 
     reader.readAsDataURL(file);
-  },
+  }
 
-  render: function() {
+  render() {
     return (
       <div className="form-group">
         <label htmlFor={this.props.name} className="col-xs-1 control-label">
@@ -73,24 +77,27 @@ var FileField = React.createClass({
       </div>
     );
   }
-});
+};
 
-var SelectField = React.createClass({
-  getInitialState: function() {
-    return { value: this.props.value };
-  },
+class SelectField extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { value: this.props.value };
+    this.getValue = this.getValue.bind(this);
+    this.handleSelection = this.handleSelection.bind(this);
+  }
 
-  getValue: function() {
+  getValue() {
     return this.state.value;
-  },
+  }
 
-  handleSelection: function(e) {
+  handleSelection(e) {
     this.setState({
       value: e.target.value
     });
-  },
+  }
 
-  render: function() {
+  render() {
     var optionNodes = this.props.options.map(function(option) {
       return (
         <option value={option.value} key={option.value}>
@@ -116,11 +123,11 @@ var SelectField = React.createClass({
       </div>
     );
   }
-});
+};
 
 
-var SubmitButton = React.createClass({
-  render: function() {
+class SubmitButton extends React.Component {
+  render() {
     return (
       <div className="form-group">
         <div className="col-xs-offset-2 col-xs-10">
@@ -129,29 +136,29 @@ var SubmitButton = React.createClass({
       </div>
     );
   }
-});
+};
 
+class Checkbox extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { isChecked: this.props.checked };
+    this.getChecked = this.getChecked.bind(this);
+    this.toggleCheckbox = this.toggleCheckbox.bind(this);
+  }
 
-let Checkbox = React.createClass({
-  getInitialState: function () {
-    return {
-      isChecked: this.props.checked
-    };
-  },
-
-  getChecked: function() {
+  getChecked() {
     return this.state.isChecked;
-  },
+  }
 
-  toggleCheckbox: function () {
+  toggleCheckbox() {
     this.setState({
       isChecked: ! this.state.isChecked
     });
 
     // this.props.handleCheckboxChange(this.props.label);
-  },
+  }
 
-  render: function () {
+  render() {
     return (
       <div className="form-group">
         <label htmlFor={this.props.name} className="col-xs-1 control-label">
@@ -168,4 +175,4 @@ let Checkbox = React.createClass({
       </div>
     );
   }
-});
+};

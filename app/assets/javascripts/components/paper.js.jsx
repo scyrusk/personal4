@@ -1,5 +1,16 @@
-var PaperContainer = React.createClass({
-  loadPapersFromServer: function() {
+function randomString(n) {
+  s = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  Array.apply(null, Array(n)).map(() => s.charAt(Math.floor(Math.random() * s.length))).join('')
+}
+
+class PaperContainer extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {data: []};
+    this.loadPapersFromServer = this.loadPapersFromServer.bind(this);
+  }
+
+  loadPapersFromServer() {
     $.ajax({
       url: this.props.url,
       dataType: 'json',
@@ -11,17 +22,13 @@ var PaperContainer = React.createClass({
         console.error(this.props.url, status, err.toString());
       }.bind(this)
     });
-  },
+  }
 
-  getInitialState: function() {
-    return {data: []};
-  },
-
-  componentDidMount: function() {
+  componentDidMount() {
     this.loadPapersFromServer();
-  },
+  }
 
-  render: function() {
+  render() {
     return (
       <div className="paper-container">
         <p className="paper-header">Selected Publications</p>
@@ -31,23 +38,26 @@ var PaperContainer = React.createClass({
       </div>
     );
   }
-});
+};
 
-var PaperList = React.createClass({
-  getInitialState: function() {
-    return {
+class PaperList extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
       filterText: "",
       timeoutVar: null
     }
-  },
+    this._handleFilterClick = this._handleFilterClick.bind(this);
+    this._handleFilterTextChanged = this._handleFilterTextChanged.bind(this);
+  }
 
-  _handleFilterClick: function(e) {
+  _handleFilterClick(e) {
     this.setState({ filterText: e.target.innerText })
     gaSendEvent("Interaction", "Search", e.target.innerText);
     $('html,body').animate({scrollTop: $('.paper-container').offset().top });
-  },
+  }
 
-  _handleFilterTextChanged: function(ft) {
+  _handleFilterTextChanged(ft) {
     if (this.state.timeoutVar != null) {
       clearTimeout(this.state.timeoutVar);
     }
@@ -61,9 +71,9 @@ var PaperList = React.createClass({
       filterText: ft,
       timeoutVar: tv
     })
-  },
+  }
 
-  render: function() {
+  render() {
     var stateRef = this.state;
     var noThumb = this.props.assets["noThumb"];
     var assets = this.props.assets;
@@ -114,7 +124,7 @@ var PaperList = React.createClass({
           tweets={paper.tweets}
           assets={assets}
           id={paper.id}
-          key={Utility.randomString(8)} />
+          key={randomString(8)} />
       );
     });
     return (
@@ -126,14 +136,19 @@ var PaperList = React.createClass({
       </div>
     );
   }
-});
+};
 
-var PaperFilter = React.createClass({
-  handleTextChanged: function(e) {
+class PaperFilter extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleTextChanged = this.handleTextChanged.bind(this);
+  }
+
+  handleTextChanged(e) {
     this.props.onFilter(e.target.value);
-  },
+  }
 
-  render: function() {
+  render() {
     return (
       <div className="paper-list-search col-xs-12">
         <input
@@ -145,11 +160,11 @@ var PaperFilter = React.createClass({
       </div>
     );
   }
-});
+};
 
-var Paper = React.createClass({
+class Paper extends React.Component {
   // Create author nodes here
-  render: function() {
+  render() {
     var filterClickListener = this.props.handleFilterClick;
     // var authors = this.props.authors;
     // authors.splice(this.props.selfOrder - 1, 0, { name: "Sauvik Das", id: 0, self: true });
@@ -157,7 +172,7 @@ var Paper = React.createClass({
       return (
         <Author
           name={author.name}
-          key={Utility.randomString(8)}
+          key={randomString(8)}
           handleAuthorClick={filterClickListener}
           self={author.self || false} />
       );
@@ -168,7 +183,7 @@ var Paper = React.createClass({
         <PaperAward
           name={award.body}
           handleAwardClick={filterClickListener}
-          key={Utility.randomString(8)} />
+          key={randomString(8)} />
       );
     });
 
@@ -280,10 +295,16 @@ var Paper = React.createClass({
       </div>
     );
   }
-});
+};
 
-var PaperForm = React.createClass({
-  _handleSubmit: function(e) {
+class PaperForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = props.paper;
+    this._handleSubmit = this._handleSubmit.bind(this);
+  }
+
+  _handleSubmit(e) {
     e.preventDefault();
     var paper = {
       paper: {
@@ -322,21 +343,17 @@ var PaperForm = React.createClass({
     });
 
     return false;
-  },
+  }
 
-  _paperTypeOptions: function() {
+  _paperTypeOptions() {
     return [
       { value: 0, "rendered": "Conference" },
       { value: 1, "rendered": "Journal" },
       { value: 2, "rendered": "Workshop" }
     ];
-  },
+  }
 
-  getInitialState: function() {
-    return this.props.paper;
-  },
-
-  render: function() {
+  render() {
     var authorsValue = this.state.authors.map(function(author) {
       return author.name;
     }).join(", ");
@@ -346,7 +363,7 @@ var PaperForm = React.createClass({
     }).join(", ");
 
     return (
-      <form className="paper-form" onSubmit={this._handleSubmit} className="form-horizontal" encType="multipart/form-data">
+      <form className="paper-form form-horizontal" onSubmit={this._handleSubmit} encType="multipart/form-data">
         <InputField name="Title" type="text" value={this.state.title} ref="title" />
         <InputField name="Venue" type="text" value={this.state.venue} ref="venue" />
         <InputField name="Self Order" type="number" value={this.state.selfOrder} ref="selfOrder" />
@@ -369,4 +386,4 @@ var PaperForm = React.createClass({
       </form>
     );
   }
-});
+};

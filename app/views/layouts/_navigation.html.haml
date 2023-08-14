@@ -2,7 +2,7 @@
   .personal-name-container
     %p.personal-name=link_to "Sauvik Das", "/", class: "personal-name-link"
   .personal-research-areas
-    %p HCI, Usable Security & Privacy, Social & Ubiquitous Computing
+    %p Human-centered security, privacy, AI
   = react_component("BioPic", rightSideUp: asset_path("sauvik_bio_sphere.png"), upsideDown: asset_path("sauvik_dwi.gif"))
   .personal-links-container
     %p
@@ -10,7 +10,6 @@
       [firstname]@cmu.edu
     = link_to "Curriculum vitae", asset_path("cv.pdf"), class: "personal-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'CV');"
     = link_to "Academic blog", "https://sauvik-das.medium.com/", class: "personal-link", onclick: "gaSendEvent('JobMarket', 'LinkClick', 'Blog');"
-    = link_to "Expert blog", "https://consult.sauvik.me", class: "personal-link", onclick: "gaSendEvent('JobMarket', 'LinkClick', 'Consult');"
   .personal-social-icons
     %p
       %strong Connect with me on:
@@ -19,6 +18,4 @@
     .social-icon
       = link_to(image_tag("ln.png", class: "social-icon-img"), "https://www.linkedin.com/in/sauvik-das-71b66a1b")
     .social-icon
-      = link_to(image_tag("gs.png", class: "social-icon-img"), "https://scholar.google.com/citations?user=laPvCf4AAAAJ&hl=en&oi=ao", onclick: "gaSendEvent('JobMarket', 'LinkClick', 'Google Scholar');")
-    .social-icon
-      = link_to(image_tag("ss.png", class: "social-icon-img"), "http://www.slideshare.net/SauvikDas2")
+      = link_to(image_tag("md.png", class: "social-icon-img"), "https://hci.social/@sauvik")

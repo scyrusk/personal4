@@ -1,5 +1,17 @@
-var AwardContainer = React.createClass({
-  loadAwardsFromServer: function() {
+class AwardContainer extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      data: [],
+      error: false,
+      scrollable: false,
+      clickCount: 0
+    };
+    this._handleClick = this._handleClick.bind(this);
+    this._loadAwardsFromServer = this._loadAwardsFromServer.bind(this);
+  }
+
+  _loadAwardsFromServer() {
     $.ajax({
       url: this.props.url,
       dataType: 'json',
@@ -12,9 +24,9 @@ var AwardContainer = React.createClass({
         this.setState({error: true});
       }.bind(this)
     });
-  },
+  }
 
-  _handleClick: function() {
+  _handleClick() {
     if (!this.state.scrollable && this.state.clickCount === 0) {
       gaSendEvent("Interaction", "ToggleScroll", "AwardContainer");
     }
@@ -22,22 +34,13 @@ var AwardContainer = React.createClass({
       scrollable: !this.state.scrollable,
       clickCount: this.state.clickCount + 1
     });
-  },
+  }
 
-  getInitialState: function() {
-    return {
-      data: [],
-      error: false,
-      scrollable: false,
-      clickCount: 0
-    };
-  },
+  componentDidMount() {
+    this._loadAwardsFromServer();
+  }
 
-  componentDidMount: function() {
-    this.loadAwardsFromServer();
-  },
-
-  render: function() {
+  render() {
     var containerClass = this.state.scrollable ?
       "award-list-container scrollable" :
       "award-list-container not-scrollable";
@@ -60,10 +63,10 @@ var AwardContainer = React.createClass({
       );
     }
   }
-});
+};
 
-var AwardList = React.createClass({
-  render: function() {
+class AwardList extends React.Component {
+  render() {
     var awardNodes = this.props.data.sort(function(a, b) {
       return b.year - a.year;
     }).sort(function(a, b) {
@@ -97,10 +100,10 @@ var AwardList = React.createClass({
       </div>
     );
   }
-});
+};
 
-var Award = React.createClass({
-  render: function() {
+class Award extends React.Component{
+  render() {
     var paperTitle = this.props.paper ?
       <span className="help-block paper-award-paper-title">{this.props.paper.title}</span> :
       <span className="help-block"/>
@@ -122,20 +125,27 @@ var Award = React.createClass({
       </div>
     );
   }
-});
+};
 
-var PaperAward = React.createClass({
-  render: function() {
+class PaperAward extends React.Component {
+  render() {
     return (
       <div className="paper-award" onClick={this.props.handleAwardClick}>
         <span className="paper-award-name">{this.props.name}</span>
       </div>
     );
   }
-});
+};
 
-var AwardForm = React.createClass({
-  _handleSubmit: function(e) {
+class AwardForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = props.award;
+    this._handleSubmit = this._handleSubmit.bind(this);
+    this._awardPaperOptions = this._awardPaperOptions.bind(this);
+  }
+
+  _handleSubmit(e) {
     e.preventDefault();
     var award = {
       award: {
@@ -160,21 +170,17 @@ var AwardForm = React.createClass({
     });
 
     return false;
-  },
+  }
 
-  _awardPaperOptions: function() {
+  _awardPaperOptions() {
     return this.props.papers.map(function(paper) {
       return { "value": paper.id, "rendered": paper.title }
     });
-  },
+  }
 
-  getInitialState: function() {
-    return this.props.award;
-  },
-
-  render: function() {
+  render() {
     return (
-      <form className="paper-form" onSubmit={this._handleSubmit} className="form-horizontal">
+      <form className="paper-form form-horizontal" onSubmit={this._handleSubmit}>
         <InputField name="Year" type="number" value={this.state.year} ref="year" />
         <InputField type="text" name="Body" value={this.state.body} ref="body" />
         <SelectField name="Paper" options={this._awardPaperOptions()} value={this.state.paper.id} ref="paperID" />
@@ -183,4 +189,4 @@ var AwardForm = React.createClass({
       </form>
     );
   }
-});
+};

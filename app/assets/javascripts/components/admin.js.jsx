@@ -1,37 +1,39 @@
-var AdminContainer = React.createClass({
-  _loadDataFromServer: function(url, stateKey) {
-    $.ajax({
-      url: url,
-      dataType: 'json',
-      cache: false,
-      success: function(data) {
-        map = {}
-        map[stateKey] = data.reverse()
-        this.setState(map);
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
-    });
-  },
-
-  getInitialState: function() {
-    return {
+class AdminContainer extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
       papers: [],
       updates: [],
       awards: [],
       travels: []
     };
-  },
+    this._loadDataFromServer = this._loadDataFromServer.bind(this);
+  }
 
-  componentDidMount: function() {
+  _loadDataFromServer(url, stateKey) {
+    $.ajax({
+      url: url,
+      dataType: 'json',
+      cache: false,
+      success: function (data) {
+        const map = {}; // Note the const declaration
+        map[stateKey] = data.reverse();
+        this.setState(map);
+      }.bind(this),
+      error: function (xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  }
+
+  componentDidMount() {
     this._loadDataFromServer(this.props.papersURL, "papers");
     this._loadDataFromServer(this.props.awardsURL, "awards");
     this._loadDataFromServer(this.props.updatesURL, "updates");
     this._loadDataFromServer(this.props.travelsURL, "travels");
-  },
+  }
 
-  render: function() {
+  render() {
     return (
       <div className="admin-container">
         <div className="admin-paper-container">
@@ -53,10 +55,10 @@ var AdminContainer = React.createClass({
       </div>
     );
   }
-});
+}
 
-var PapersAdminList = React.createClass({
-  render: function() {
+class PapersAdminList extends React.Component {
+  render() {
     var paperNodes = this.props.data.map(function(paper) {
       return (
         <tr>
@@ -87,10 +89,10 @@ var PapersAdminList = React.createClass({
       </table>
     );
   }
-});
+};
 
-var UpdatesAdminList = React.createClass({
-  render: function() {
+class UpdatesAdminList extends React.Component {
+  render() {
     var updateNodes = this.props.data.map(function(update) {
       return (
         <tr>
@@ -121,11 +123,11 @@ var UpdatesAdminList = React.createClass({
       </table>
     );
   }
-});
+};
 
 
-var AwardsAdminList = React.createClass({
-  render: function() {
+class AwardsAdminList extends React.Component {
+  render() {
     var awardNodes = this.props.data.map(function(award) {
       return (
         <tr>
@@ -156,10 +158,10 @@ var AwardsAdminList = React.createClass({
       </table>
     );
   }
-});
+};
 
-var TravelsAdminList = React.createClass({
-  render: function() {
+class TravelsAdminList extends React.Component {
+  render() {
     var travelNodes = this.props.data.map(function(travel) {
       return (
         <tr>
@@ -190,4 +192,4 @@ var TravelsAdminList = React.createClass({
       </table>
     );
   }
-});
+};

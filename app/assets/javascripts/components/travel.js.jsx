@@ -1,5 +1,13 @@
-var TravelContainer = React.createClass({
-  loadTravelsFromServer: function() {
+class TravelContainer extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      data: []
+    };
+    this.loadTravelsFromServer = this.loadTravelsFromServer.bind(this);
+  }
+
+  loadTravelsFromServer() {
     $.ajax({
       url: this.props.url,
       dataType: 'json',
@@ -11,19 +19,13 @@ var TravelContainer = React.createClass({
         console.error(this.props.url, status, err.toString());
       }.bind(this)
     });
-  },
+  }
 
-  getInitialState: function() {
-    return {
-      data: []
-    }
-  },
-
-  componentDidMount: function() {
+  componentDidMount() {
     this.loadTravelsFromServer();
-  },
+  }
 
-  render: function() {
+  render() {
     return (
       <div className="row upcoming-travel-container">
         <div className="col-xs-12">
@@ -35,11 +37,11 @@ var TravelContainer = React.createClass({
         <TravelList data={this.state.data} />
       </div>
     );
-  },
-});
+  }
+};
 
-var TravelList = React.createClass({
-  render: function() {
+class TravelList extends React.Component {
+  render() {
     var startingIndex = this.props.data.length > 6 ? this.props.data.length - 6 : 0;
     var travelNodes = this.props.data.sort(function(a, b) {
       return Date.parse(a.wireDate) - Date.parse(b.wireDate);
@@ -59,10 +61,10 @@ var TravelList = React.createClass({
       </div>
     );
   }
-});
+};
 
-var Travel = React.createClass({
-  render: function() {
+class Travel extends React.createClass {
+  render() {
     var topLevelClassName = this.props.datePassed ?
       "upcoming-travel upcoming-travel-done col-xs-2" :
       "upcoming-travel col-xs-2";
@@ -83,10 +85,16 @@ var Travel = React.createClass({
       </div>
     );
   }
-});
+};
 
-var TravelForm = React.createClass({
-  _handleSubmit: function(e) {
+class TravelForm extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = props.travel;
+    this._handleSubmit = this._handleSubmit.bind(this);
+  }
+
+  _handleSubmit(e) {
     e.preventDefault();
     var travel = {
       travel: {
@@ -111,15 +119,11 @@ var TravelForm = React.createClass({
     });
 
     return false;
-  },
+  }
 
-  getInitialState: function() {
-    return this.props.travel;
-  },
-
-  render: function() {
+  render() {
     return (
-      <form className="update-form" onSubmit={this._handleSubmit} className="form-horizontal">
+      <form className="update-form form-horizontal" onSubmit={this._handleSubmit}>
         <InputField name="Date" type="date" value={this.state.wireDate} ref="date" />
         <InputField name="Title" type="text" value={this.state.title} ref="title" />
         <InputField name="Location" type="text" value={this.state.location} ref="location" />
@@ -128,4 +132,4 @@ var TravelForm = React.createClass({
       </form>
     );
   }
-});
+};
