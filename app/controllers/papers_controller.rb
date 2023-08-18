@@ -83,7 +83,14 @@ class PapersController < ApplicationController
     @paper.save
 
     pdf_path =  Rails.root.join('public', @paper.pdf.path)
-    send_file pdf_path, filename: 'file.pdf', type: 'application/pdf', disposition: 'inline'
+    filename = "#{@paper.authors.first.name.split(" ").last}#{@paper.year}"
+
+    begin
+      filename = "#{@paper.authors.first.name.split(" ").last}#{@paper.year}"
+    rescue StandardError
+      filename = "file.pdf"
+    end
+    send_file pdf_path, filename: filename, type: 'application/pdf', disposition: 'inline'
   end
 
   protected
