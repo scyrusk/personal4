@@ -83,7 +83,6 @@ class PapersController < ApplicationController
     @paper.save
 
     pdf_path =  Rails.root.join('public', @paper.pdf.path)
-    filename = "#{@paper.authors.first.name.split(" ").last}#{@paper.year}"
 
     begin
       filename = "#{@paper.authors.first.name.split(" ").last}#{@paper.year}"
