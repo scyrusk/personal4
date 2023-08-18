@@ -1,4 +1,4 @@
-class SeedDB
+class SeedDb
   def self.seed_db
     self::seed_papers
     self::seed_awards
