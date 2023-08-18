@@ -82,7 +82,8 @@ class PapersController < ApplicationController
     @paper.downloads = @paper.downloads.present? ? @paper.downloads + 1 : 1
     @paper.save
 
-    redirect_to @paper.pdf.url
+    pdf_path =  Rails.root.join('public', @paper.pdf.path)
+    send_file pdf_path, filename: 'file.pdf', type: 'application/pdf', disposition: 'inline'
   end
 
   protected

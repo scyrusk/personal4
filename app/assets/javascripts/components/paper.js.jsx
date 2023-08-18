@@ -208,7 +208,7 @@ class Paper extends React.Component {
 
     var pdfNode = (this.props.pdf || this.props.html_paper_url) ?
       <div className="paper-media-link" onClick={pdfEventTracking(this.props.id)}>
-        <a href={pdfServeLink}>
+        <a href={pdfServeLink} target="_blank">
           <img className="paper-pdf-icon" src={this.props.assets["pdfDL"]}/>
         </a>
       </div> :
