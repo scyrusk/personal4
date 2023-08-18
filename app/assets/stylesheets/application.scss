@@ -119,6 +119,28 @@ p.student-name {
   font-weight: bold;
 }
 
+p.student-now {
+  margin-top: -5px;
+  font-size: small;
+  padding: 0px 5px;
+  color: white;
+  font-weight: bold;
+}
+
+p.student-now-alum {
+  background-color: rgba(0, 127, 0, 0.8);
+}
+
+p.student-now-market {
+  background-color: rgb(51, 122, 183);
+}
+
+p.student-years {
+  margin-top: -5px;
+  font-size: small;
+  font-style: italic;
+}
+
 p.personal-name {
   font-size: 20px;
   font-weight: bolder;

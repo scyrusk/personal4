@@ -1,6 +1,6 @@
 class PapersController < ApplicationController
   before_action :set_paper, only: [:edit, :update, :serve, :destroy]
-  before_filter :authenticate, :except => [:index, :serve]
+  before_action :authenticate, :except => [:index, :serve]
 
   def index
     @papers = Paper.all

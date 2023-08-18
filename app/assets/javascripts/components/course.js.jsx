@@ -1,5 +1,5 @@
-var CoursesContainer = React.createClass({
-  render: function() {
+class CoursesContainer extends React.Component {
+  render() {
     const courses = this.props.data.map(function(course, index) {
       return (
         <div className="course-container col-md-4">
@@ -25,4 +25,4 @@ var CoursesContainer = React.createClass({
       </div>
     )
   }
-});
+};

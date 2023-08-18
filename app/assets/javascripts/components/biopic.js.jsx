@@ -1,25 +1,34 @@
-var BioPic = React.createClass({
-  _handleMouseOver: function(e) {
+class BioPic extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      upsideDown: false
+    };
+    this._handleMouseOver = this._handleMouseOver.bind(this);
+    this._handleMouseOut = this._handleMouseOut.bind(this);
+  }
+
+  _handleMouseOver(e) {
     e.preventDefault();
     this.setState({
       // upsideDown: true
     });
-  },
+  }
 
-  _handleMouseOut: function(e) {
+  _handleMouseOut(e) {
     e.preventDefault();
     this.setState({
       upsideDown: false
     });
-  },
+  }
 
-  getInitialState: function() {
+  getInitialState() {
     return {
       upsideDown: false
     };
-  },
+  }
 
-  render: function() {
+  render() {
     var picSrc = this.state.upsideDown ?
       this.props.upsideDown :
       this.props.rightSideUp;
@@ -33,4 +42,4 @@ var BioPic = React.createClass({
       </div>
     );
   }
-});
+};

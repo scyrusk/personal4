@@ -1,7 +1,7 @@
 class AwardsController < ApplicationController
   before_action :set_award, only: [:edit, :update, :destroy]
   before_action :get_paper_opts, only: [:new, :edit]
-  before_filter :authenticate, :except => [:index]
+  before_action :authenticate, :except => [:index]
 
   def index
     @awards = Award.all

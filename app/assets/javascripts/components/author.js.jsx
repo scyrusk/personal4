@@ -1,5 +1,5 @@
-var Author = React.createClass({
-  render: function() {
+class Author extends React.Component {
+  render() {
     var dClassNames = "author " + (this.props.self ? 'author-self' : 'author-other')
     return (
       <div className={dClassNames} onClick={this.props.handleAuthorClick}>
@@ -7,4 +7,4 @@ var Author = React.createClass({
       </div>
     );
   }
-});
+};

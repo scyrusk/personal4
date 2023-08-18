@@ -1,5 +1,5 @@
 class StaticPagesController < ApplicationController
-  before_filter :authenticate, :except => [:index]
+  before_action :authenticate, :except => [:index]
 
   def index
     @updateAssetMap = {
@@ -21,36 +21,42 @@ class StaticPagesController < ApplicationController
     }
 
     @courses = [{
-      courseCode: "CS4001",
+      courseCode: "GT CS4001",
       courseName: "Computing, Society & Professionalism",
       semester: "Spring 2018",
       link: "http://cs4001.sauvik.me"
     }, {
-      courseCode: "CS4001",
+      courseCode: "GT CS4001",
       courseName: "Computing, Society & Professionalism",
       semester: "Fall 2018",
       link: "http://cs4001.sauvik.me"
     }, {
-      courseCode: "CS4/8803 UPS",
+      courseCode: "GT CS4/8803 UPS",
       courseName: "Usable Privacy & Security",
       semester: "Spring 2019",
       link: "http://cs8803.sauvik.me"
     }, { 
-      courseCode: "CS4873",
+      courseCode: "GT CS4873",
       courseName: "Computing, Society & Professionalism",
       semester: "Fall 2020",
       link: "http://cs4873c.sauvik.me"
     }, {
-      courseCode: "CS4/8803 UPS",
+      courseCode: "GT CS4/8803 UPS",
       courseName: "Computing, Society & Professionalism",
       semester: "Spring 2022",
       link: "http://cs8803.sauvik.me"
     },
     { 
-      courseCode: "05-120 A1",
+      courseCode: "CMU 05-120 A1",
       courseName: "Intro to HCI",
       semester: "Fall 2022",
       link: "https://canvas.cmu.edu/courses/31234"
+    },
+    {
+      courseCode: "CMU 05/17-200",
+      courseName: "Ethics and Policy Issues in Computing",
+      semester: "Spring 2023",
+      link: "https://canvas.cmu.edu/courses/33066/assignments/syllabus"
     },
     ].reverse
 
@@ -59,32 +65,53 @@ class StaticPagesController < ApplicationController
         name: "Youngwook Do",
         link: "http://www.youngwookdo.me/",
         image: ActionController::Base.helpers.asset_url("ywd.png"),
-        info: "Tangible Cybersecurity"
+        info: "Tangible Cybersecurity",
+        alum: true,
+        now: "→ JP Morgan Chase",
+        years: "2018-2023"
       },
       {
         name: "Yuxi Wu",
         link: "https://yuxi-wu.github.io/",
         image: ActionController::Base.helpers.asset_url("yw.jpg"),
-        info: "Privacy Collective Action"
+        info: "Privacy Collective Action",
+        alum: false,
+        now: "On the market!",
+        years: "2019-present"
       },
       {
         name: "Jacob Logas",
         link: "https://logas.me/",
         image: ActionController::Base.helpers.asset_url("pjl.jpg"),
-        info: "Subversive AI"
+        info: "Subversive AI",
+        alum: false,
+        now: "On the market!",
+        years: "2019-present"
       },
       {
         name: "Hao-Ping (Hank) Lee",
         link: "https://hankhplee.com/",
         image: ActionController::Base.helpers.asset_url("hhpl.jpg"),
-        info: "Privacy through Design"
+        info: "AI Privacy",
+        alum: false,
+        years: "2021-present"
       },
       {
         name: "Ezra Awumey",
         link: "https://www.linkedin.com/in/ezra-awumey-52405017b/",
         image: ActionController::Base.helpers.asset_url("ea.jpg"),
-        info: "Workplace privacy / surveillance"
-      }
+        info: "Workplace privacy / surveillance",
+        alum: false,
+        years: "2022-present"
+      },
+      {
+        name: "Isadora Krsek",
+        link: "https://www.isadorakrsek.com/",
+        image: ActionController::Base.helpers.asset_url("ik.jpg"),
+        info: "Social cybersecurity & privacy",
+        alum: false,
+        years: "2022-present"
+      },
     ]
   end
 
