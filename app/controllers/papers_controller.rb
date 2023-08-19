@@ -85,7 +85,7 @@ class PapersController < ApplicationController
     pdf_path =  Rails.root.join('public', @paper.pdf.path)
 
     begin
-      filename = "#{@paper.authors.first.name.split(" ").last}#{@paper.year}"
+      filename = "#{@paper.self_order == 1 ? "Das" : @paper.authors.first.name.split(" ").last}#{@paper.year}"
     rescue StandardError
       filename = "file.pdf"
     end
