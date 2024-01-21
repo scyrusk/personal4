@@ -38,7 +38,7 @@ class UpdatesController < ApplicationController
   # PUT /updates/1.json
   def update
     respond_to do |format|
-      if @update.update_attributes(update_params)
+      if @update.update(update_params)
         format.js { render json: @update }
       else
         format.js { render json: { error: @update.errors } }

@@ -59,7 +59,7 @@ class PapersController < ApplicationController
     end
 
     respond_to do |format|
-      if @paper.update_attributes(params)
+      if @paper.update(params)
         format.js { render json: @paper }
       else
         format.js { render json: { error: @paper.errors } }

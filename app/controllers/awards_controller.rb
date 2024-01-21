@@ -39,7 +39,7 @@ class AwardsController < ApplicationController
   # PUT /papers/1.json
   def update
     respond_to do |format|
-      if @award.update_attributes(award_params)
+      if @award.update(award_params)
         format.js { render json: @award }
       else
         format.js { render json: { error: @award.errors } }

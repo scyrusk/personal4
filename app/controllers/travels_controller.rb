@@ -39,7 +39,7 @@ class TravelsController < ApplicationController
   # PATCH/PUT /travels/1.json
   def update
     respond_to do |format|
-      if @travel.update_attributes(travel_params)
+      if @travel.update(travel_params)
         format.js { render json: @travel }
       else
         format.js { render json: { error: @travel.errors } }
