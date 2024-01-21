@@ -121,7 +121,7 @@ class StaticPagesController < ApplicationController
       {
         name: "Kyzyl Monteiro",
         link: "https://www.kyzyl.me/",
-        image: ActionController::Base.helpers.asset_url("km.jpeg"),
+        image: ActionController::Base.helpers.asset_url("km.jpg"),
         info: "Tangible security controls",
         alum: false,
         years: "2023-present"
