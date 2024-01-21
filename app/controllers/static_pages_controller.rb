@@ -58,6 +58,12 @@ class StaticPagesController < ApplicationController
       semester: "Spring 2023",
       link: "https://canvas.cmu.edu/courses/33066/assignments/syllabus"
     },
+    {
+      courseCode: "CMU 05-4/630",
+      courseName: "Programming Usable Interfaces",
+      semester: "Spring 2024",
+      link: "https://canvas.cmu.edu/courses/38964/assignments/syllabus"
+    },
     ].reverse
 
     @students = [
@@ -67,7 +73,7 @@ class StaticPagesController < ApplicationController
         image: ActionController::Base.helpers.asset_url("ywd.png"),
         info: "Tangible Cybersecurity",
         alum: true,
-        now: "→ JP Morgan Chase",
+        # now: "→ JP Morgan Chase",
         years: "2018-2023"
       },
       {
@@ -76,7 +82,7 @@ class StaticPagesController < ApplicationController
         image: ActionController::Base.helpers.asset_url("yw.jpg"),
         info: "Privacy Collective Action",
         alum: false,
-        now: "On the market!",
+        # now: "On the market!",
         years: "2019-present"
       },
       {
@@ -85,7 +91,7 @@ class StaticPagesController < ApplicationController
         image: ActionController::Base.helpers.asset_url("pjl.jpg"),
         info: "Subversive AI",
         alum: false,
-        now: "On the market!",
+        # now: "On the market!",
         years: "2019-present"
       },
       {
@@ -111,6 +117,22 @@ class StaticPagesController < ApplicationController
         info: "Social cybersecurity & privacy",
         alum: false,
         years: "2022-present"
+      },
+      {
+        name: "Kyzyl Monteiro",
+        link: "https://www.kyzyl.me/",
+        image: ActionController::Base.helpers.asset_url("km.jpeg"),
+        info: "Tangible security controls",
+        alum: false,
+        years: "2023-present"
+      },
+      {
+        name: "William Agnew",
+        link: "https://sites.google.com/cs.washington.edu/william-agnew/home",
+        image: ActionController::Base.helpers.asset_url("wa.png"),
+        info: "Community-centered AI",
+        alum: false,
+        years: "2023-present"
       },
     ]
   end
