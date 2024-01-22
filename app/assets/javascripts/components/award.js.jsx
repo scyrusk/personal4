@@ -27,13 +27,11 @@ class AwardContainer extends React.Component {
   }
 
   _handleClick() {
-    if (!this.state.scrollable && this.state.clickCount === 0) {
-      gaSendEvent("Interaction", "ToggleScroll", "AwardContainer");
-    }
     this.setState({
       scrollable: !this.state.scrollable,
       clickCount: this.state.clickCount + 1
     });
+    console.log(this.state.scrollable);
   }
 
   componentDidMount() {

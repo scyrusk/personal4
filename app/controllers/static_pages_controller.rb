@@ -73,7 +73,7 @@ class StaticPagesController < ApplicationController
         image: ActionController::Base.helpers.asset_url("ywd.png"),
         info: "Tangible Cybersecurity",
         alum: true,
-        # now: "→ JP Morgan Chase",
+        now: "GT Ph.D. alum",
         years: "2018-2023"
       },
       {
@@ -82,7 +82,7 @@ class StaticPagesController < ApplicationController
         image: ActionController::Base.helpers.asset_url("yw.jpg"),
         info: "Privacy Collective Action",
         alum: false,
-        # now: "On the market!",
+        now: "GT Ph.D.",
         years: "2019-present"
       },
       {
@@ -91,7 +91,7 @@ class StaticPagesController < ApplicationController
         image: ActionController::Base.helpers.asset_url("pjl.jpg"),
         info: "Subversive AI",
         alum: false,
-        # now: "On the market!",
+        now: "GT Ph.D.",
         years: "2019-present"
       },
       {
@@ -100,22 +100,25 @@ class StaticPagesController < ApplicationController
         image: ActionController::Base.helpers.asset_url("hhpl.jpg"),
         info: "AI Privacy",
         alum: false,
+        now: "CMU Ph.D.",
         years: "2021-present"
       },
       {
         name: "Ezra Awumey",
         link: "https://www.linkedin.com/in/ezra-awumey-52405017b/",
         image: ActionController::Base.helpers.asset_url("ea.jpg"),
-        info: "Workplace privacy / surveillance",
+        info: "Workplace privacy",
         alum: false,
+        now: "CMU Ph.D.",
         years: "2022-present"
       },
       {
         name: "Isadora Krsek",
         link: "https://www.isadorakrsek.com/",
         image: ActionController::Base.helpers.asset_url("ik.jpg"),
-        info: "Social cybersecurity & privacy",
+        info: "NLP for privacy / security",
         alum: false,
+        now: "CMU Ph.D.",
         years: "2022-present"
       },
       {
@@ -124,6 +127,7 @@ class StaticPagesController < ApplicationController
         image: ActionController::Base.helpers.asset_url("km.jpg"),
         info: "Tangible security controls",
         alum: false,
+        now: "CMU Ph.D.",
         years: "2023-present"
       },
       {
@@ -132,6 +136,7 @@ class StaticPagesController < ApplicationController
         image: ActionController::Base.helpers.asset_url("wa.png"),
         info: "Community-centered AI",
         alum: false,
+        now: "CMU Postdoc",
         years: "2023-present"
       },
     ]

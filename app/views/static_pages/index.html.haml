@@ -79,19 +79,11 @@
         -# and a
         -# =link_to "vlog", "https://www.youtube.com/channel/UCn4ZcBS7p7N4KwVmJwy3bzQ?view_as=subscriber"
         -# covering topics on academia and research in HCI and cybersecurity.
-  .col-md-6
+    %hr
+    = react_component('StudentsContainer', students: @students)
+    %hr
     = react_component('AwardContainer', url: awards_url(format: :json))
-%hr
-= react_component('CoursesContainer', data: @courses)
-%hr
-= react_component('StudentsContainer', students: @students)
-
--# .row
--#   .col-md-6
--#     = react_component('UpdateContainer', url: updates_url(format: :json), assets: @updateAssetMap, pollInterval: 10000)
--#   .col-md-6
--#     = react_component('AwardContainer', url: awards_url(format: :json))
-%hr
-.row
-  .col-md-12
+    %hr
+    = react_component('CoursesContainer', data: @courses)
+  .col-md-6
     = react_component('PaperContainer', url: papers_url(format: :json), assets: @paperAssetMap, pollInterval: 10000)

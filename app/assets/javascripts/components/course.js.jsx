@@ -2,7 +2,7 @@ class CoursesContainer extends React.Component {
   render() {
     const courses = this.props.data.map(function(course, index) {
       return (
-        <div className="course-container col-md-4">
+        <div className="course-container col-md-3">
           <div className="course-semester">
             { course.semester }
           </div>
