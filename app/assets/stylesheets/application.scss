@@ -22,6 +22,8 @@
 
 body {
   font-family: 'Roboto', sans-serif;
+  padding-left: 10px;
+  padding-right: 10px;
   padding-bottom: 30px;
 }
 
@@ -51,6 +53,13 @@ body {
   text-align: center;
 }
 
+.nav-row {
+  display: flex;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: thin solid rgba(0,127,0,0.8);
+}
+
 @media (min-width: 767px) {
   #navigation{
       position: fixed;
@@ -76,9 +85,9 @@ body {
 }
 
 .personal-image {
-  display: block;
+  padding-top: 10px;
   max-width: 100%;
-  max-height: 200px;
+  max-height: 100px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -87,6 +96,15 @@ body {
   object-fit:cover;
   display: inline-block;
   margin-right: 5px;
+}
+
+.personal-name-container {
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  flex: 1;
 }
 
 img.student-img {
@@ -144,6 +162,7 @@ p.student-years {
 p.personal-name {
   font-size: 20px;
   font-weight: bolder;
+
 }
 
 a.personal-name-link {
@@ -168,15 +187,32 @@ a.personal-name-link:hover {
 }
 
 .personal-links-container {
-  padding: 5px;
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  flex: 1;
 }
 
 .personal-link {
   display: block;
 }
 
-.personal-social-icons {
+.personal-social-icons-container {
   padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  flex: 1;
+}
+
+.personal-social-icons {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .social-icon {

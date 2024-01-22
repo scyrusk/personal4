@@ -1,0 +1,22 @@
+.col-md-1.col-xs-12
+  = react_component("BioPic", rightSideUp: asset_path("sauvik_bio_sphere.png"), upsideDown: asset_path("sauvik_dwi.gif"))
+.col-md-4.col-xs-12.personal-name-container
+  %p.personal-name=link_to "Sauvik Das", "/", class: "personal-name-link"
+  .personal-research-areas
+    %p Human-centered security, privacy, AI
+.col-md-5.col-xs-12.personal-social-icons-container
+  %p
+    %strong Connect with me on:
+  .personal-social-icons
+    .social-icon
+      = link_to(image_tag("tw.png", class: "social-icon-img"), "https://twitter.com/scyrusk")
+    .social-icon
+      = link_to(image_tag("ln.png", class: "social-icon-img"), "https://www.linkedin.com/in/sauvik-das-71b66a1b")
+    .social-icon
+      = link_to(image_tag("md.png", class: "social-icon-img"), "https://hci.social/@sauvik")
+.col-md-2.col-xs-12.personal-links-container
+  %p
+    %strong Email:
+    [firstname]@cmu.edu
+  = link_to "Curriculum vitae", asset_path("cv.pdf"), class: "personal-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'CV');"
+  = link_to "Academic blog", "https://sauvik-das.medium.com/", class: "personal-link", onclick: "gaSendEvent('JobMarket', 'LinkClick', 'Blog');"

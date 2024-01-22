@@ -30,12 +30,10 @@
     %meta{:content => "width=device-width, initial-scale=1.0", :name => "viewport"}/
   %body
     #content.container-fluid.fill
+      .row.nav-row
+        = render partial: "layouts/navigation_row"
       .row
-        #navigation.col-lg-2.col-md-3.col-sm-3
-          = render partial: "layouts/navigation"
-        .col-lg-2.col-md-3.col-sm-3
-        #main.col-lg-10.col-md-9.col-sm-9.fill
-          = yield
+        = yield
     #footer
       © Sauvik Das
       ="2009-#{DateTime.now.year}"
