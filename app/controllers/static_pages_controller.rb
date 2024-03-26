@@ -104,15 +104,6 @@ class StaticPagesController < ApplicationController
         years: "2021-present"
       },
       {
-        name: "Ezra Awumey",
-        link: "https://www.linkedin.com/in/ezra-awumey-52405017b/",
-        image: ActionController::Base.helpers.asset_url("ea.jpg"),
-        info: "Workplace privacy",
-        alum: false,
-        now: "CMU Ph.D.",
-        years: "2022-present"
-      },
-      {
         name: "Isadora Krsek",
         link: "https://www.isadorakrsek.com/",
         image: ActionController::Base.helpers.asset_url("ik.jpg"),
