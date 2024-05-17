@@ -71,7 +71,7 @@ class StaticPagesController < ApplicationController
         name: "Youngwook Do",
         link: "http://www.youngwookdo.me/",
         image: ActionController::Base.helpers.asset_url("ywd.png"),
-        info: "Tangible Cybersecurity",
+        info: "Phyiscally-intuitive security",
         alum: true,
         now: "GT Ph.D. alum",
         years: "2018-2023"
@@ -81,9 +81,9 @@ class StaticPagesController < ApplicationController
         link: "https://yuxi-wu.github.io/",
         image: ActionController::Base.helpers.asset_url("yw.jpg"),
         info: "Privacy Collective Action",
-        alum: false,
-        now: "GT Ph.D.",
-        years: "2019-present"
+        alum: true,
+        now: "GT Ph.D. alum",
+        years: "2019-2024"
       },
       {
         name: "Jacob Logas",
@@ -116,7 +116,7 @@ class StaticPagesController < ApplicationController
         name: "Kyzyl Monteiro",
         link: "https://www.kyzyl.me/",
         image: ActionController::Base.helpers.asset_url("km.jpg"),
-        info: "Tangible security controls",
+        info: "Intelligent agents for security",
         alum: false,
         now: "CMU Ph.D.",
         years: "2023-present"
