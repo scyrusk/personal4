@@ -64,6 +64,12 @@ class StaticPagesController < ApplicationController
       semester: "Spring 2024",
       link: "https://canvas.cmu.edu/courses/38964/assignments/syllabus"
     },
+    {
+      courseCode: "CMU 05-4/899 D",
+      courseName: "Building Technologies for the Resistance (BTR)",
+      semester: "Fall 2024",
+      link: "https://bit.ly/btr-syllabus"
+    },
     ].reverse
 
     @students = [
@@ -130,6 +136,15 @@ class StaticPagesController < ApplicationController
         now: "CMU Postdoc",
         years: "2023-present"
       },
+      {
+        name: "Yuxuan Li",
+        link: "https://www.linkedin.com/in/yuxuan-li-cmuhcii/",
+        image: ActionController::Base.helpers.asset_url("yl.jpg"),
+        info: "Ethics and social simulation",
+        alum: false,
+        now: "CMU Ph.D.",
+        years: "2024-present"
+      }
     ]
   end
 
