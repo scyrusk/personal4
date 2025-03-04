@@ -53,7 +53,6 @@ class PaperList extends React.Component {
 
   _handleFilterClick(e) {
     this.setState({ filterText: e.target.innerText })
-    gaSendEvent("Interaction", "Search", e.target.innerText);
     $('html,body').animate({scrollTop: $('.paper-container').offset().top });
   }
 
@@ -80,7 +79,12 @@ class PaperList extends React.Component {
     var filterClickListener = this._handleFilterClick;
 
     var paperNodes = this.props.data.map(function(paper) {
-      var ft = stateRef.filterText.toLowerCase();
+      // Function to escape special characters in the search query
+      function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+
+      var ft = escapeRegExp(stateRef.filterText.toLowerCase());
       paper.selected = (
         ft === "" ||
         paper.title.toLowerCase().search(ft) >= 0 ||
@@ -153,7 +157,7 @@ class PaperFilter extends React.Component {
       <div className="paper-list-search col-xs-12">
         <input
           type="text"
-          placeholder="Search by title, author, venue or award"
+          placeholder="Search by title, author, venue, tag, or award"
           className="form-control paperFilter"
           value={this.props.initialText}
           onChange={this.handleTextChanged} />
