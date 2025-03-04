@@ -483,3 +483,12 @@ a.personal-name-link:hover {
   color: gray;
   text-transform: uppercase;
 }
+
+a.project-highlight {
+  font-size: small;
+  padding: 0px 5px;
+  &:not(:last-child) {
+    border-right: 1px solid #000000;
+  }
+  line-height: 2;
+}
