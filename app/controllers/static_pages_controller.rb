@@ -70,6 +70,18 @@ class StaticPagesController < ApplicationController
       semester: "Fall 2024",
       link: "https://bit.ly/btr-syllabus"
     },
+    {
+      courseCode: "CMU 05-3/891 A",
+      courseName: "Designing Human-Centered Software (DHCS)",
+      semester: "Spring 2025",
+      link: "https://bit.ly/s25-dhcs-a"
+    },
+    {
+      courseCode: "CMU 05-3/891 D",
+      courseName: "Designing Human-Centered Software (DHCS)",
+      semester: "Fall 2025",
+      link: "https://bit.ly/f25-dhcs-d"
+    },
     ].reverse
 
     all_students = [
@@ -79,7 +91,7 @@ class StaticPagesController < ApplicationController
         image: ActionController::Base.helpers.asset_url("ywd.png"),
         info: "Phyiscally-intuitive security",
         alum: true,
-        now: "now: JP Morgan Research",
+        now: "now: JP Morgan Chase",
         years: "2018-2023"
       },
       {
@@ -140,7 +152,7 @@ class StaticPagesController < ApplicationController
         name: "Yuxuan Li",
         link: "https://www.linkedin.com/in/yuxuan-li-cmuhcii/",
         image: ActionController::Base.helpers.asset_url("yl.jpg"),
-        info: "Ethics and social simulation",
+        info: "Social agent simulation & policy",
         alum: false,
         now: "CMU Ph.D.",
         years: "2024-present"

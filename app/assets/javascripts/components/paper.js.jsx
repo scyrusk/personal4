@@ -31,9 +31,14 @@ class PaperContainer extends React.Component {
   render() {
     return (
       <div className="paper-container">
-        <p className="paper-header">Selected Publications</p>
         <div className="paper-list-container">
-          <PaperList data={this.state.data} assets={this.props.assets} />
+          <PaperList 
+            data={this.state.data} 
+            assets={this.props.assets} 
+            studentFilter={this.props.studentFilter}
+            currentStudents={this.props.currentStudents}
+            alums={this.props.alums}
+          />
         </div>
       </div>
     );
@@ -49,6 +54,26 @@ class PaperList extends React.Component {
     }
     this._handleFilterClick = this._handleFilterClick.bind(this);
     this._handleFilterTextChanged = this._handleFilterTextChanged.bind(this);
+  }
+
+  componentDidMount() {
+    // Listen for student filter changes
+    this.handleStudentFilterChange = (event) => {
+      this._handleFilterTextChanged(event.detail.studentName || "");
+    };
+    window.addEventListener('studentFilterChanged', this.handleStudentFilterChange);
+  }
+
+  componentWillUnmount() {
+    // Clean up event listener
+    window.removeEventListener('studentFilterChanged', this.handleStudentFilterChange);
+  }
+
+  componentDidUpdate(prevProps) {
+    // If student filter changed, update the filter text
+    if (prevProps.studentFilter !== this.props.studentFilter) {
+      this._handleFilterTextChanged(this.props.studentFilter || "");
+    }
   }
 
   _handleFilterClick(e) {
@@ -69,8 +94,15 @@ class PaperList extends React.Component {
     this.setState({
       filterText: ft,
       timeoutVar: tv
-    })
+    });
+
+    // Dispatch search change event for StudentsContainer to listen
+    const event = new CustomEvent('searchFilterChanged', { 
+      detail: { searchTerm: ft } 
+    });
+    window.dispatchEvent(event);
   }
+
 
   render() {
     var stateRef = this.state;

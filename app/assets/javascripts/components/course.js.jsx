@@ -15,12 +15,6 @@ class CoursesContainer extends React.Component {
 
     return (
       <div className="row">
-        <div className="col col-md-12">
-          <p className="teaching-header">
-            <i className="glypicon glyphicon-"/>
-              Teaching
-          </p>
-        </div>
         { courses }
       </div>
     )

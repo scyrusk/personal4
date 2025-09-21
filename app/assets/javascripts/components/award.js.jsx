@@ -48,9 +48,6 @@ class AwardContainer extends React.Component {
     } else {
       return (
         <div className="award-container"  onClick={this._handleClick}>
-          <p className="award-header">
-            Honors & Awards
-          </p>
           <div className={containerClass}>
             <AwardList data={this.state.data} />
           </div>
