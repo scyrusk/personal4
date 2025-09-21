@@ -93,7 +93,7 @@
         -# =link_to "vlog", "https://www.youtube.com/channel/UCn4ZcBS7p7N4KwVmJwy3bzQ?view_as=subscriber"
         -# covering topics on academia and research in HCI and cybersecurity.
     %hr
-    = react_component('StudentsContainer', students: @students)
+    = react_component('StudentsContainer', currentStudents: @currentStudents, alums: @alums)
     %hr
     = react_component('AwardContainer', url: awards_url(format: :json))
     %hr

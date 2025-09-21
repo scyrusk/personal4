@@ -72,23 +72,23 @@ class StaticPagesController < ApplicationController
     },
     ].reverse
 
-    @students = [
+    all_students = [
       {
         name: "Youngwook Do",
         link: "http://www.youngwookdo.me/",
         image: ActionController::Base.helpers.asset_url("ywd.png"),
         info: "Phyiscally-intuitive security",
         alum: true,
-        now: "GT Ph.D. alum",
+        now: "now: JP Morgan Research",
         years: "2018-2023"
       },
       {
         name: "Yuxi Wu",
         link: "https://yuxi-wu.github.io/",
         image: ActionController::Base.helpers.asset_url("yw.jpg"),
-        info: "Privacy Collective Action",
+        info: "Privacy collectve action",
         alum: true,
-        now: "GT Ph.D. alum",
+        now: "now: Postdoc at Northeastern",
         years: "2019-2024"
       },
       {
@@ -96,9 +96,9 @@ class StaticPagesController < ApplicationController
         link: "https://logas.me/",
         image: ActionController::Base.helpers.asset_url("pjl.jpg"),
         info: "Subversive AI",
-        alum: false,
-        now: "GT Ph.D.",
-        years: "2019-present"
+        alum: true,
+        now: "now: Asst. Prof (Franklin & Marshall)",
+        years: "2019-2025"
       },
       {
         name: "Hao-Ping (Hank) Lee",
@@ -146,6 +146,10 @@ class StaticPagesController < ApplicationController
         years: "2024-present"
       }
     ]
+
+    # Separate current students and alums
+    @currentStudents = all_students.select { |student| !student[:alum] }
+    @alums = all_students.select { |student| student[:alum] }
   end
 
   def dktest

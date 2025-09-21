@@ -39,9 +39,7 @@ class AwardContainer extends React.Component {
   }
 
   render() {
-    var containerClass = this.state.scrollable ?
-      "award-list-container scrollable" :
-      "award-list-container not-scrollable";
+    var containerClass = "award-list-container not-scrollable";
 
     if (this.state.error) {
       <p className="error">
@@ -52,7 +50,6 @@ class AwardContainer extends React.Component {
         <div className="award-container"  onClick={this._handleClick}>
           <p className="award-header">
             Honors & Awards
-            <span className="header-help"> (click to toggle scroll)</span>
           </p>
           <div className={containerClass}>
             <AwardList data={this.state.data} />
@@ -77,18 +74,11 @@ class AwardList extends React.Component {
         return pinnedComp;
       }
     }).map(function(award, index, arr) {
-      var firstPinned = award.pinned && index === 0;
-      var lastPinned = award.pinned && (index < (arr.length - 1)) && !arr[index+1].pinned;
-      var firstUnpinned = !award.pinned && index > 0 && arr[index-1].pinned;
       return (
         <Award
           year={award.year}
           text={award.body}
           paper={award.paper}
-          pinned={award.pinned}
-          firstPinned={firstPinned}
-          lastPinned={lastPinned}
-          firstUnpinned={firstUnpinned}
           key={award.id} />
       );
     });
@@ -105,14 +95,8 @@ class Award extends React.Component{
     var paperTitle = this.props.paper ?
       <span className="help-block paper-award-paper-title">{this.props.paper.title}</span> :
       <span className="help-block"/>
-    var divClass =
-      "award row well well-sm" +
-      (this.props.pinned ? " pinned" : "") +
-      (this.props.firstUnpinned ? " firstUnpinned" : "") +
-      (this.props.firstPinned ? " firstPinned" : "") +
-      (this.props.lastPinned ? " lastPinned" : "");
     return (
-      <div className={divClass}>
+      <div className="award row well well-sm">
         <div className="award-year col-xs-1">
           {this.props.year}
         </div>
