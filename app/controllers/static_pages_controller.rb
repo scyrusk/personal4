@@ -82,6 +82,12 @@ class StaticPagesController < ApplicationController
       semester: "Fall 2025",
       link: "https://bit.ly/f25-dhcs-d"
     },
+    {
+      courseCode: "CMU 05-4/899 D",
+      courseName: "Building Technologies for the Resistance (BTR)",
+      semester: "Spring 2026",
+      link: "https://bit.ly/s26-btr"
+    },
     ].reverse
 
     all_students = [
@@ -150,7 +156,7 @@ class StaticPagesController < ApplicationController
       },
       {
         name: "Yuxuan Li",
-        link: "https://www.linkedin.com/in/yuxuan-li-cmuhcii/",
+        link: "https://yuxuanli.com/",
         image: ActionController::Base.helpers.asset_url("yl.jpg"),
         info: "Social agent simulation & policy",
         alum: false,
