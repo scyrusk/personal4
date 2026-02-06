@@ -4,7 +4,7 @@ class AwardsController < ApplicationController
   before_action :authenticate, :except => [:index]
 
   def index
-    @awards = Award.all
+    @awards = Award.order(pinned: :desc, year: :desc)
     respond_to do |format|
       format.json { render json: @awards }
     end
@@ -29,8 +29,10 @@ class AwardsController < ApplicationController
     respond_to do |format|
       if @award.save
         format.js { render json: @award }
+        format.json { render json: @award }
       else
-        format.js { render json: { error: @award.errors } }
+        format.js { render json: { error: @award.errors }, status: :unprocessable_entity }
+        format.json { render json: { error: @award.errors }, status: :unprocessable_entity }
       end
     end
   end
@@ -41,8 +43,10 @@ class AwardsController < ApplicationController
     respond_to do |format|
       if @award.update(award_params)
         format.js { render json: @award }
+        format.json { render json: @award }
       else
-        format.js { render json: { error: @award.errors } }
+        format.js { render json: { error: @award.errors }, status: :unprocessable_entity }
+        format.json { render json: { error: @award.errors }, status: :unprocessable_entity }
       end
     end
   end
@@ -74,7 +78,9 @@ class AwardsController < ApplicationController
     end
 
     def award_params
-      params.require(:award).permit(:year, :body, :pinned, :paper_id)
+      p = params.require(:award).permit(:year, :body, :pinned, :paper_id)
+      p[:paper_id] = nil if p[:paper_id].blank? || p[:paper_id].to_i <= 0
+      p
     end
 
     def get_paper_opts

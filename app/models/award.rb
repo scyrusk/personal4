@@ -12,7 +12,7 @@
 #
 
 class Award < ActiveRecord::Base
-  belongs_to :paper
+  belongs_to :paper, optional: true
 
   def as_json(options)
     {

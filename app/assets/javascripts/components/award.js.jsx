@@ -59,18 +59,16 @@ class AwardContainer extends React.Component {
 
 class AwardList extends React.Component {
   render() {
-    var awardNodes = this.props.data.sort(function(a, b) {
-      return b.year - a.year;
-    }).sort(function(a, b) {
-      console.log(a.pinned - b.pinned);
-      var pinnedComp = b.pinned - a.pinned;
-      var yearComp = b.year - a.year;
-      if (pinnedComp == 0) {
-        return yearComp == 0 ? b.id - a.id : yearComp;
-      } else {
-        return pinnedComp;
-      }
-    }).map(function(award, index, arr) {
+    var sorted = this.props.data.slice().sort(function(a, b) {
+      // Pinned first, then by year (newest first), then by id for ties
+      // var pinnedComp = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+      // if (pinnedComp !== 0) return pinnedComp;
+      var yearA = a.year != null ? Number(a.year) : 0;
+      var yearB = b.year != null ? Number(b.year) : 0;
+      var yearComp = yearB - yearA;
+      return yearComp !== 0 ? yearComp : (b.id || 0) - (a.id || 0);
+    });
+    var awardNodes = sorted.map(function(award, index, arr) {
       return (
         <Award
           year={award.year}
