@@ -29,11 +29,10 @@
     = csrf_meta_tags
     %meta{:content => "width=device-width, initial-scale=1.0", :name => "viewport"}/
   %body
-    #content.container-fluid.fill
-      .row.nav-row
-        = render partial: "layouts/navigation_row"
-      .row
-        = yield
+    .site-sidebar
+      = render partial: "layouts/sidebar"
+    .site-content
+      = yield
     #footer
       © Sauvik Das
       ="2009-#{DateTime.now.year}"

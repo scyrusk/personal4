@@ -1,0 +1,21 @@
+.sidebar-photo
+  = react_component("BioPic", rightSideUp: asset_path("sauvik_bio_sphere.png"), upsideDown: asset_path("sauvik_dwi.gif"))
+.sidebar-identity
+  %p.personal-name= link_to "Sauvik Das", "/", class: "personal-name-link"
+  %p.personal-tagline Human-centered security, privacy, AI
+.sidebar-social
+  .personal-social-icons
+    .social-icon
+      = link_to(image_tag("bs.jpg", class: "social-icon-img", alt: "Bluesky"), "https://bsky.app/profile/sauvik.me", aria: {label: "Bluesky"})
+    .social-icon
+      = link_to(image_tag("ln.png", class: "social-icon-img", alt: "LinkedIn"), "https://www.linkedin.com/in/sauvik-das-71b66a1b", aria: {label: "LinkedIn"})
+    .social-icon
+      = link_to(image_tag("md.png", class: "social-icon-img", alt: "Mastodon"), "https://hci.social/@sauvik", aria: {label: "Mastodon"})
+.sidebar-links
+  %p
+    %strong Email:
+    sauvik@cmu.edu
+  = link_to "Curriculum vitae", asset_path("cv.pdf"), class: "personal-link", target: "_blank"
+  = link_to "Academic blog", "https://sauvik-das.medium.com/", class: "personal-link", target: "_blank"
+  = link_to "SPUD Lab", "https://cs.cmu.edu/~spudlab", class: "personal-link", target: "_blank"
+  = link_to "FuguUX", "https://www.fuguux.com", class: "personal-link", target: "_blank"

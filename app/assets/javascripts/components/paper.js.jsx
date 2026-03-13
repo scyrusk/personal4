@@ -204,13 +204,16 @@ class Paper extends React.Component {
     var filterClickListener = this.props.handleFilterClick;
     // var authors = this.props.authors;
     // authors.splice(this.props.selfOrder - 1, 0, { name: "Sauvik Das", id: 0, self: true });
-    var authorNodes = this.props.authors.map(function(author) {
+    var authorNodes = this.props.authors.map(function(author, idx, arr) {
+      var isLast = idx === arr.length - 1;
       return (
-        <Author
-          name={author.name}
-          key={randomString(8)}
-          handleAuthorClick={filterClickListener}
-          self={author.self || false} />
+        <span key={randomString(8)}>
+          <Author
+            name={author.name}
+            handleAuthorClick={filterClickListener}
+            self={author.self || false} />
+          {!isLast && <span className="author-sep">, </span>}
+        </span>
       );
     });
 
@@ -244,8 +247,9 @@ class Paper extends React.Component {
 
     var pdfNode = (this.props.pdf || this.props.html_paper_url) ?
       <div className="paper-media-link" onClick={pdfEventTracking(this.props.id)}>
-        <a href={pdfServeLink} target="_blank">
+        <a href={pdfServeLink} target="_blank" className="paper-media-item" aria-label={"PDF: " + this.props.title}>
           <img className="paper-pdf-icon" src={this.props.assets["pdfDL"]}/>
+          <span className="paper-media-label">pdf</span>
         </a>
       </div> :
       null;
@@ -258,8 +262,9 @@ class Paper extends React.Component {
 
     var slidesNode = slidesServeLink ?
       <div className="paper-media-link" onClick={slidesEventTracking}>
-        <a href={slidesServeLink}>
+        <a href={slidesServeLink} className="paper-media-item" aria-label={"Slides: " + this.props.title}>
           <img className="paper-slides-icon" src={this.props.assets["slidesDL"]}/>
+          <span className="paper-media-label">slides</span>
         </a>
       </div> :
       null;
@@ -271,8 +276,9 @@ class Paper extends React.Component {
 
     var prezNode = prezServeLink ?
       <div className="paper-media-link" onClick={prezEventTracking}>
-        <a href={prezServeLink} target="_blank">
+        <a href={prezServeLink} target="_blank" className="paper-media-item" aria-label={"Presentation: " + this.props.title}>
           <img className="paper-slides-icon" src={this.props.assets["prezDL"]}/>
+          <span className="paper-media-label">talk</span>
         </a>
       </div> :
       null;
@@ -288,28 +294,34 @@ class Paper extends React.Component {
 
     var videoNode = videoServeLink ?
       <div className="paper-media-link" onClick={videoEventTracking}>
-        <a href={videoServeLink} target="_blank">
+        <a href={videoServeLink} target="_blank" className="paper-media-item" aria-label={"Video: " + this.props.title}>
           <img className="paper-slides-icon" src={this.props.assets["videoDL"]}/>
-        </a>
-      </div> :
-      null;
-    
-    var tweetsNode = this.props.tweets ?
-      <div className="paper-media-link" onClick={tweetEventTracking}>
-        <a href={this.props.tweets} target="_blank">
-          <img className="paper-tweets-icon" src={this.props.assets["tweetsDL"]}/>
+          <span className="paper-media-label">video</span>
         </a>
       </div> :
       null;
 
-    var paperClassName = this.props.selected ? "paper row well well-sm" : "paper row well well-sm unselected";
+    var tweetsNode = this.props.tweets ?
+      <div className="paper-media-link" onClick={tweetEventTracking}>
+        <a href={this.props.tweets} target="_blank" className="paper-media-item" aria-label={"Paper summary thread: " + this.props.title}>
+          <svg className="paper-thread-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 14l-3 -3h-7a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10" />
+            <path d="M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2" />
+          </svg>
+          <span className="paper-media-label">summary</span>
+        </a>
+      </div> :
+      null;
+
+    var paperClassName = this.props.selected ? "paper row" : "paper row unselected";
 
     return (
       <div className={paperClassName}>
         <div className="paper-thumbnail col-xs-3">
           <img className="paper-thumbnail-img" src={this.props.thumbnail} />
         </div>
-        <div className="paper-citation col-xs-7">
+        <div className="paper-body col-xs-9">
           <p className="paper-title-line">
             <span className="paper-title">{this.props.title}</span>
             <span className="paper-year" onClick={filterClickListener}> ({this.props.year})</span>
@@ -319,14 +331,10 @@ class Paper extends React.Component {
             <span className="paper-venue" onClick={filterClickListener}>{this.props.venue}</span>
           </p>
           <div className="paper-award-list">{awardNodes}</div>
+          <div className="paper-media">
+            {pdfNode}{slidesNode}{prezNode}{videoNode}{tweetsNode}
+          </div>
           <div className="paper-tags">{tagNodes}</div>
-        </div>
-        <div className="paper-media col-xs-2">
-          {pdfNode}
-          {slidesNode}
-          {prezNode}
-          {videoNode}
-          {tweetsNode}
         </div>
       </div>
     );
