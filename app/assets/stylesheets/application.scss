@@ -16,206 +16,485 @@
 @import "bootstrap";
 @import url(https://fonts.googleapis.com/css?family=Roboto:400,700,300,400italic);
 
-* {
-  border-radius: 0 !important;
+/* ─── CSS Custom Properties ─── */
+:root {
+  --color-brand: #007f00;
+  --color-brand-muted: rgba(0, 127, 0, 0.8);
+  --color-brand-dark: #3c763d;
+  --color-text: #222222;
+  --color-text-secondary: #555555;
+  --color-text-muted: #767676;
+  --color-border: #e0e0e0;
+  --color-surface: #f8f8f8;
+  --sidebar-width: 240px;
+}
+
+/* Targeted Bootstrap border-radius reset — preserves circular student avatars and tab corners */
+.btn, .well, .alert, .panel, .panel-heading,
+.thumbnail, .label, .badge, .input-group-addon {
+  border-radius: 0;
 }
 
 body {
   font-family: 'Roboto', sans-serif;
-  padding-left: 10px;
-  padding-right: 10px;
   padding-bottom: 30px;
+  color: var(--color-text);
 }
 
-/* Let's get this party started */
+/* ─── Scrollbar (distinctive personal touch — keep) ─── */
 ::-webkit-scrollbar {
-    width: 6px;
+  width: 6px;
 }
-
-/* Handle */
 ::-webkit-scrollbar-thumb {
-    -webkit-border-radius: 0px;
-    border-radius: 0px;
-    background: rgba(0,127,0,0.8);
+  -webkit-border-radius: 0px;
+  border-radius: 0px;
+  background: var(--color-brand-muted);
 }
 ::-webkit-scrollbar-thumb:window-inactive {
   background: rgba(0,127,0,0.4);
 }
 
-#navigation {
-  padding: 10px;
-  background-color: #ffffff;
-  border-right: 0px;
-  border-bottom: thin solid rgba(0,127,0,0.8);
-}
+/* ─── Sidebar Layout ─── */
 
-.nav-data-container {
-  text-align: center;
-}
-
-.nav-row {
-  display: flex;
-  flex-wrap: wrap;
-  padding-bottom: 10px;
-  border-bottom: thin solid rgba(0,127,0,0.8);
-}
-
-@media (min-width: 767px) {
-  #navigation{
-      position: fixed;
-      height:100%;
-      border-bottom: 0px;
-      border-right: thin solid rgba(0,127,0,0.8);
+@media (min-width: 768px) {
+  body {
+    padding-left: 0;
+    padding-right: 0;
   }
-
-  .nav-data-container {
-    max-width: 100%;
+  .site-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 16px;
+    border-right: 1px solid var(--color-brand-muted);
+    background: white;
+    z-index: 100;
+  }
+  .site-content {
+    margin-left: var(--sidebar-width);
+    padding: 24px 32px;
+  }
+  .sidebar-photo {
+    text-align: left;
+    margin-bottom: 12px;
+  }
+  .sidebar-identity {
+    text-align: left;
+    margin-bottom: 12px;
+  }
+  .sidebar-social {
+    text-align: left;
+    margin-bottom: 12px;
+  }
+  .sidebar-links {
     text-align: left;
   }
+}
 
-  .personal-bio-container {
-    max-width: 100%;
-    padding: 10px 5px;
-    text-align: left;
+@media (max-width: 767px) {
+  body {
+    padding-left: 0;
+    padding-right: 0;
   }
-
-  .paper-thumbnail-img {
-    max-width: 80%;
+  .site-sidebar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 12px;
+    border-bottom: none;
+    gap: 12px;
+    background: white;
+  }
+  .site-content {
+    padding: 16px 12px;
   }
 }
 
-.personal-image {
-  padding-top: 10px;
-  max-width: 100%;
-  max-height: 100px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.rounded {
-  object-fit:cover;
-  display: inline-block;
-  margin-right: 5px;
-}
-
-.personal-name-container {
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  flex: 1;
-}
-
-img.student-img {
-  width: 50px;
-  height: auto;
-  border: 1px black solid;
-  -webkit-border-radius: 50%;
-  -moz-border-radius: 50%;
-  -ms-border-radius: 50%;
-  -o-border-radius: 50%;
-  border-radius: 50%;
-}
-
-a.student-link {
-  color: black;
-}
-
-.student-info {
-  font-size: small;
-  margin-top:-5px;
-}
-
-p.student-name {
-  margin-top: 10px;
-  font-size: small;
-  text-transform: uppercase;
-  font-weight: bold;
-}
-
-p.student-now {
-  margin-top: -5px;
-  font-size: small;
-  font-style: italic;
-}
-
-p.student-years {
-  margin-top: -5px;
-  font-size: small;
-  font-style: italic;
-}
+/* ─── Sidebar Internals ─── */
 
 p.personal-name {
-  font-size: 20px;
-  font-weight: bolder;
-
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 2px;
 }
 
 a.personal-name-link {
-  color: black;
+  color: var(--color-text);
 }
 
 a.personal-name-link:hover {
-  color: black;
+  color: var(--color-text);
+  background: transparent;
+  text-decoration: none;
+}
+
+.personal-tagline {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 0;
 }
 
 .personal-research-areas {
-  margin-top: -10px;
+  margin-top: 4px;
   margin-bottom: 10px;
-}
-
-.personal-bio-container {
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 10px 5px;
-  text-align: left;
-}
-
-.personal-links-container {
-  padding-top: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  flex: 1;
-}
-
-.personal-link {
-  display: block;
-}
-
-.personal-social-icons-container {
-  padding-top: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  flex: 1;
 }
 
 .personal-social-icons {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
-  justify-content: center;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
 }
 
 .social-icon {
   display: inline-block;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
 }
 
 .social-icon-img {
   max-width: 100%;
 }
 
-#main {
-  padding-top: 10px;
+.personal-link {
+  display: block;
+  font-size: 14px;
+  color: var(--color-brand-dark);
+  margin-bottom: 4px;
 }
 
+.personal-link:hover {
+  text-decoration: none;
+  color: white;
+  background-color: var(--color-brand-dark);
+}
+
+/* ─── Scoped link hover — only bio text & nav links get the green treatment ─── */
+.bio a:hover,
+a.project-highlight:hover {
+  text-decoration: none;
+  color: white;
+  background-color: var(--color-brand-dark);
+}
+
+/* Prevent green flash on icon/image links */
+a:has(img):hover {
+  background-color: transparent;
+  color: inherit;
+}
+
+/* ─── Section Headers ─── */
+.update-header, .award-header, .paper-header,
+.about-header, .teaching-header, .student-header {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 32px;
+  margin-bottom: 16px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--color-brand);
+  color: var(--color-text);
+}
+
+/* ─── Publication Cards ─── */
+.paper {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  min-height: 50px;
+  transition: background 0.15s;
+}
+
+.paper:hover {
+  background: var(--color-surface);
+}
+
+.paper-title-line {
+  font-size: 16px;
+}
+
+.paper-title {
+  font-weight: 700;
+}
+
+.paper-year {
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.paper-venue {
+  font-style: italic;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+.paper-thumbnail-img {
+  display: block;
+  max-width: 100%;
+  max-height: 150px;
+  border: thin solid #000000;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 767px) {
+  .paper-thumbnail {
+    display: none;
+  }
+  .paper-body {
+    width: 100%;
+  }
+}
+
+/* ─── Authors — inline text, no chips ─── */
+.author {
+  display: inline;
+  background: transparent;
+  margin-right: 0;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.author-name {
+  font-size: 14px;
+  padding: 0;
+  color: var(--color-text-secondary);
+}
+
+.author-self .author-name {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ─── Tags — outlined pills ─── */
+.paper-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  margin: 2px 2px 2px 0;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.paper-tag:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand-dark);
+  background: transparent;
+}
+
+/* ─── Award Badges ─── */
+.paper-award {
+  display: inline-block;
+  background: var(--color-brand);
+  padding: 2px 8px;
+  margin: 2px 2px 2px 0;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.paper-award-name {
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.paper-award-paper-title {
+  font-size: 12px;
+}
+
+/* ─── Media Links ─── */
+.paper-media {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.paper-media-link {
+  display: flex;
+}
+
+.paper-media-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 1;
+    background: transparent;
+  }
+}
+
+.paper-pdf-icon, .paper-slides-icon {
+  display: block;
+  max-height: 32px;
+}
+
+.paper-thread-icon {
+  display: block;
+  color: var(--color-text-muted);
+}
+
+.paper-media-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Unselected state ─── */
+.unselected {
+  color: gray;
+  opacity: 0.5;
+}
+
+/* ─── Updates ─── */
+.update, .award {
+  margin: 0px;
+  padding: 5px;
+  border: 0px;
+  vertical-align: middle;
+}
+
+.update {
+  min-height: 50px;
+}
+
+.update-icon, .update-date, .update-body {
+  margin-bottom: 5px;
+  padding-right: 10px;
+}
+
+.update-icon-img {
+  max-height: 48px;
+}
+
+.update-list-container {
+  max-height: 50vh;
+}
+
+/* ─── Awards list ─── */
+.award-year {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.award-body {
+  margin-bottom: 1px;
+}
+
+.firstPinned {}
+.pinned { font-weight: bold; }
+.lastPinned {
+  border-bottom: 5px solid #eeeeee;
+  margin-bottom: 5px;
+}
+.firstUnpinned {}
+
+/* ─── Scrollable containers ─── */
+.scrollable {
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.not-scrollable {
+  overflow-y: hidden;
+}
+
+.header-help {
+  color: #888888;
+  font-size: 12px;
+}
+
+/* ─── Footer ─── */
+#footer {
+  position: fixed;
+  text-align: center;
+  left: 0px;
+  bottom: 0px;
+  padding-top: 5px;
+  height: 30px;
+  width: 100%;
+  background: rgba(240,240,240,1.0);
+}
+
+/* ─── Travel ─── */
+.upcoming-travel-date {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: bold;
+  padding-right: 5px;
+}
+
+.upcoming-travel-location {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: lighter;
+  text-transform: uppercase;
+}
+
+.upcoming-travel-venue {
+  font-size: 12px;
+}
+
+.upcoming-travel {
+  max-height: 75px;
+}
+
+.upcoming-travel-done {
+  color: var(--color-text-muted);
+}
+
+.upcoming-travel-done a:link,
+.upcoming-travel-done a:visited {
+  color: var(--color-text-muted);
+}
+
+.upcoming-travel-container {
+  margin-bottom: 10px;
+}
+
+.travel-header {
+  font-weight: bolder;
+  text-transform: uppercase;
+  padding-bottom: 2px;
+  margin-bottom: -2px;
+}
+
+/* ─── Courses ─── */
+.course-semester {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+/* ─── Research area project links ─── */
+a.project-highlight {
+  font-size: small;
+  padding: 0px 5px;
+  &:not(:last-child) {
+    border-right: 1px solid #000000;
+  }
+  line-height: 2;
+}
+
+/* ─── About / Bio ─── */
 .about-me-container, .on-the-market {
   margin: 15px;
 }
@@ -235,295 +514,81 @@ a.personal-name-link:hover {
 
 .job-link:hover {
   text-decoration: none;
-  color: #3c763d;
+  color: var(--color-brand-dark);
 }
 
-.update-list-container {
-  height: 395px;
+/* ─── Callout Boxes ─── */
+.callout-box {
+  border-left: 3px solid var(--color-brand);
+  padding: 12px 16px;
+  margin: 16px 0;
+  background: var(--color-surface);
+  font-size: 14px;
 }
 
-.award-list-container {
-  // height: 500px;
+/* ─── Students ─── */
+img.student-img {
+  width: 50px;
+  height: auto;
+  border: 1px black solid;
+  border-radius: 50%;
 }
 
-.scrollable {
-  overflow-y: scroll;
-  overflow-x: hidden;
+a.student-link {
+  color: black;
 }
 
-.not-scrollable {
-  overflow-y: hidden;
-}
-
-.header-help {
-  color: #888888;
-  font-size: x-small;
-}
-
-.update-header, .award-header, .paper-header, .about-header, .teaching-header, .student-header {
-  font-size: 20px;
-  font-weight: bold;
-  margin-top: 10px;
-  text-transform: uppercase;
-}
-
-.update, .award, .paper {
-  margin: 0px;
-  padding: 5px;
-  border: 0px;
-  vertical-align: middle;
-}
-
-.update {
-  min-height: 50px;
-}
-
-.paper:hover {
-  background-color: #eeeeee;
-}
-
-.update-icon, .update-date, .update-body {
-  // display: inline-block;
-  margin-bottom: 5px;
-  padding-right: 10px;
-}
-
-.update-icon-img {
-  max-height: 48px;
-}
-
-.award-year {
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.award-body {
-  margin-bottom: 1px;
-}
-
-.firstPinned {
-}
-
-.pinned {
-  font-weight: bold;
-}
-
-.lastPinned {
-  border-bottom: 5px solid #eeeeee;
-  margin-bottom: 5px;
-}
-
-.firstUnpinned {
-}
-
-.paper-award-paper-title {
-  font-size: 11px;
-}
-
-.paper {
-  min-height: 50px;
-}
-
-.paper-thumbnail-img {
-  display: block;
-  max-width: 100%;
-  max-height: 150px;
-  border: thin solid #000000;
-  text-align: center;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.paper-year {
-  cursor: pointer;
-}
-
-.paper-title-line {
-  font-size: 16px;
-}
-
-.paper-title {
-  font-weight: bold;
-}
-
-.paper-venue {
-  font-style: italic;
-  cursor: pointer;
-}
-
-.author {
-  display: inline-block;
-  margin-right: 5px;
-  margin-bottom: 5px;
-  background-color: #cccccc;
-  cursor: pointer;
-}
-
-.author-name {
-  font-size: 13px;
-  padding: 5px;
-}
-
-.author-self {
-  font-weight: bold;
-}
-
-.paper-award {
-  display: inline-block;
-  background-color: rgba(0,127,0,0.8);
-  padding: 5px;
-  margin-right: 5px;
-  margin-bottom: 5px;
-  cursor: pointer;
-}
-
-.paper-tag {
-  padding: 2px;
-  margin: 5px 5px;
-  background-color: rgb(51, 122, 183);
-  color: white;
-  cursor: pointer;
-}
-
-.paper-award-name {
-  color: white;
-  font-weight: bold;
-}
-
-.paper-media {
-  vertical-align: middle;
-}
-
-.paper-media-link {
-  display: inline-block;
-  padding-right: 10px;
-  margin-bottom: 5px;
-}
-
-.paper-pdf-icon, .paper-slides-icon, .paper-tweets-icon {
-  max-height: 48px;
-}
-
-.unselected {
-  color: gray;
-  opacity: 0.5;
-}
-
-#footer {
-  position:fixed;
-  text-align:center;
-  left:0px;
-  bottom:0px;
-  padding-top:5px;
-  height:30px;
-  width:100%;
-  background:rgba(240,240,240,1.0);
-}
-
-.upcoming-travel-date {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: bold;
-  padding-right: 5px;
-}
-
-.upcoming-travel-location {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: lighter;
-  text-transform: uppercase;
-}
-
-.upcoming-travel-venue {
-  font-size: 12px;
-}
-
-.upcoming-travel {
-  max-height: 75px;
-}
-
-.upcoming-travel-done {
-  color: rgb(150, 150, 150);
-}
-
-.upcoming-travel-done a:link {
-  color: rgb(150, 150, 150);
-}
-
-.upcoming-travel-done a:visited {
-  color: rgb(150, 150, 150);
-}
-
-.upcoming-travel-container {
-  margin-bottom: 10px;
-}
-
-.travel-header {
-  font-weight: bolder;
-  text-transform: uppercase;
-  padding-bottom: 2px;
-  margin-bottom: -2px;
-}
-
-.course-semester {
-  font-size: smaller;
-  color: gray;
-  text-transform: uppercase;
-}
-
-a.project-highlight {
+.student-info {
   font-size: small;
-  padding: 0px 5px;
-  &:not(:last-child) {
-    border-right: 1px solid #000000;
-  }
-  line-height: 2;
+  margin-top: 2px;
 }
 
-a:hover {
-  text-decoration: none;
-  color: white;
-  background-color: #3c763d;
+p.student-name {
+  margin-top: 10px;
+  font-size: small;
+  text-transform: uppercase;
+  font-weight: bold;
 }
 
-.header-row {
-  position:fixed;
-  left:0px;
-  top:0px;
-  padding-bottom:5px;
-  height:100px;
-  width:100%;
-  background:rgba(240,240,240,1.0);
+p.student-now {
+  margin-top: 2px;
+  font-size: small;
+  font-style: italic;
 }
 
-/* Tab Container Styles */
+p.student-years {
+  margin-top: 2px;
+  font-size: small;
+  font-style: italic;
+}
+
+/* ─── Tab Container ─── */
 .tab-container {
   margin-top: 10px;
-  
+
   .nav-tabs {
     border-bottom: 2px solid #ddd;
     margin-bottom: 20px;
-    
+
     li {
       margin-bottom: -2px;
-      
+
       a {
         color: #666;
         border: 1px solid transparent;
         border-radius: 4px 4px 0 0;
         padding: 12px 18px;
         text-decoration: none;
-        transition: all 0.3s ease;
         font-size: 16px;
         font-weight: 500;
-        
+
         &:hover {
           color: #333;
           background-color: #f5f5f5;
           border-color: #ddd #ddd transparent;
         }
       }
-      
+
       &.active a {
         color: #333;
         background-color: #fff;
@@ -531,7 +596,7 @@ a:hover {
         border-bottom-color: transparent;
         cursor: default;
         font-weight: 700;
-        
+
         &:hover {
           background-color: #fff;
           border-color: #ddd;
@@ -540,11 +605,11 @@ a:hover {
       }
     }
   }
-  
+
   .tab-content {
     .tab-pane {
       display: block;
-      
+
       &.active {
         display: block;
       }
@@ -552,23 +617,22 @@ a:hover {
   }
 }
 
-/* Student Container Styles */
+/* ─── Student Container ─── */
 .student-item {
   cursor: pointer;
   transition: opacity 0.3s ease;
-  
+
   &:hover {
     opacity: 0.8;
   }
-  
+
   &.active {
     opacity: 1;
-    
+
     .student-img {
-      border: 2px solid #007f00;
-      border-radius: 4px;
+      border: 2px solid var(--color-brand);
     }
-    
+
     .student-name {
       font-weight: bold;
     }
@@ -578,4 +642,62 @@ a:hover {
 /* Only grey out inactive students when there's an active student */
 .students-container.has-active .student-item:not(.active) {
   opacity: 0.5;
+}
+
+/* ─── Personal image (used in BioPic component) ─── */
+.personal-image {
+  padding-top: 10px;
+  max-width: 100%;
+  max-height: 100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.rounded {
+  object-fit: cover;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+/* ─── Details/summary for research areas ─── */
+li:has(details) {
+  list-style: none;
+  margin-left: -16px;
+}
+
+details > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details > summary::before {
+  content: '▸ ';
+  font-size: 14px;
+  color: var(--color-brand);
+}
+
+details[open] > summary::before {
+  content: '▾ ';
+}
+
+.research-links {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0 4px 16px;
+
+  a.project-highlight {
+    border-right: none;
+    border-left: none;
+    padding: 1px 0;
+    line-height: 1.8;
+  }
+}
+
+/* ─── Misc ─── */
+#main {
+  padding-top: 10px;
 }
