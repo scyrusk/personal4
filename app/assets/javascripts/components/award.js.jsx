@@ -59,27 +59,42 @@ class AwardContainer extends React.Component {
 
 class AwardList extends React.Component {
   render() {
-    var sorted = this.props.data.slice().sort(function(a, b) {
-      // Pinned first, then by year (newest first), then by id for ties
-      // var pinnedComp = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
-      // if (pinnedComp !== 0) return pinnedComp;
-      var yearA = a.year != null ? Number(a.year) : 0;
-      var yearB = b.year != null ? Number(b.year) : 0;
-      var yearComp = yearB - yearA;
-      return yearComp !== 0 ? yearComp : (b.id || 0) - (a.id || 0);
+    const grouped = {};
+    this.props.data.forEach(function(award) {
+      const year = award.year || 'Unknown';
+      if (!grouped[year]) grouped[year] = [];
+      grouped[year].push(award);
     });
-    var awardNodes = sorted.map(function(award, index, arr) {
+
+    const years = Object.keys(grouped).sort(function(a, b) { return Number(b) - Number(a); });
+
+    const timelineNodes = years.map(function(year) {
+      const awards = grouped[year].slice().sort(function(a, b) {
+        const pinnedComp = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+        return pinnedComp !== 0 ? pinnedComp : (a.id || 0) - (b.id || 0);
+      });
       return (
-        <Award
-          year={award.year}
-          text={award.body}
-          paper={award.paper}
-          key={award.id} />
+        <div key={year} className="timeline-item">
+          <div className="timeline-dot" />
+          <div className="timeline-content">
+            <div className="award-year-label">{year}</div>
+            {awards.map(function(award) {
+              return (
+                <Award
+                  text={award.body}
+                  paper={award.paper}
+                  pinned={award.pinned}
+                  key={award.id} />
+              );
+            })}
+          </div>
+        </div>
       );
     });
+
     return (
-      <div className="award-list">
-        {awardNodes}
+      <div className="awards-timeline">
+        {timelineNodes}
       </div>
     );
   }
@@ -88,17 +103,13 @@ class AwardList extends React.Component {
 class Award extends React.Component{
   render() {
     var paperTitle = this.props.paper ?
-      <span className="help-block paper-award-paper-title">{this.props.paper.title}</span> :
-      <span className="help-block"/>
+      <div className="award-paper-title">{this.props.paper.title}</div> :
+      null;
+    var className = "award-item" + (this.props.pinned ? " award-pinned" : "");
     return (
-      <div className="award row well well-sm">
-        <div className="award-year col-xs-1">
-          {this.props.year}
-        </div>
-        <div className="award-text col-xs-offset-1 col-xs-10">
-          <span className="award-body">{this.props.text}</span>
-          {paperTitle}
-        </div>
+      <div className={className}>
+        <span className="award-body">{this.props.text}</span>
+        {paperTitle}
       </div>
     );
   }
