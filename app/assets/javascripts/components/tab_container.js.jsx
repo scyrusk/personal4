@@ -71,10 +71,68 @@ class TabContainer extends React.Component {
   }
 
   // ─── Publications timeline ───────────────────────────────────────────────
+  _paperNode(paper, assets, filterClickListener, selected) {
+    var noThumb = assets['noThumb'];
+    return (
+      <Paper
+        key={randomString(8)}
+        handleFilterClick={filterClickListener}
+        selected={selected !== undefined ? selected : paper.selected}
+        type={paper.type}
+        thumbnail={paper.thumbnail || noThumb}
+        selfOrder={paper.selfOrder}
+        title={paper.title}
+        authors={paper.authors}
+        venue={paper.venue}
+        year={paper.year}
+        pdf={paper.pdf}
+        summary={paper.summary}
+        awards={paper.awards}
+        slides={paper.slides}
+        html_slides_url={paper.html_slides_url}
+        html_paper_url={paper.html_paper_url}
+        presentation_url={paper.presentation_url}
+        video_url={paper.video_url}
+        downloads={paper.downloads}
+        tags={paper.tags || ''}
+        tweets={paper.tweets}
+        assets={assets}
+        id={paper.id}
+      />
+    );
+  }
+
+  _groupByYear(papers) {
+    var grouped = {};
+    papers.forEach(function(p) {
+      if (!grouped[p.year]) grouped[p.year] = [];
+      grouped[p.year].push(p);
+    });
+    return grouped;
+  }
+
+  _timelineItems(grouped, assets, filterClickListener, selectedOverride) {
+    var self = this;
+    var years = Object.keys(grouped).map(Number).sort(function(a, b) { return b - a; });
+    return years.map(function(year) {
+      return (
+        <div key={year} className="timeline-item">
+          <div className="timeline-dot" />
+          <div className="timeline-content">
+            <div className="timeline-year-label">{year}</div>
+            {grouped[year].map(function(paper) {
+              return self._paperNode(paper, assets, filterClickListener, selectedOverride);
+            })}
+          </div>
+        </div>
+      );
+    });
+  }
+
   _publicationsTimeline() {
+    var self = this;
     var filterClickListener = this._handleFilterClick;
     var assets = this.props.paperAssets;
-    var noThumb = assets['noThumb'];
 
     function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
     var ft = this.state.filterText.toLowerCase();
@@ -93,57 +151,31 @@ class TabContainer extends React.Component {
       return paper;
     });
 
-    // Group by year, preserve chronological order
-    var grouped = {};
-    papers.forEach(function(paper) {
-      var y = paper.year;
-      if (!grouped[y]) grouped[y] = [];
-      grouped[y].push(paper);
-    });
+    // No filter: plain chronological timeline
+    if (ft === '') {
+      return this._timelineItems(this._groupByYear(papers), assets, filterClickListener);
+    }
 
-    var years = Object.keys(grouped).map(Number).sort(function(a, b) { return b - a; });
+    // Filter active: matches float to top, full timeline grayed below
+    var matched = papers.filter(function(p) { return p.selected; });
+    var matchedGrouped = this._groupByYear(matched);
 
-    return years.map(function(year) {
-      var yearPapers = grouped[year];
-      var allUnselected = ft !== '' && yearPapers.every(function(p) { return !p.selected; });
-      return (
-        <div key={year} className={'timeline-item' + (allUnselected ? ' timeline-year-inactive' : '')}>
-          <div className="timeline-dot" />
-          <div className="timeline-content">
-            <div className="timeline-year-label">{year}</div>
-            {yearPapers.map(function(paper) {
-              return (
-                <Paper
-                  key={randomString(8)}
-                  handleFilterClick={filterClickListener}
-                  selected={paper.selected}
-                  type={paper.type}
-                  thumbnail={paper.thumbnail || noThumb}
-                  selfOrder={paper.selfOrder}
-                  title={paper.title}
-                  authors={paper.authors}
-                  venue={paper.venue}
-                  year={paper.year}
-                  pdf={paper.pdf}
-                  summary={paper.summary}
-                  awards={paper.awards}
-                  slides={paper.slides}
-                  html_slides_url={paper.html_slides_url}
-                  html_paper_url={paper.html_paper_url}
-                  presentation_url={paper.presentation_url}
-                  video_url={paper.video_url}
-                  downloads={paper.downloads}
-                  tags={paper.tags || ''}
-                  tweets={paper.tweets}
-                  assets={assets}
-                  id={paper.id}
-                />
-              );
-            })}
+    return (
+      <div>
+        {matched.length === 0 && (
+          <p className="timeline-no-results">No publications matched your search.</p>
+        )}
+        {this._timelineItems(matchedGrouped, assets, filterClickListener, true)}
+        {matched.length > 0 && (
+          <div className="timeline-context-divider">
+            <span>All publications</span>
           </div>
+        )}
+        <div className="timeline-context">
+          {this._timelineItems(this._groupByYear(papers), assets, filterClickListener, false)}
         </div>
-      );
-    });
+      </div>
+    );
   }
 
   // ─── Awards timeline ─────────────────────────────────────────────────────
