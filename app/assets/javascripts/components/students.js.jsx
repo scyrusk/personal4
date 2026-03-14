@@ -73,7 +73,7 @@ class StudentsContainer extends React.Component {
 
     const renderStudent = (student, i) => {
       const isActive = activeStudent === student.name;
-      const studentClass = `col-md-3 student-item ${isActive ? 'active' : ''}`;
+      const studentClass = `student-item ${isActive ? 'active' : ''}`;
       
       return (
         <div key={i} className={studentClass} onClick={(e) => this.handleStudentClick(student.name, e)}>

@@ -748,6 +748,24 @@ p.student-years {
 }
 
 /* ─── Student Container ─── */
+.students-container .row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-left: 0;
+  margin-right: 0;
+
+  // Header spans all columns
+  .col-xs-12 {
+    grid-column: 1 / -1;
+    padding-left: 0;
+  }
+
+  @media (max-width: 767px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .student-item {
   cursor: pointer;
   transition: opacity 0.3s ease;
