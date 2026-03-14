@@ -56,7 +56,10 @@ class TabContainer extends React.Component {
 
   _handleFilterClick(e) {
     this._handleFilterTextChanged(e.target.innerText);
-    $('html,body').animate({ scrollTop: 0 });
+    var container = $('.unified-timeline-container');
+    if (container.length) {
+      $('html,body').animate({ scrollTop: container.offset().top });
+    }
   }
 
   _handleFilterTextChanged(ft) {
