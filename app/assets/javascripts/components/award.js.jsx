@@ -77,7 +77,7 @@ class AwardList extends React.Component {
         <div key={year} className="timeline-item">
           <div className="timeline-dot" />
           <div className="timeline-content">
-            <div className="award-year-label">{year}</div>
+            <div className="timeline-year-label">{year}</div>
             {awards.map(function(award) {
               return (
                 <Award
