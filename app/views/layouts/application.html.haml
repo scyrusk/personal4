@@ -3,6 +3,12 @@
   %head
     %meta{:content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
     %title Sauvik Das's Personal Homepage
+    %meta{name: "description", content: "Sauvik Das — Associate Professor at CMU HCII. Research in human-centered security, privacy, and AI."}/
+    %meta{property: "og:title", content: "Sauvik Das"}/
+    %meta{property: "og:description", content: "Associate Professor at CMU HCII. Research in human-centered security, privacy, and AI."}/
+    %meta{property: "og:type", content: "website"}/
+    %meta{property: "og:url", content: "https://sauvik.me"}/
+    %meta{property: "og:image", content: asset_path("sauvik_bio_sphere.png")}/
     = stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true
     = javascript_include_tag 'application', 'data-turbolinks-track' => true
     = javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/mobx/5.15.7/mobx.umd.min.js'

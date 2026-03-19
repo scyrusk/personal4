@@ -153,6 +153,7 @@ class TabContainer extends React.Component {
       );
       return paper;
     });
+    this._matchedCount = ft === '' ? null : papers.filter(function(p) { return p.selected; }).length;
 
     // No filter: plain chronological timeline
     if (ft === '') {
@@ -325,13 +326,25 @@ class TabContainer extends React.Component {
 
         {activeTab === 'publications' && (
           <div className="timeline-search">
-            <input
-              type="text"
-              placeholder="Search by title, author, venue, tag, or award"
-              className="form-control paperFilter"
-              value={filterText}
-              onChange={function(e) { self._handleFilterTextChanged(e.target.value); }}
-            />
+            <div className="timeline-search-input-wrap">
+              <input
+                type="text"
+                placeholder="Search by title, author, venue, tag, or award"
+                className="form-control paperFilter"
+                value={filterText}
+                onChange={function(e) { self._handleFilterTextChanged(e.target.value); }}
+                aria-label="Filter publications"
+              />
+              {filterText && (
+                <button className="timeline-search-clear" onClick={function() { self._handleFilterTextChanged(''); }}
+                  aria-label="Clear search">×</button>
+              )}
+            </div>
+            {filterText && (
+              <p className="timeline-search-count" aria-live="polite">
+                Showing {self._matchedCount} of {self.state.papers.length} publications
+              </p>
+            )}
           </div>
         )}
 

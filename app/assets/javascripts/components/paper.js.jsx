@@ -100,20 +100,23 @@ class CiteButton extends React.Component {
     var copied = this.state.copied;
     return (
       <div className="cite-button-container" ref={function(el) { self._containerRef = el; }}>
-        <div className="paper-media-item" onClick={this._toggle} role="button" tabIndex="0"
-          aria-label="Copy citation" aria-expanded={String(open)}>
+        <button className="paper-media-item cite-trigger" onClick={this._toggle}
+          aria-label="Copy citation" aria-expanded={String(open)} aria-haspopup="true">
           <svg className="paper-cite-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5" />
             <path d="M19 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5" />
           </svg>
           <span className="paper-media-label">{copied ? '✓ copied' : 'cite'}</span>
+        </button>
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {copied ? 'Citation copied in ' + copied.toUpperCase() + ' format' : ''}
         </div>
         {open && (
-          <div className="cite-dropdown">
-            <button className="cite-option" onClick={function(e) { self._copy('apa', e); }}>APA</button>
-            <button className="cite-option" onClick={function(e) { self._copy('mla', e); }}>MLA</button>
-            <button className="cite-option" onClick={function(e) { self._copy('bibtex', e); }}>BibTeX</button>
+          <div className="cite-dropdown" role="menu">
+            <button className="cite-option" role="menuitem" onClick={function(e) { self._copy('apa', e); }}>APA</button>
+            <button className="cite-option" role="menuitem" onClick={function(e) { self._copy('mla', e); }}>MLA</button>
+            <button className="cite-option" role="menuitem" onClick={function(e) { self._copy('bibtex', e); }}>BibTeX</button>
           </div>
         )}
       </div>
@@ -122,8 +125,8 @@ class CiteButton extends React.Component {
 }
 
 function randomString(n) {
-  s = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-  Array.apply(null, Array(n)).map(() => s.charAt(Math.floor(Math.random() * s.length))).join('')
+  var s = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  return Array.apply(null, Array(n)).map(function() { return s.charAt(Math.floor(Math.random() * s.length)); }).join('');
 }
 
 class PaperContainer extends React.Component {
