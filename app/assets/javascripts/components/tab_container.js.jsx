@@ -300,6 +300,9 @@ class TabContainer extends React.Component {
     var activeTab = this.state.activeTab;
     var filterText = this.state.filterText;
 
+    // Pre-compute so _matchedCount is up-to-date before the count display renders
+    var publicationsTimeline = activeTab === 'publications' ? this._publicationsTimeline() : null;
+
     var tabs = [
       { id: 'publications', label: 'Publications' },
       { id: 'awards',       label: 'Honors & Awards' },
@@ -349,7 +352,7 @@ class TabContainer extends React.Component {
         )}
 
         <div className="courses-timeline">
-          {activeTab === 'publications' && this._publicationsTimeline()}
+          {activeTab === 'publications' && publicationsTimeline}
           {activeTab === 'awards'       && this._awardsTimeline()}
           {activeTab === 'teaching'     && this._teachingTimeline()}
         </div>
