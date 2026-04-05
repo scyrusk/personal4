@@ -454,7 +454,12 @@ class Paper extends React.Component {
           </p>
           <div className="paper-author-list">{authorNodes}</div>
           <p className="paper-venue-line">
-            <span className="paper-venue" onClick={filterClickListener}>{this.props.venue}</span>
+            <span
+              className="paper-venue"
+              onClick={filterClickListener}
+              onMouseEnter={function() { window.dispatchEvent(new CustomEvent('searchPreview', { detail: { text: this.props.venue } })); }.bind(this)}
+              onMouseLeave={function() { window.dispatchEvent(new CustomEvent('searchPreview', { detail: { text: null } })); }}
+            >{this.props.venue}</span>
           </p>
           <div className="paper-award-list">{awardNodes}</div>
           <div className="paper-media">

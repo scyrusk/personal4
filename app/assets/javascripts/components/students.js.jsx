@@ -93,24 +93,22 @@ class StudentsContainer extends React.Component {
     return (
       <div className={`students-container ${activeStudent ? 'has-active' : ''}`}>
         {/* Current Students Section */}
+        <p className="student-header">
+          Current Ph.D. Students and Post-Docs
+        </p>
         <div className="row">
-          <div className="col-xs-12">
-            <p className="student-header">
-              Current Ph.D. Students and Post-Docs
-            </p>
-          </div>
           { currentStudents.map(renderStudent) }
         </div>
 
         {/* Alums Section */}
         { alums.length > 0 && (
-          <div className="row" style={{ marginTop: '30px' }}>
-            <div className="col-xs-12">
-              <p className="student-header">
-                Alumni
-              </p>
+          <div className="student-section" style={{ marginTop: '30px' }}>
+            <p className="student-header">
+              Alumni
+            </p>
+            <div className="row">
+              { alums.map(renderStudent) }
             </div>
-            { alums.map(renderStudent) }
           </div>
         )}
       </div>

@@ -164,6 +164,8 @@ GEM
     nokogiri (1.15.4)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
+    nokogiri (1.15.4-arm64-darwin)
+      racc (~> 1.4)
     psych (5.1.0)
       stringio
     public_suffix (5.0.3)
@@ -236,6 +238,7 @@ GEM
       sprockets (>= 3.0.0)
     sqlite3 (1.6.3)
       mini_portile2 (~> 2.8.0)
+    sqlite3 (1.6.3-arm64-darwin)
     ssrf_filter (1.1.1)
     stringio (3.0.8)
     temple (0.10.2)
@@ -261,6 +264,7 @@ GEM
     zeitwerk (2.6.11)
 
 PLATFORMS
+  arm64-darwin-25
   ruby
 
 DEPENDENCIES

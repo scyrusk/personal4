@@ -1,4 +1,4 @@
-class ChangeTypeToBackingType < ActiveRecord::Migration
+class ChangeTypeToBackingType < ActiveRecord::Migration[5.0]
   def self.up
     add_column :papers, :backing_type, :integer
     remove_column :papers, :type

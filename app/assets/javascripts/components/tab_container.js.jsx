@@ -6,7 +6,8 @@ class TabContainer extends React.Component {
       papers: [],
       awards: [],
       filterText: '',
-      timeoutVar: null
+      timeoutVar: null,
+      searchHint: null
     };
     this._handleFilterClick = this._handleFilterClick.bind(this);
     this._handleFilterTextChanged = this._handleFilterTextChanged.bind(this);
@@ -22,10 +23,28 @@ class TabContainer extends React.Component {
       this._handleFilterTextChanged(event.detail.studentName || '');
     };
     window.addEventListener('studentFilterChanged', this._studentFilterListener);
+
+    // Hover preview: author names and venue update the search placeholder
+    this._searchPreviewListener = (event) => {
+      this.setState({ searchHint: event.detail.text || null });
+    };
+    window.addEventListener('searchPreview', this._searchPreviewListener);
+
+    // '/' keyboard shortcut to focus search
+    this._keyDownListener = (e) => {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        var input = document.querySelector('.paperFilter');
+        if (input) { this.handleTabClick('publications'); input.focus(); }
+      }
+    };
+    window.addEventListener('keydown', this._keyDownListener);
   }
 
   componentWillUnmount() {
     window.removeEventListener('studentFilterChanged', this._studentFilterListener);
+    window.removeEventListener('searchPreview', this._searchPreviewListener);
+    window.removeEventListener('keydown', this._keyDownListener);
   }
 
   componentDidUpdate(prevProps) {
@@ -78,7 +97,7 @@ class TabContainer extends React.Component {
     var noThumb = assets['noThumb'];
     return (
       <Paper
-        key={randomString(8)}
+        key={paper.id}
         handleFilterClick={filterClickListener}
         selected={selected !== undefined ? selected : paper.selected}
         type={paper.type}
@@ -299,6 +318,7 @@ class TabContainer extends React.Component {
     var self = this;
     var activeTab = this.state.activeTab;
     var filterText = this.state.filterText;
+    var searchHint = this.state.searchHint;
 
     // Pre-compute so _matchedCount is up-to-date before the count display renders
     var publicationsTimeline = activeTab === 'publications' ? this._publicationsTimeline() : null;
@@ -311,45 +331,52 @@ class TabContainer extends React.Component {
 
     return (
       <div className="unified-timeline-container">
-        <div className="timeline-tab-switcher">
-          {tabs.map(function(tab) {
-            return (
-              <button
-                key={tab.id}
-                className={'timeline-tab-btn' + (activeTab === tab.id ? ' active' : '')}
-                onClick={function() { self.handleTabClick(tab.id); }}
-                role="tab"
-                aria-selected={activeTab === tab.id}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+        <div className="timeline-sticky-header">
+          <div className="timeline-tab-switcher">
+            {tabs.map(function(tab) {
+              return (
+                <button
+                  key={tab.id}
+                  className={'timeline-tab-btn' + (activeTab === tab.id ? ' active' : '')}
+                  onClick={function() { self.handleTabClick(tab.id); }}
+                  role="tab"
+                  aria-selected={activeTab === tab.id}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
 
-        {activeTab === 'publications' && (
-          <div className="timeline-search">
-            <div className="timeline-search-input-wrap">
-              <input
-                type="text"
-                placeholder="Search by title, author, venue, tag, or award"
-                className="form-control paperFilter"
-                value={filterText}
-                onChange={function(e) { self._handleFilterTextChanged(e.target.value); }}
-                aria-label="Filter publications"
-              />
+          {activeTab === 'publications' && (
+            <div className="timeline-search">
+              <div className="timeline-search-input-wrap">
+                <input
+                  type="text"
+                  placeholder="Search by title, author, venue, tag, or award"
+                  className="form-control paperFilter"
+                  value={filterText}
+                  onChange={function(e) { self._handleFilterTextChanged(e.target.value); }}
+                  aria-label="Filter publications"
+                />
+                {filterText && (
+                  <button className="timeline-search-clear" onClick={function() { self._handleFilterTextChanged(''); }}
+                    aria-label="Clear search">×</button>
+                )}
+              </div>
               {filterText && (
-                <button className="timeline-search-clear" onClick={function() { self._handleFilterTextChanged(''); }}
-                  aria-label="Clear search">×</button>
+                <p className="timeline-search-count" aria-live="polite">
+                  Showing {self._matchedCount} of {self.state.papers.length} publications
+                </p>
+              )}
+              {searchHint && (
+                <p className="timeline-search-hint">
+                  Click to filter by <b>{searchHint}</b>
+                </p>
               )}
             </div>
-            {filterText && (
-              <p className="timeline-search-count" aria-live="polite">
-                Showing {self._matchedCount} of {self.state.papers.length} publications
-              </p>
-            )}
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="courses-timeline">
           {activeTab === 'publications' && publicationsTimeline}

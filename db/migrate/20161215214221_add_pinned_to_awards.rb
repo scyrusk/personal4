@@ -1,4 +1,4 @@
-class AddPinnedToAwards < ActiveRecord::Migration
+class AddPinnedToAwards < ActiveRecord::Migration[5.0]
   def change
     add_column :awards, :pinned, :boolean
   end

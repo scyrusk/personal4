@@ -76,6 +76,10 @@ body {
   .site-content {
     margin-left: var(--sidebar-width);
     padding: 24px 32px;
+
+    // Keep columns equal height (default stretch) so the sticky tab header
+    // inside the right column has a tall-enough container to remain pinned
+    // even when the left column is longer than the publications list.
   }
   .sidebar-photo {
     text-align: left;
@@ -111,6 +115,27 @@ body {
   }
   .site-content {
     padding: 16px 12px;
+  }
+
+  // Sticky section headers: each one sticks until the next scrolls in and
+  // replaces it. Equal z-index + DOM order means later headers sit on top.
+  .about-header, .student-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: white;
+    // Bleed to the edges of site-content's 12px horizontal padding
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  // Tab switcher (Publications / Honors & Awards / Teaching) is already
+  // inside .timeline-sticky-header with sticky+top:0; just bump its z-index
+  // to match so it replaces Alumni as the final sticky header.
+  .timeline-sticky-header {
+    z-index: 20;
   }
 }
 
@@ -219,22 +244,25 @@ a:has(img):hover {
 }
 
 .paper-title-line {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .paper-title {
   font-weight: 700;
+  font-size: 15px;
 }
 
 .paper-year {
   color: var(--color-text-muted);
   cursor: pointer;
+  font-size: 13px;
 }
 
 .paper-venue {
   font-style: italic;
   cursor: pointer;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
+  font-size: 13px;
 }
 
 .paper-thumbnail-img {
@@ -269,6 +297,13 @@ a:has(img):hover {
   font-size: 14px;
   padding: 0;
   color: var(--color-text-secondary);
+  transition: color 0.15s;
+}
+
+.author:hover .author-name {
+  outline: 1px solid var(--color-brand);
+  outline-offset: 2px;
+  color: var(--color-brand-dark);
 }
 
 .author-self .author-name {
@@ -634,6 +669,25 @@ a.project-highlight {
   font-size: 14px;
 }
 
+.recruiting-status {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-brand);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+/* ─── CV updated timestamp ─── */
+.cv-updated {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  display: block;
+  margin-top: -2px;
+  margin-bottom: 4px;
+}
+
 /* ─── Students ─── */
 img.student-img {
   width: 50px;
@@ -675,6 +729,16 @@ p.student-years {
   margin-top: 10px;
 }
 
+.timeline-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fff;
+  padding-top: 10px;
+  padding-bottom: 4px;
+  margin-top: -10px;
+}
+
 .timeline-tab-switcher {
   display: flex;
   gap: 24px;
@@ -708,6 +772,7 @@ p.student-years {
 }
 
 .timeline-search {
+  position: relative;
   margin-bottom: 12px;
 }
 
@@ -763,10 +828,9 @@ p.student-years {
   margin-left: 0;
   margin-right: 0;
 
-  // Header spans all columns
-  .col-xs-12 {
-    grid-column: 1 / -1;
-    padding-left: 0;
+  // Bootstrap clearfix pseudo-elements become ghost grid items — suppress them.
+  &::before, &::after {
+    display: none;
   }
 
   @media (max-width: 767px) {
@@ -942,4 +1006,17 @@ summary:focus-visible {
   font-size: 12px;
   color: var(--color-text-muted);
   margin: 4px 0 0 0;
+}
+
+.timeline-search-hint {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  font-size: 12px;
+  color: var(--color-brand);
+  background: white;
+  padding: 2px 0;
+  margin: 0;
+  pointer-events: none;
+  z-index: 5;
 }
