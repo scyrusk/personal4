@@ -112,7 +112,7 @@
         -# covering topics on academia and research in HCI and cybersecurity.
     %hr
     = react_component('StudentsContainer', currentStudents: @currentStudents, alums: @alums)
-  .col-md-6
+  .col-md-6#publications-section
     = react_component('TabContainer',
         papersUrl: papers_url(format: :json),
         paperAssets: @paperAssetMap,
@@ -121,3 +121,4 @@
         courses: @courses,
         currentStudents: @currentStudents,
         alums: @alums)
+%a.jump-to-publications{href: "#publications-section"} Go to Publications
