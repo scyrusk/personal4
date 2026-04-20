@@ -1,4 +1,4 @@
-class CreateJoinTablePaperAuthor < ActiveRecord::Migration
+class CreateJoinTablePaperAuthor < ActiveRecord::Migration[5.0]
   def change
     create_join_table :papers, :authors do |t|
       t.index [:paper_id, :author_id]

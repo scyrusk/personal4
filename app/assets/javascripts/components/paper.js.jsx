@@ -1,3 +1,129 @@
+class CiteButton extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { open: false, copied: null };
+    this._containerRef = null;
+    this._toggle = this._toggle.bind(this);
+    this._copy = this._copy.bind(this);
+  }
+
+  componentDidMount() {
+    var self = this;
+    this._outsideClick = function(e) {
+      if (self._containerRef && !self._containerRef.contains(e.target)) {
+        self.setState({ open: false });
+      }
+    };
+    document.addEventListener('click', this._outsideClick);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('click', this._outsideClick);
+  }
+
+  _parseName(fullName) {
+    var parts = fullName.trim().split(/\s+/);
+    return { last: parts[parts.length - 1], firsts: parts.slice(0, -1) };
+  }
+
+  _formatAuthorsAPA(authors) {
+    var self = this;
+    var formatted = authors.map(function(a) {
+      var p = self._parseName(a.name);
+      var initials = p.firsts.map(function(f) {
+        var c = f.replace(/[^A-Za-z]/g, '');
+        return c[0] ? c[0].toUpperCase() + '.' : '';
+      }).filter(Boolean).join(' ');
+      return p.last + (initials ? ', ' + initials : '');
+    });
+    if (formatted.length <= 1) return formatted[0] || '';
+    return formatted.slice(0, -1).join(', ') + ', & ' + formatted[formatted.length - 1];
+  }
+
+  _formatAuthorsMLA(authors) {
+    if (!authors.length) return '';
+    var self = this;
+    var p = self._parseName(authors[0].name);
+    var first = p.last + ', ' + p.firsts.join(' ');
+    if (authors.length === 1) return first;
+    if (authors.length === 2) return first + ', and ' + authors[1].name;
+    return first + ', et al';
+  }
+
+  _formatAuthorsBibtex(authors) {
+    var self = this;
+    return authors.map(function(a) {
+      var p = self._parseName(a.name);
+      return p.last + ', ' + p.firsts.join(' ');
+    }).join(' and ');
+  }
+
+  _getCitation(format) {
+    var title = this.props.title;
+    var authors = this.props.authors;
+    var venue = this.props.venue;
+    var year = this.props.year;
+    if (format === 'apa') {
+      return this._formatAuthorsAPA(authors) + ' (' + year + '). ' + title + '. ' + venue + '.';
+    }
+    if (format === 'mla') {
+      return this._formatAuthorsMLA(authors) + '. "' + title + '." ' + venue + ', ' + year + '.';
+    }
+    if (format === 'bibtex') {
+      var key = (authors.length > 0 ? this._parseName(authors[0].name).last.toLowerCase() : 'unknown') + year;
+      return '@inproceedings{' + key + ',\n' +
+        '  author    = {' + this._formatAuthorsBibtex(authors) + '},\n' +
+        '  title     = {' + title + '},\n' +
+        '  booktitle = {' + venue + '},\n' +
+        '  year      = {' + year + '}\n}';
+    }
+    return '';
+  }
+
+  _copy(format, e) {
+    e.stopPropagation();
+    var self = this;
+    navigator.clipboard.writeText(this._getCitation(format)).then(function() {
+      self.setState({ copied: format, open: false });
+      setTimeout(function() { self.setState({ copied: null }); }, 2000);
+    });
+  }
+
+  _toggle(e) {
+    e.stopPropagation();
+    this.setState({ open: !this.state.open });
+  }
+
+  render() {
+    var self = this;
+    var open = this.state.open;
+    var copied = this.state.copied;
+    return (
+      <div className="cite-button-container" ref={function(el) { self._containerRef = el; }}>
+        <button className="paper-media-item cite-trigger" onClick={this._toggle}
+          aria-label="Copy citation" aria-expanded={String(open)} aria-haspopup="true">
+          <svg className="paper-cite-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5" />
+            <path d="M19 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5" />
+          </svg>
+          <span className="paper-media-label">{copied ? '✓ copied' : 'cite'}</span>
+        </button>
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {copied ? 'Citation copied in ' + copied.toUpperCase() + ' format' : ''}
+        </div>
+        {open && (
+          <div className="cite-dropdown" role="menu">
+            <button className="cite-option" role="menuitem" onClick={function(e) { self._copy('apa', e); }}>APA</button>
+            <button className="cite-option" role="menuitem" onClick={function(e) { self._copy('mla', e); }}>MLA</button>
+            <button className="cite-option" role="menuitem" onClick={function(e) { self._copy('bibtex', e); }}>BibTeX</button>
+          </div>
+        )}
+      </div>
+    );
+  }
+}
+
 function randomString(n) {
   var s = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   return Array.apply(null, Array(n)).map(function() {

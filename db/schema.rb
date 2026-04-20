@@ -1,88 +1,85 @@
-# encoding: UTF-8
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
 #
-# Note that this schema.rb definition is the authoritative source for your
-# database schema. If you need to create the application database on another
-# system, you should be using db:schema:load, not running all the migrations
-# from scratch. The latter is a flawed and unsustainable approach (the more migrations
-# you'll amass, the slower it'll run and the greater likelihood for issues).
+# This file is the source Rails uses to define your schema when running `bin/rails
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
+# be faster and is potentially less error prone than running all of your
+# migrations from scratch. Old migrations may fail to apply correctly if those
+# migrations use external dependencies or application code.
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[6.1].define(version: 20210221194356) do
-
+ActiveRecord::Schema[7.0].define(version: 2021_02_21_194356) do
   create_table "authors", force: :cascade do |t|
-    t.string   "name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.string "name"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
   end
 
   create_table "authors_papers", id: false, force: :cascade do |t|
-    t.integer "paper_id",  null: false
+    t.integer "paper_id", null: false
     t.integer "author_id", null: false
+    t.index ["author_id", "paper_id"], name: "index_authors_papers_on_author_id_and_paper_id"
+    t.index ["paper_id", "author_id"], name: "index_authors_papers_on_paper_id_and_author_id"
   end
-
-  add_index "authors_papers", ["author_id", "paper_id"], name: "index_authors_papers_on_author_id_and_paper_id"
-  add_index "authors_papers", ["paper_id", "author_id"], name: "index_authors_papers_on_paper_id_and_author_id"
 
   create_table "awards", force: :cascade do |t|
-    t.integer  "year"
-    t.text     "body"
-    t.integer  "paper_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.boolean  "pinned"
+    t.integer "year"
+    t.text "body"
+    t.integer "paper_id"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.boolean "pinned"
+    t.index ["paper_id"], name: "index_awards_on_paper_id"
   end
 
-  add_index "awards", ["paper_id"], name: "index_awards_on_paper_id"
-
   create_table "paper_author_links", force: :cascade do |t|
-    t.integer  "paper_id"
-    t.integer  "author_id"
-    t.integer  "author_order"
-    t.datetime "created_at",   null: false
-    t.datetime "updated_at",   null: false
+    t.integer "paper_id"
+    t.integer "author_id"
+    t.integer "author_order"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
   end
 
   create_table "papers", force: :cascade do |t|
-    t.integer  "self_order"
-    t.integer  "year"
-    t.text     "venue"
-    t.integer  "downloads"
-    t.integer  "likes"
-    t.datetime "created_at",       null: false
-    t.datetime "updated_at",       null: false
-    t.string   "title"
-    t.integer  "backing_type"
-    t.string   "pdf"
-    t.string   "thumbnail"
-    t.text     "summary"
-    t.string   "slides"
-    t.string   "html_slides_url"
-    t.string   "html_paper_url"
-    t.string   "presentation_url"
-    t.string   "video_url"
-    t.text     "tags"
-    t.string   "tweets"
+    t.integer "self_order"
+    t.integer "year"
+    t.text "venue"
+    t.integer "downloads"
+    t.integer "likes"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.string "title"
+    t.integer "backing_type"
+    t.string "pdf"
+    t.string "thumbnail"
+    t.text "summary"
+    t.string "slides"
+    t.string "html_slides_url"
+    t.string "html_paper_url"
+    t.string "presentation_url"
+    t.string "video_url"
+    t.text "tags"
+    t.string "tweets"
   end
 
   create_table "travels", force: :cascade do |t|
-    t.datetime "date"
-    t.string   "location"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string   "title"
-    t.string   "link"
+    t.datetime "date", precision: nil
+    t.string "location"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.string "title"
+    t.string "link"
   end
 
   create_table "updates", force: :cascade do |t|
-    t.datetime "date"
-    t.text     "text"
-    t.integer  "backing_type"
-    t.datetime "created_at",   null: false
-    t.datetime "updated_at",   null: false
+    t.datetime "date", precision: nil
+    t.text "text"
+    t.integer "backing_type"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
   end
 
+  add_foreign_key "awards", "papers"
 end

@@ -1,4 +1,4 @@
-class CreatePaperAuthorLinks < ActiveRecord::Migration
+class CreatePaperAuthorLinks < ActiveRecord::Migration[5.0]
   def change
     create_table :paper_author_links do |t|
       t.integer :paper_id
