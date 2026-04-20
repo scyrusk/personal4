@@ -1,124 +1,90 @@
--# = react_component('TravelContainer', url: travels_url(format: :json), pollInterval: 10000)
-.row
-  .col-md-6
-    %p{class: "about-header"}
-      About
-    .bio
-      %p
-        I am an Associate Professor (without indefinite tenure) at
-        =link_to "Carnegie Mellon University's", "https://www.cmu.edu"
-        =link_to "Human-Computer Interaction Institute.", "https://www.hcii.cmu.edu"
-        I am also co-founder and Chief Technology Officer of
-        =link_to "FuguUX,", "https://www.fuguux.com"
-        an early-stage start-up dedicated to improving web usability.
-      %p
-        At CMU, I direct the
-        =link_to "SPUD (Security, Privacy, Usability and Design) Lab.", "https://cs.cmu.edu/~spudlab"
-        Our work, at the intersection of HCI, AI and cybersecurity, is oriented around answering the question:
-        %strong How can we design systems that empower people with improved agency over their personal data and experiences online?
-        Some past and present research directions include:
-        %ul
-          %li
-            %details
-              %summary
-                %b Practitioner Support for AI Privacy
-              .research-links
-                =link_to "Privy: AI Privacy Risk Assessment Tool (CHI Honorable Mention)", "https://www.sauvik.me/papers/69/serve", class: "project-highlight", target: "_blank"
-                =link_to "AI Privacy Taxonomy (CHI Best Paper)", "https://sauvikdas.com/papers/51/serve", class: "project-highlight", target: "_blank"
-                =link_to "Barriers to AI Privacy Work (USENIX SEC Distinguished Paper)", "https://sauvikdas.com/papers/47/serve", class: "project-highlight", target: "_blank"
-                =link_to "Designing for AI Privacy (CSCW Honorable Mention)", "https://sauvikdas.com/papers/31/serve", class: "project-highlight", target: "_blank"
-                =link_to "Keynote talk — Privacy@Michigan 2025", "https://safecomputing.umich.edu/events/privacy/privacy-2025/dr-sauvik-das", class: "project-highlight", target: "_blank"
-                =link_to "USENIX PEPR talk", "https://www.youtube.com/watch?v=69GqgR_arOo", class: "project-highlight", target: "_blank"
-          %li
-            %details
-              %summary
-                %b Human-AI Teaming for Security & Privacy
-              .research-links
-                =link_to "Image Ally (SOUPS)", "https://sauvikdas.com/papers/43/serve", class: "project-highlight", target: "_blank"
-                =link_to "Self-Disclosure Detection Model (ACL)", "https://sauvikdas.com/papers/55/serve", class: "project-highlight", target: "_blank"
-                =link_to "Helping People Make Informed Disclosure Decisions (CSCW)", "https://sauvikdas.com/papers/58/serve", class: "project-highlight", target: "_blank"
-                =link_to "Quantifying Privacy Risk in Self-Disclosures using AI (NeurIPS)", "https://www.sauvik.me/papers/67/serve", class: "project-highlight", target: "_blank"
-                =link_to "Presenting AI Estimated Privacy Risks to Users (CHI)", "https://www.sauvik.me/papers/70/serve", class: "project-highlight", target: "_blank"
-          %li
-            %details
-              %summary
-                %b Human-centered Adversarial Machine Learning
-              .research-links
-                =link_to "Subversive AI (Resistance AI Workshop)", "https://sauvikdas.com/papers/27/serve", class: "project-highlight", target: "_blank"
-                =link_to "Measuring Human-acceptability of Adversarial Perturbations (CSCW)", "https://sauvikdas.com/papers/49/serve", class: "project-highlight", target: "_blank"
-                =link_to "Data Defenses againt Large Language Models (pre-print)", "https://arxiv.org/abs/2410.13138", class: "project-highlight", target: "_blank"
-          %li
-            %details
-              %summary
-                %b Ethical Design for and with Language Agent Simulations
-              .research-links
-                =link_to "Language Agent Simulations Reveal Implicit Bias in LLMs (pre-print)", "https://arxiv.org/html/2501.17420v1", class: "project-highlight", target: "_blank"
-          %li
-            %details
-              %summary
-                %b Privacy Collective Action & Governance
-              .research-links
-                =link_to "Orchestrating distributed collectives for privacy (CHI)", "https://sauvikdas.com/papers/39/serve", class: "project-highlight", target: "_blank"
-                =link_to "Taxonomy of Lived Privacy Harms (FAccT)", "https://sauvikdas.com/papers/42/serve", class: "project-highlight", target: "_blank"
-                =link_to "Design Fictions for Privacy Harm Reporting (CSCW)", "https://sauvikdas.com/papers/56/serve", class: "project-highlight", target: "_blank"
-                =link_to "Privacy for the People Vision (IEEE S&P Mag)", "https://sauvikdas.com/papers/32/serve", class: "project-highlight", target: "_blank"
-          %li
-            %details
-              %summary
-                %b Physically-intuitive Privacy and Security (PIPS)
-              .research-links
-                =link_to "Smart Webcam Cover (IMWUT)", "https://sauvikdas.com/papers/35/serve", class: "project-highlight", target: "_blank"
-                =link_to "Powering for Privacy (USENIX SEC)", "https://sauvikdas.com/papers/46/serve", class: "project-highlight", target: "_blank"
-                =link_to "On-demand RFID (USEC)", "https://sauvikdas.com/papers/62/serve", class: "project-highlight", target: "_blank"
-          %li
-            %details
-              %summary
-                %b Social cybersecurity
-              .research-links
-                =link_to "Social Proof Increases Security Acceptance (CCS; NSA Best Scientific Cybersecurity Paper Honorable Mention)", "https://sauvikdas.com/papers/9/serve", class: "project-highlight", target: "_blank"
-                =link_to "SoK: Social Cybersecurity (Oakland)", "https://sauvikdas.com/papers/36/serve", class: "project-highlight", target: "_blank"
-                =link_to "How Groups Make Security Decisions (CHI Honorable Mention)", "https://sauvikdas.com/papers/23/serve", class: "project-highlight", target: "_blank"
-                =link_to "A Design Space for Group Cybersecurity Controls (USENIX SEC)", "https://sauvikdas.com/papers/34/serve", class: "project-highlight", target: "_blank"
-                =link_to "USENIX Enigma Talk", "https://www.youtube.com/watch?v=jcIlE4dGdWY", class: "project-highlight", target: "_blank"
-      %p
-        A few of my papers have been recognized with awards:
-        a best paper at UbiComp (2013) and CHI (2024),
-        a distinguished paper at SOUPS (2020) and USENIX Security (2024),
-        five best paper honorable mentions at CHI (2016, 2017, 2020, 2024, 2026),
-        a best paper honorable mention at CSCW (2021),
-        and an honorable mention for the NSA's Best Scientific Cybersecurity Paper (2014).
-        My lab's work has been generously supported by the NSF, Facebook, Georgia Tech, and CMU.
-        My work has also been covered by the popular press, including features on The Atlantic, The Financial Times and Dark Reading.
-      .callout-box
-        %span.recruiting-status Not Currently Recruiting
-        %h4 Prospective Ph.D. Students
-        %p
-          While I am not currently looking for new Ph.D. students,
-          I encourage you to apply to the
-          = link_to "HCII Ph.D.", "https://www.hcii.cmu.edu/academics/phd-hci"
-          at Carnegie Mellon.
-          I'm afraid that I am unlikely to respond to cold e-mails; I just have too many
-          other things to do in my limited workday.
-          A few years ago, I made a
-          = link_to "YouTube video", "https://www.youtube.com/watch?v=JqD2arlzXVE"
-          on improving your odds at landing a position in a C.S. Ph.D. program.
-      -# %p
-        -# I write two (infrequently updated) blogs:
-        -# =link_to "an academic blog,", "https://medium.com/@scyrus89"
-        -# and
-        -# =link_to "a privacy and security blog", "https://consult.sauvik.me"
-        -# and a
-        -# =link_to "vlog", "https://www.youtube.com/channel/UCn4ZcBS7p7N4KwVmJwy3bzQ?view_as=subscriber"
-        -# covering topics on academia and research in HCI and cybersecurity.
-    %hr
-    = react_component('StudentsContainer', currentStudents: @currentStudents, alums: @alums)
-  .col-md-6#publications-section
-    = react_component('TabContainer',
-        papersUrl: papers_url(format: :json),
-        paperAssets: @paperAssetMap,
-        paperPollInterval: 10000,
-        awardsUrl: awards_url(format: :json),
-        courses: @courses,
-        currentStudents: @currentStudents,
-        alums: @alums)
-%a.jump-to-publications{href: "#publications-section"} Go to Publications
+.about-section
+  .about-text
+    I am an Associate Professor (without indefinite tenure) at
+    =link_to "Carnegie Mellon University's", "https://www.cmu.edu"
+    =link_to "Human-Computer Interaction Institute.", "https://www.hcii.cmu.edu"
+    I am also co-founder and Chief Technology Officer of
+    =link_to "FuguUX,", "https://www.fuguux.com"
+    an early-stage start-up dedicated to improving web usability.
+  .about-text
+    At CMU, I direct the
+    =link_to "SPUD (Security, Privacy, Usability and Design) Lab.", "https://cs.cmu.edu/~spudlab"
+    Our work, at the intersection of HCI, AI and cybersecurity, is oriented around answering:
+    %strong How can we design systems that empower people with improved agency over their personal data and experiences online?
+  .research-directions
+    %p Some key research directions include:
+    .research-dir
+      %b Practitioner Support for AI Privacy:
+      =link_to "Privy (CHI HM)", "https://www.sauvik.me/papers/69/serve", class: "project-highlight", target: "_blank"
+      =link_to "AI Privacy Taxonomy (CHI BP)", "https://sauvikdas.com/papers/51/serve", class: "project-highlight", target: "_blank"
+      =link_to "Barriers to AI Privacy Work (USENIX SEC DP)", "https://sauvikdas.com/papers/47/serve", class: "project-highlight", target: "_blank"
+      =link_to "Designing for AI Privacy (CSCW HM)", "https://sauvikdas.com/papers/31/serve", class: "project-highlight", target: "_blank"
+    .research-dir
+      %b Human-AI Teaming for Security & Privacy:
+      =link_to "Image Ally (SOUPS)", "https://sauvikdas.com/papers/43/serve", class: "project-highlight", target: "_blank"
+      =link_to "Informed Disclosure Decisions (CSCW)", "https://sauvikdas.com/papers/58/serve", class: "project-highlight", target: "_blank"
+      =link_to "Quantifying Privacy Risk (NeurIPS)", "https://sauvikdas.com/papers/67/serve", class: "project-highlight", target: "_blank"
+      =link_to "AI Privacy Risk Estimates (CHI)", "https://www.sauvik.me/papers/70/serve", class: "project-highlight", target: "_blank"
+    .research-dir
+      %b Human-centered Adversarial ML:
+      =link_to "Subversive AI (Resistance AI)", "https://sauvikdas.com/papers/27/serve", class: "project-highlight", target: "_blank"
+      =link_to "Human-acceptability of Perturbations (CSCW)", "https://sauvikdas.com/papers/49/serve", class: "project-highlight", target: "_blank"
+      =link_to "Data Defenses against LLMs (pre-print)", "https://arxiv.org/abs/2410.13138", class: "project-highlight", target: "_blank"
+    .research-dir
+      %b Privacy Collective Action & Governance:
+      =link_to "Orchestrating Distributed Collectives (CHI)", "https://sauvikdas.com/papers/39/serve", class: "project-highlight", target: "_blank"
+      =link_to "Taxonomy of Lived Privacy Harms (FAccT)", "https://sauvikdas.com/papers/42/serve", class: "project-highlight", target: "_blank"
+      =link_to "Privacy for the People (IEEE S&P Mag)", "https://sauvikdas.com/papers/32/serve", class: "project-highlight", target: "_blank"
+    .research-dir
+      %b Physically-intuitive Privacy and Security:
+      =link_to "Smart Webcam Cover (IMWUT)", "https://sauvikdas.com/papers/35/serve", class: "project-highlight", target: "_blank"
+      =link_to "Powering for Privacy (USENIX SEC)", "https://sauvikdas.com/papers/46/serve", class: "project-highlight", target: "_blank"
+    .research-dir
+      %b Social Cybersecurity:
+      =link_to "Social Proof & Security (CCS)", "https://sauvikdas.com/papers/9/serve", class: "project-highlight", target: "_blank"
+      =link_to "SoK: Social Cybersecurity (Oakland)", "https://sauvikdas.com/papers/36/serve", class: "project-highlight", target: "_blank"
+      =link_to "Group Security Decisions (CHI HM)", "https://sauvikdas.com/papers/23/serve", class: "project-highlight", target: "_blank"
+  .about-text
+    %p
+      %a.awards-filter-link#awardsFilterLink{href: "#publications"}
+        A few of my papers have been recognized with awards
+      \: a best paper at UbiComp (2013) and CHI (2024), a distinguished paper at SOUPS (2020) and USENIX Security (2024), five best paper honorable mentions at CHI (2016, 2017, 2020, 2024, 2026), a best paper honorable mention at CSCW (2021), and an honorable mention for the NSA's Best Scientific Cybersecurity Paper (2014). My lab's work has been generously supported by the NSF, Facebook, Georgia Tech, and CMU. My work has also been covered by the popular press, including features on The Atlantic, The Financial Times and Dark Reading.
+
+.recruiting-box
+  .recruiting-status Not Recruiting
+  %p.recruiting-title Prospective Ph.D. Students
+  .recruiting-body
+    While I am not currently looking for new Ph.D. students, I encourage you to apply to the
+    =link_to "HCII Ph.D. program", "https://www.hcii.cmu.edu/academics/phd-hci"
+    at Carnegie Mellon and mention my name in your application. I'm afraid that I am unlikely to respond
+    to cold e-mails due to time constraints.
+  .recruiting-ctas
+    = link_to "Watch PhD Application Advice Video", "https://www.youtube.com/watch?v=JqD2arlzXVE", class: "btn-sd btn-sd-secondary", target: "_blank"
+    = link_to "Read Academic Blog", "https://sauvik-das.medium.com/", class: "btn-sd btn-sd-ghost", target: "_blank"
+    = link_to "Browse Publications", "#publications", class: "btn-sd btn-sd-ghost"
+
+%div#students
+  = react_component('StudentsContainer', currentStudents: @currentStudents, alums: @alums)
+
+%div#publications
+= react_component('TabContainer',
+    papersUrl: papers_url(format: :json),
+    paperAssets: @paperAssetMap,
+    paperPollInterval: 10000,
+    awardsUrl: awards_url(format: :json),
+    courses: @courses,
+    currentStudents: @currentStudents,
+    alums: @alums)
+
+:javascript
+  (function() {
+    var link = document.getElementById('awardsFilterLink');
+    if (!link) return;
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('publications').scrollIntoView({ behavior: 'smooth' });
+      setTimeout(function() {
+        window.dispatchEvent(new CustomEvent('setActiveFilter', { detail: { filter: 'Award-winning' } }));
+      }, 300);
+    });
+  })();

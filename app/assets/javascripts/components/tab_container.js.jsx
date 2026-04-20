@@ -3,386 +3,158 @@ class TabContainer extends React.Component {
     super(props);
     this.state = {
       activeTab: 'publications',
-      papers: [],
-      awards: [],
-      filterText: '',
-      timeoutVar: null,
-      searchHint: null
+      query: '',
+      activeFilter: null,
+      resultCount: null
     };
-    this._handleFilterClick = this._handleFilterClick.bind(this);
-    this._handleFilterTextChanged = this._handleFilterTextChanged.bind(this);
-    this.handleTabClick = this.handleTabClick.bind(this);
+    this.searchRef = React.createRef();
+    this._keyHandler = null;
+    this.handleQueryChange = this.handleQueryChange.bind(this);
+    this.handleFilterToggle = this.handleFilterToggle.bind(this);
+    this.handleResultCount = this.handleResultCount.bind(this);
   }
 
   componentDidMount() {
-    this._loadPapers();
-    this._loadAwards();
-
-    // Sync from student filter → paper filter
-    this._studentFilterListener = (event) => {
-      this._handleFilterTextChanged(event.detail.studentName || '');
-    };
-    window.addEventListener('studentFilterChanged', this._studentFilterListener);
-
-    // Hover preview: author names and venue update the search placeholder
-    this._searchPreviewListener = (event) => {
-      this.setState({ searchHint: event.detail.text || null });
-    };
-    window.addEventListener('searchPreview', this._searchPreviewListener);
-
-    // '/' keyboard shortcut to focus search
-    this._keyDownListener = (e) => {
-      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    this._keyHandler = (e) => {
+      if (e.key === '/' && document.activeElement !== this.searchRef.current && this.state.activeTab === 'publications') {
         e.preventDefault();
-        var input = document.querySelector('.paperFilter');
-        if (input) { this.handleTabClick('publications'); input.focus(); }
+        if (this.searchRef.current) this.searchRef.current.focus();
+      }
+      if (e.key === 'Escape') {
+        if (this.searchRef.current) this.searchRef.current.blur();
       }
     };
-    window.addEventListener('keydown', this._keyDownListener);
+    window.addEventListener('keydown', this._keyHandler);
+
+    // When a student card is clicked, update the search query
+    this._studentFilterHandler = (e) => {
+      var studentName = (e.detail && e.detail.studentName) || "";
+      this.handleQueryChange(studentName);
+    };
+    window.addEventListener('studentFilterChanged', this._studentFilterHandler);
+
+    // When an author/tag/venue is clicked inside a paper card, filter by that value
+    this._setSearchHandler = (e) => {
+      var value = (e.detail && e.detail.value) || "";
+      this.setState({ activeTab: 'publications' });
+      this.handleQueryChange(value);
+    };
+    window.addEventListener('setSearchFilter', this._setSearchHandler);
+
+    // Activate a quick-filter chip programmatically (e.g. from the awards link in the bio)
+    this._setActiveFilterHandler = (e) => {
+      var filter = (e.detail && e.detail.filter) || null;
+      this.setState({ activeTab: 'publications', activeFilter: filter });
+    };
+    window.addEventListener('setActiveFilter', this._setActiveFilterHandler);
   }
 
   componentWillUnmount() {
-    window.removeEventListener('studentFilterChanged', this._studentFilterListener);
-    window.removeEventListener('searchPreview', this._searchPreviewListener);
-    window.removeEventListener('keydown', this._keyDownListener);
+    if (this._keyHandler) window.removeEventListener('keydown', this._keyHandler);
+    if (this._studentFilterHandler) window.removeEventListener('studentFilterChanged', this._studentFilterHandler);
+    if (this._setSearchHandler) window.removeEventListener('setSearchFilter', this._setSearchHandler);
+    if (this._setActiveFilterHandler) window.removeEventListener('setActiveFilter', this._setActiveFilterHandler);
   }
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.studentFilter !== this.props.studentFilter) {
-      this._handleFilterTextChanged(this.props.studentFilter || '');
+  handleQueryChange(query) {
+    this.setState({ query });
+    // Notify students component so it can highlight the matching student
+    window.dispatchEvent(new CustomEvent('searchFilterChanged', { detail: { searchTerm: query } }));
+  }
+
+  handleFilterToggle(filter) {
+    this.setState(prev => ({
+      activeFilter: prev.activeFilter === filter ? null : filter
+    }));
+  }
+
+  handleResultCount(count) {
+    if (this.state.resultCount !== count) {
+      this.setState({ resultCount: count });
     }
-  }
-
-  _loadPapers() {
-    $.ajax({
-      url: this.props.papersUrl,
-      dataType: 'json',
-      cache: false,
-      success: (data) => this.setState({ papers: data.reverse() }),
-      error: (xhr, status, err) => console.error(this.props.papersUrl, status, err.toString())
-    });
-  }
-
-  _loadAwards() {
-    $.ajax({
-      url: this.props.awardsUrl,
-      dataType: 'json',
-      cache: false,
-      success: (data) => this.setState({ awards: data }),
-      error: (xhr, status, err) => console.error(this.props.awardsUrl, status, err.toString())
-    });
-  }
-
-  _handleFilterClick(e) {
-    this._handleFilterTextChanged(e.target.innerText);
-    var container = $('.unified-timeline-container');
-    if (container.length) {
-      $('html,body').animate({ scrollTop: container.offset().top });
-    }
-  }
-
-  _handleFilterTextChanged(ft) {
-    if (this.state.timeoutVar) clearTimeout(this.state.timeoutVar);
-    var tv = ft !== '' ? setTimeout(() => gaSendEvent('Interaction', 'Search', ft), 5000) : null;
-    this.setState({ filterText: ft, timeoutVar: tv });
-    window.dispatchEvent(new CustomEvent('searchFilterChanged', { detail: { searchTerm: ft } }));
-  }
-
-  handleTabClick(tabName) {
-    this.setState({ activeTab: tabName });
-  }
-
-  // ─── Publications timeline ───────────────────────────────────────────────
-  _paperNode(paper, assets, filterClickListener, selected) {
-    var noThumb = assets['noThumb'];
-    return (
-      <Paper
-        key={paper.id}
-        handleFilterClick={filterClickListener}
-        selected={selected !== undefined ? selected : paper.selected}
-        type={paper.type}
-        thumbnail={paper.thumbnail || noThumb}
-        selfOrder={paper.selfOrder}
-        title={paper.title}
-        authors={paper.authors}
-        venue={paper.venue}
-        year={paper.year}
-        pdf={paper.pdf}
-        summary={paper.summary}
-        awards={paper.awards}
-        slides={paper.slides}
-        html_slides_url={paper.html_slides_url}
-        html_paper_url={paper.html_paper_url}
-        presentation_url={paper.presentation_url}
-        video_url={paper.video_url}
-        downloads={paper.downloads}
-        tags={paper.tags || ''}
-        tweets={paper.tweets}
-        assets={assets}
-        id={paper.id}
-      />
-    );
-  }
-
-  _groupByYear(papers) {
-    var grouped = {};
-    papers.forEach(function(p) {
-      if (!grouped[p.year]) grouped[p.year] = [];
-      grouped[p.year].push(p);
-    });
-    return grouped;
-  }
-
-  _timelineItems(grouped, assets, filterClickListener, selectedOverride) {
-    var self = this;
-    var years = Object.keys(grouped).map(Number).sort(function(a, b) { return b - a; });
-    return years.map(function(year) {
-      return (
-        <div key={year} className="timeline-item">
-          <div className="timeline-dot" />
-          <div className="timeline-content">
-            <div className="timeline-year-label">{year}</div>
-            {grouped[year].map(function(paper) {
-              return self._paperNode(paper, assets, filterClickListener, selectedOverride);
-            })}
-          </div>
-        </div>
-      );
-    });
-  }
-
-  _publicationsTimeline() {
-    var self = this;
-    var filterClickListener = this._handleFilterClick;
-    var assets = this.props.paperAssets;
-
-    function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-    var ft = this.state.filterText.toLowerCase();
-    var ftEsc = escapeRegExp(ft);
-
-    var papers = this.state.papers.map(function(paper) {
-      paper.selected = (
-        ft === '' ||
-        paper.title.toLowerCase().search(ftEsc) >= 0 ||
-        paper.venue.toLowerCase().indexOf(ft) >= 0 ||
-        paper.year.toString().indexOf(ft) >= 0 ||
-        paper.authors.some(function(a) { return a.name.toLowerCase().search(ftEsc) >= 0; }) ||
-        paper.awards.some(function(a) { return a.body.toLowerCase().search(ftEsc) >= 0; }) ||
-        (paper.tags || '').toLowerCase().search(ftEsc) >= 0
-      );
-      return paper;
-    });
-    this._matchedCount = ft === '' ? null : papers.filter(function(p) { return p.selected; }).length;
-
-    // No filter: plain chronological timeline
-    if (ft === '') {
-      return this._timelineItems(this._groupByYear(papers), assets, filterClickListener);
-    }
-
-    // Filter active: matches float to top, full timeline grayed below
-    var matched = papers.filter(function(p) { return p.selected; });
-    var matchedGrouped = this._groupByYear(matched);
-
-    return (
-      <div>
-        {matched.length === 0 && (
-          <p className="timeline-no-results">No publications matched your search.</p>
-        )}
-        {this._timelineItems(matchedGrouped, assets, filterClickListener, true)}
-        {matched.length > 0 && (
-          <div className="timeline-context-divider">
-            <span>All publications</span>
-          </div>
-        )}
-        <div className="timeline-context">
-          {this._timelineItems(this._groupByYear(papers), assets, filterClickListener, false)}
-        </div>
-      </div>
-    );
-  }
-
-  // ─── Awards timeline ─────────────────────────────────────────────────────
-  _awardsTimeline() {
-    var grouped = {};
-    this.state.awards.forEach(function(award) {
-      var y = award.year || 'Unknown';
-      if (!grouped[y]) grouped[y] = [];
-      grouped[y].push(award);
-    });
-
-    var years = Object.keys(grouped).sort(function(a, b) { return Number(b) - Number(a); });
-
-    return years.map(function(year) {
-      var sorted = grouped[year].slice().sort(function(a, b) {
-        var pc = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
-        return pc !== 0 ? pc : (a.id || 0) - (b.id || 0);
-      });
-      return (
-        <div key={year} className="timeline-item">
-          <div className="timeline-dot" />
-          <div className="timeline-content">
-            <div className="timeline-year-label">{year}</div>
-            {sorted.map(function(award) {
-              return (
-                <Award
-                  key={award.id}
-                  text={award.body}
-                  paper={award.paper}
-                  pinned={award.pinned}
-                />
-              );
-            })}
-          </div>
-        </div>
-      );
-    });
-  }
-
-  // ─── Teaching timeline ───────────────────────────────────────────────────
-  _teachingTimeline() {
-    var courses = this.props.courses;
-    var grouped = {};
-    courses.forEach(function(course) {
-      if (!grouped[course.semester]) grouped[course.semester] = [];
-      grouped[course.semester].push(course);
-    });
-
-    function semValue(sem) {
-      var parts = sem.split(' ');
-      var year = parseInt(parts[1]);
-      var order = parts[0].toLowerCase() === 'spring' ? 0 : parts[0].toLowerCase() === 'summer' ? 1 : 2;
-      return year * 10 + order;
-    }
-
-    var knownValues = Object.keys(grouped).map(semValue);
-    var minVal = Math.min.apply(null, knownValues);
-    var maxVal = Math.max.apply(null, knownValues);
-    var minYear = Math.floor(minVal / 10);
-    var maxYear = Math.floor(maxVal / 10);
-
-    var allSems = [];
-    for (var year = maxYear; year >= minYear; year--) {
-      [['Fall', 2], ['Spring', 0]].forEach(function(pair) {
-        var val = year * 10 + pair[1];
-        if (val >= minVal && val <= maxVal) {
-          allSems.push({ semester: pair[0] + ' ' + year, value: val });
-        }
-      });
-    }
-
-    var items = [];
-    var i = 0;
-    while (i < allSems.length) {
-      var semCourses = grouped[allSems[i].semester];
-      if (semCourses) {
-        items.push({ type: 'semester', semester: allSems[i].semester, courses: semCourses });
-        i++;
-      } else {
-        while (i < allSems.length && !grouped[allSems[i].semester]) i++;
-        items.push({ type: 'gap' });
-      }
-    }
-
-    return items.map(function(item, idx) {
-      if (item.type === 'gap') {
-        return (
-          <div key={'gap-' + idx} className="timeline-item timeline-gap">
-            <div className="timeline-dot" />
-            <div className="timeline-content">
-              <span className="timeline-leave">Release / leave</span>
-            </div>
-          </div>
-        );
-      }
-      return (
-        <div key={item.semester} className="timeline-item">
-          <div className="timeline-dot" />
-          <div className="timeline-content">
-            <div className="timeline-year-label">{item.semester}</div>
-            {item.courses.map(function(course, cidx) {
-              return (
-                <div key={cidx} className="course-item">
-                  <a href={course.link} target="_blank">
-                    <b>{course.courseCode}</b>: {course.courseName}
-                  </a>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    });
   }
 
   render() {
-    var self = this;
-    var activeTab = this.state.activeTab;
-    var filterText = this.state.filterText;
-    var searchHint = this.state.searchHint;
-
-    // Pre-compute so _matchedCount is up-to-date before the count display renders
-    var publicationsTimeline = activeTab === 'publications' ? this._publicationsTimeline() : null;
-
-    var tabs = [
-      { id: 'publications', label: 'Publications' },
-      { id: 'awards',       label: 'Honors & Awards' },
-      { id: 'teaching',     label: 'Teaching' }
-    ];
+    const { activeTab, query, activeFilter, resultCount } = this.state;
+    const FILTERS = ["Recent", "AI & Privacy", "Security", "Award-winning"];
 
     return (
-      <div className="unified-timeline-container">
-        <div className="timeline-sticky-header">
-          <div className="timeline-tab-switcher">
-            {tabs.map(function(tab) {
-              return (
-                <button
-                  key={tab.id}
-                  className={'timeline-tab-btn' + (activeTab === tab.id ? ' active' : '')}
-                  onClick={function() { self.handleTabClick(tab.id); }}
-                  role="tab"
-                  aria-selected={activeTab === tab.id}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
+      <div className="pubs-section">
+        <div className="pubs-sticky-header">
+          <div className="pubs-tabs">
+            <button
+              className={'pubs-tab' + (activeTab === 'publications' ? ' active' : '')}
+              onClick={() => this.setState({ activeTab: 'publications' })}
+            >Publications</button>
+            <button
+              className={'pubs-tab' + (activeTab === 'awards' ? ' active' : '')}
+              onClick={() => this.setState({ activeTab: 'awards' })}
+            >Honors &amp; Awards</button>
+            <button
+              className={'pubs-tab' + (activeTab === 'teaching' ? ' active' : '')}
+              onClick={() => this.setState({ activeTab: 'teaching' })}
+            >Teaching</button>
           </div>
 
           {activeTab === 'publications' && (
-            <div className="timeline-search">
-              <div className="timeline-search-input-wrap">
-                <input
-                  type="text"
-                  placeholder="Search by title, author, venue, tag, or award"
-                  className="form-control paperFilter"
-                  value={filterText}
-                  onChange={function(e) { self._handleFilterTextChanged(e.target.value); }}
-                  aria-label="Filter publications"
-                />
-                {filterText && (
-                  <button className="timeline-search-clear" onClick={function() { self._handleFilterTextChanged(''); }}
-                    aria-label="Clear search">×</button>
-                )}
+            <div>
+              <div className="pubs-search-row">
+                <div className="pubs-search-wrap">
+                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"
+                    style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-muted)',pointerEvents:'none'}}>
+                    <circle cx="6.5" cy="6.5" r="4"/>
+                    <line x1="10" y1="10" x2="14" y2="14"/>
+                  </svg>
+                  <input
+                    ref={this.searchRef}
+                    type="text"
+                    className="pubs-search"
+                    placeholder="Search by title, author, venue, or tag"
+                    value={query}
+                    onChange={e => this.handleQueryChange(e.target.value)}
+                  />
+                  {query && (
+                    <button className="pubs-search-clear" onClick={() => this.handleQueryChange('')}>×</button>
+                  )}
+                </div>
+                <span className="pubs-result-count">
+                  {resultCount !== null ? resultCount + ' papers' : ''}
+                </span>
               </div>
-              {filterText && (
-                <p className="timeline-search-count" aria-live="polite">
-                  Showing {self._matchedCount} of {self.state.papers.length} publications
-                </p>
-              )}
-              {searchHint && (
-                <p className="timeline-search-hint">
-                  Click to filter by <b>{searchHint}</b>
-                </p>
-              )}
+              <div className="pubs-filters">
+                {FILTERS.map(f => (
+                  <button
+                    key={f}
+                    className={'pubs-filter-chip' + (activeFilter === f ? ' active' : '')}
+                    onClick={() => this.handleFilterToggle(f)}
+                  >{f}</button>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
-        <div className="courses-timeline">
-          {activeTab === 'publications' && publicationsTimeline}
-          {activeTab === 'awards'       && this._awardsTimeline()}
-          {activeTab === 'teaching'     && this._teachingTimeline()}
-        </div>
+        {activeTab === 'publications' && (
+          <PaperContainer
+            url={this.props.papersUrl}
+            assets={this.props.paperAssets}
+            pollInterval={this.props.paperPollInterval}
+            studentFilter={this.props.studentFilter}
+            currentStudents={this.props.currentStudents}
+            alums={this.props.alums}
+            query={query}
+            activeFilter={activeFilter}
+            onResultCount={this.handleResultCount}
+          />
+        )}
+
+        {activeTab === 'awards' && (
+          <AwardContainer url={this.props.awardsUrl} />
+        )}
+
+        {activeTab === 'teaching' && (
+          <CoursesContainer data={this.props.courses} />
+        )}
       </div>
     );
   }

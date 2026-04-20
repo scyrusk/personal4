@@ -1,13 +1,7 @@
 class AwardContainer extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      data: [],
-      error: false,
-      scrollable: false,
-      clickCount: 0
-    };
-    this._handleClick = this._handleClick.bind(this);
+    this.state = { data: [], error: false };
     this._loadAwardsFromServer = this._loadAwardsFromServer.bind(this);
   }
 
@@ -17,21 +11,13 @@ class AwardContainer extends React.Component {
       dataType: 'json',
       cache: false,
       success: function(data) {
-        this.setState({data: data});
+        this.setState({ data: data });
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
-        this.setState({error: true});
+        this.setState({ error: true });
       }.bind(this)
     });
-  }
-
-  _handleClick() {
-    this.setState({
-      scrollable: !this.state.scrollable,
-      clickCount: this.state.clickCount + 1
-    });
-    console.log(this.state.scrollable);
   }
 
   componentDidMount() {
@@ -39,91 +25,59 @@ class AwardContainer extends React.Component {
   }
 
   render() {
-    var containerClass = "award-list-container not-scrollable";
-
     if (this.state.error) {
-      <p className="error">
-        Sorry, something seems to have gone wrong. Try refreshing your page?
-      </p>
-    } else {
-      return (
-        <div className="award-container"  onClick={this._handleClick}>
-          <div className={containerClass}>
-            <AwardList data={this.state.data} />
-          </div>
-        </div>
-      );
+      return <p style={{color: 'var(--text-muted)', padding: '20px 0'}}>Could not load awards. Try refreshing.</p>;
     }
+    return <AwardList data={this.state.data} />;
   }
-};
+}
 
 class AwardList extends React.Component {
   render() {
-    const grouped = {};
-    this.props.data.forEach(function(award) {
-      const year = award.year || 'Unknown';
-      if (!grouped[year]) grouped[year] = [];
-      grouped[year].push(award);
-    });
-
-    const years = Object.keys(grouped).sort(function(a, b) { return Number(b) - Number(a); });
-
-    const timelineNodes = years.map(function(year) {
-      const awards = grouped[year].slice().sort(function(a, b) {
-        const pinnedComp = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
-        return pinnedComp !== 0 ? pinnedComp : (a.id || 0) - (b.id || 0);
-      });
-      return (
-        <div key={year} className="timeline-item">
-          <div className="timeline-dot" />
-          <div className="timeline-content">
-            <div className="timeline-year-label">{year}</div>
-            {awards.map(function(award) {
-              return (
-                <Award
-                  text={award.body}
-                  paper={award.paper}
-                  pinned={award.pinned}
-                  key={award.id} />
-              );
-            })}
-          </div>
-        </div>
-      );
+    var sorted = this.props.data.slice().sort(function(a, b) {
+      var yearA = a.year != null ? Number(a.year) : 0;
+      var yearB = b.year != null ? Number(b.year) : 0;
+      return yearB !== yearA ? yearB - yearA : (b.id || 0) - (a.id || 0);
     });
 
     return (
-      <div className="awards-timeline">
-        {timelineNodes}
+      <div className="honors-list">
+        {sorted.map(function(award) {
+          return <Award key={award.id} year={award.year} text={award.body} paper={award.paper} />;
+        })}
       </div>
     );
   }
-};
+}
 
-class Award extends React.Component{
+class Award extends React.Component {
   render() {
-    var paperTitle = this.props.paper ?
-      <div className="award-paper-title">{this.props.paper.title}</div> :
-      null;
-    var className = "award-item" + (this.props.pinned ? " award-pinned" : "");
     return (
-      <div className={className}>
-        <span className="award-body">{this.props.text}</span>
-        {paperTitle}
+      <div className="honor-item">
+        <div className="honor-year">{this.props.year}</div>
+        <div className="honor-content">
+          <div className="honor-title">{this.props.text}</div>
+          {this.props.paper && (
+            <div className="honor-venue">{this.props.paper.title}</div>
+          )}
+        </div>
       </div>
     );
   }
-};
+}
 
 class PaperAward extends React.Component {
   render() {
     return (
-      <div className="paper-award" onClick={this.props.handleAwardClick}>
-        <span className="paper-award-name">{this.props.name}</span>
+      <div className="pub-award" onClick={this.props.handleAwardClick}>
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="currentColor">
+          <path d="M5.5 1l1.18 2.4 2.65.38-1.92 1.87.45 2.64L5.5 7.1 3.14 8.29l.45-2.64L1.67 3.78l2.65-.38z"/>
+        </svg>
+        <span>{this.props.name}</span>
       </div>
     );
   }
-};
+}
 
 class AwardForm extends React.Component {
   constructor(props) {
@@ -149,12 +103,8 @@ class AwardForm extends React.Component {
       dataType: 'json',
       type: this.props.action,
       data: award,
-      success: function(data) {
-        window.location.href = "/"
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
+      success: function(data) { window.location.href = "/"; }.bind(this),
+      error: function(xhr, status, err) { console.error(this.props.url, status, err.toString()); }.bind(this)
     });
 
     return false;
@@ -162,7 +112,7 @@ class AwardForm extends React.Component {
 
   _awardPaperOptions() {
     return this.props.papers.map(function(paper) {
-      return { "value": paper.id, "rendered": paper.title }
+      return { "value": paper.id, "rendered": paper.title };
     });
   }
 
@@ -177,4 +127,4 @@ class AwardForm extends React.Component {
       </form>
     );
   }
-};
+}
