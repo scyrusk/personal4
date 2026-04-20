@@ -3,6 +3,8 @@
   %head
     %meta{:content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
     %title Sauvik Das's Personal Homepage
+    %link{rel: "preconnect", href: "https://fonts.googleapis.com"}/
+    %link{rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"}/
     = stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true
     = javascript_include_tag 'application', 'data-turbolinks-track' => true
     = javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/mobx/5.15.7/mobx.umd.min.js'
@@ -29,13 +31,34 @@
     = csrf_meta_tags
     %meta{:content => "width=device-width, initial-scale=1.0", :name => "viewport"}/
   %body
-    #content.container-fluid.fill
-      .row.nav-row
-        = render partial: "layouts/navigation_row"
-      .row
+    .mobile-header#mobileHeader
+      %span.mobile-name Sauvik Das
+      %button.mobile-menu-btn#drawerToggle Profile ↗
+    .page-wrap
+      %aside.sidebar
+        = render partial: "layouts/sidebar"
+      %main.main
         = yield
+    .mobile-drawer#mobileDrawer
+      .mobile-drawer-overlay#drawerOverlay
+      .mobile-drawer-panel
+        %button.mobile-drawer-close#drawerClose ×
+        = render partial: "layouts/sidebar"
     #footer
       © Sauvik Das
       ="2009-#{DateTime.now.year}"
-      |
-      Thanks for stopping by!
+      · Thanks for stopping by!
+    :javascript
+      (function() {
+        var toggle = document.getElementById('drawerToggle');
+        var drawer = document.getElementById('mobileDrawer');
+        var overlay = document.getElementById('drawerOverlay');
+        var close = document.getElementById('drawerClose');
+
+        function openDrawer() { if (drawer) drawer.classList.add('open'); }
+        function closeDrawer() { if (drawer) drawer.classList.remove('open'); }
+
+        if (toggle) toggle.addEventListener('click', openDrawer);
+        if (overlay) overlay.addEventListener('click', closeDrawer);
+        if (close) close.addEventListener('click', closeDrawer);
+      })();

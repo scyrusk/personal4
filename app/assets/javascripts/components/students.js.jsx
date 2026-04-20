@@ -1,119 +1,106 @@
+function getInitials(name) {
+  return (name || "").split(" ").map(function(w) { return w[0]; }).join("").slice(0, 2).toUpperCase();
+}
+
 class StudentsContainer extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      activeStudent: null
-    };
+    this.state = { activeStudent: null };
     this.handleStudentClick = this.handleStudentClick.bind(this);
     this.handleSearchChange = this.handleSearchChange.bind(this);
     this.isInternalChange = false;
   }
 
   componentDidMount() {
-    // Listen for search changes from the paper filter
     window.addEventListener('searchFilterChanged', this.handleSearchChange);
   }
 
   componentWillUnmount() {
-    // Clean up event listener
     window.removeEventListener('searchFilterChanged', this.handleSearchChange);
   }
 
   handleSearchChange(event) {
-    // Ignore search changes that come from our own student clicks
     if (this.isInternalChange) {
       this.isInternalChange = false;
       return;
     }
-    
-    const searchTerm = event.detail.searchTerm || "";
+    var searchTerm = event.detail.searchTerm || "";
     this.updateActiveStudentFromSearch(searchTerm);
   }
 
   updateActiveStudentFromSearch(searchTerm) {
-    const allStudents = [...(this.props.currentStudents || []), ...(this.props.alums || [])];
-    
-    // Only match if search term is not empty and contains a student name
-    let matchingStudent = null;
+    var allStudents = [].concat(this.props.currentStudents || [], this.props.alums || []);
+    var matchingStudent = null;
     if (searchTerm.trim() !== "") {
-      matchingStudent = allStudents.find(student => 
-        student.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      matchingStudent = allStudents.find(function(s) {
+        return s.name.toLowerCase().includes(searchTerm.toLowerCase());
+      });
     }
-    
-    const newActiveStudent = matchingStudent ? matchingStudent.name : null;
-    
-    if (newActiveStudent !== this.state.activeStudent) {
-      this.setState({ activeStudent: newActiveStudent });
+    var newActive = matchingStudent ? matchingStudent.name : null;
+    if (newActive !== this.state.activeStudent) {
+      this.setState({ activeStudent: newActive });
     }
   }
 
   handleStudentClick(studentName, e) {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Toggle active student
-    const newActiveStudent = this.state.activeStudent === studentName ? null : studentName;
-    this.setState({ activeStudent: newActiveStudent });
-    
-    // Set flag to ignore the search change event that will be triggered
+    var newActive = this.state.activeStudent === studentName ? null : studentName;
+    this.setState({ activeStudent: newActive });
     this.isInternalChange = true;
-    
-    // Dispatch custom event for global communication
-    const event = new CustomEvent('studentFilterChanged', { 
-      detail: { studentName: newActiveStudent } 
-    });
-    window.dispatchEvent(event);
+    window.dispatchEvent(new CustomEvent('studentFilterChanged', {
+      detail: { studentName: newActive }
+    }));
   }
 
   render() {
-    const currentStudents = this.props.currentStudents || [];
-    const alums = this.props.alums || [];
-    const { activeStudent } = this.state;
+    var currentStudents = this.props.currentStudents || [];
+    var alums = this.props.alums || [];
+    var activeStudent = this.state.activeStudent;
+    var handleStudentClick = this.handleStudentClick.bind(this);
 
-    const renderStudent = (student, i) => {
-      const isActive = activeStudent === student.name;
-      const studentClass = `col-md-3 student-item ${isActive ? 'active' : ''}`;
-      
+    var renderStudent = function(student, i) {
+      var isActive = activeStudent === student.name;
       return (
-        <div key={i} className={studentClass} onClick={(e) => this.handleStudentClick(student.name, e)}>
-          <img src={student.image} alt={`Profile photo of ${student.name}`} className="student-img" />
-          <p className="student-name">
-            <a href={student.link} className="student-link" onClick={(e) => e.stopPropagation()}>
-              { student.name }
-            </a>
-          </p>
-          <p className="student-info">{ student.info }</p>
-          <p className="student-years">{ student.years }</p>
-          { student.now && <p className={`student-now ${student.alum ? "student-now-alum" : "student-now-market" }`}>{ student.now }</p> }
+        <div key={i} className={'student-card' + (isActive ? ' active' : '')}
+          onClick={function(e) { handleStudentClick(student.name, e); }}>
+          <div className="student-avatar">
+            {student.image ? (
+              <img src={student.image} alt={student.name} />
+            ) : (
+              getInitials(student.name)
+            )}
+          </div>
+          <div className="student-card-name">
+            {student.link ? (
+              <a href={student.link} onClick={function(e) { e.stopPropagation(); }}>
+                {student.name}
+              </a>
+            ) : student.name}
+          </div>
+          {student.info && <div className="student-card-topic">{student.info}</div>}
+          {student.years && <div className="student-card-meta">{student.years}</div>}
+          {student.now && <div className="student-card-meta" style={{fontStyle:'italic'}}>{student.now}</div>}
         </div>
       );
     };
 
     return (
-      <div className={`students-container ${activeStudent ? 'has-active' : ''}`}>
-        {/* Current Students Section */}
-        <div className="row">
-          <div className="col-xs-12">
-            <p className="student-header">
-              Current Ph.D. Students and Post-Docs
-            </p>
-          </div>
-          { currentStudents.map(renderStudent) }
+      <div className={'students-section' + (activeStudent ? ' has-active' : '')}>
+        <div className="students-section-head">Current Ph.D. Students &amp; Post-Docs</div>
+        <div className="students-grid">
+          {currentStudents.map(renderStudent)}
         </div>
 
-        {/* Alums Section */}
-        { alums.length > 0 && (
-          <div className="row" style={{ marginTop: '30px' }}>
-            <div className="col-xs-12">
-              <p className="student-header">
-                Alumni
-              </p>
+        {alums.length > 0 && (
+          <div style={{marginTop: 32}}>
+            <div className="students-section-head">Alumni</div>
+            <div className="students-grid">
+              {alums.map(renderStudent)}
             </div>
-            { alums.map(renderStudent) }
           </div>
         )}
       </div>
     );
   }
-};
+}
