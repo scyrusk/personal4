@@ -151,9 +151,10 @@ function getTopTags(papers, n) {
 function paperMatchesFilter(paper, activeFilter) {
   if (!activeFilter) return true;
   if (FILTER_MAP[activeFilter]) return FILTER_MAP[activeFilter](paper);
-  // Tag-based filter
-  var tags = (paper.tags || "").split(";").map(function(t) { return t.trim(); });
-  return tags.indexOf(activeFilter) >= 0;
+  // Tag-based filter (case-insensitive)
+  var needle = activeFilter.toLowerCase();
+  var tags = (paper.tags || "").split(";").map(function(t) { return t.trim().toLowerCase(); });
+  return tags.indexOf(needle) >= 0;
 }
 
 function escapeRegExp(string) {
