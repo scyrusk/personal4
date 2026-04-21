@@ -133,17 +133,28 @@ function randomString(n) {
 
 // ── FILTER HELPERS ──────────────────────────────────────
 var FILTER_MAP = {
-  "Recent": function(p) { return p.year >= 2024; },
-  "AI & Privacy": function(p) {
-    var tags = (p.tags || "").toLowerCase();
-    return tags.indexOf("privacy") >= 0 || tags.indexOf("ai") >= 0;
-  },
-  "Security": function(p) {
-    var tags = (p.tags || "").toLowerCase();
-    return tags.indexOf("security") >= 0 || tags.indexOf("privacy") >= 0;
-  },
   "Award-winning": function(p) { return p.awards && p.awards.length > 0; }
 };
+
+function getTopTags(papers, n) {
+  var counts = {};
+  papers.forEach(function(p) {
+    if (!p.tags) return;
+    p.tags.split(";").forEach(function(t) {
+      var tag = t.trim();
+      if (tag) counts[tag] = (counts[tag] || 0) + 1;
+    });
+  });
+  return Object.keys(counts).sort(function(a, b) { return counts[b] - counts[a]; }).slice(0, n);
+}
+
+function paperMatchesFilter(paper, activeFilter) {
+  if (!activeFilter) return true;
+  if (FILTER_MAP[activeFilter]) return FILTER_MAP[activeFilter](paper);
+  // Tag-based filter
+  var tags = (paper.tags || "").split(";").map(function(t) { return t.trim(); });
+  return tags.indexOf(activeFilter) >= 0;
+}
 
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -176,7 +187,9 @@ class PaperContainer extends React.Component {
       dataType: 'json',
       cache: false,
       success: function(data) {
-        this.setState({ data: data.reverse() });
+        var reversed = data.reverse();
+        this.setState({ data: reversed });
+        if (this.props.onTopTags) this.props.onTopTags(getTopTags(reversed, 5));
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -195,6 +208,7 @@ class PaperContainer extends React.Component {
       if (this.props.onResultCount) {
         var count = this.getFilteredCount();
         this.props.onResultCount(count);
+        if (this.props.onTopTags) this.props.onTopTags(getTopTags(this.state.data, 5));
       }
     }
   }
@@ -204,7 +218,7 @@ class PaperContainer extends React.Component {
     var activeFilter = this.props.activeFilter;
     return this.state.data.filter(function(paper) {
       var matchQ = paperMatchesQuery(paper, query);
-      var matchF = !activeFilter || (FILTER_MAP[activeFilter] && FILTER_MAP[activeFilter](paper));
+      var matchF = paperMatchesFilter(paper, activeFilter);
       return matchQ && matchF;
     }).length;
   }
@@ -232,7 +246,7 @@ class PaperList extends React.Component {
     // Filter papers
     var filtered = this.props.data.filter(function(paper) {
       var matchQ = paperMatchesQuery(paper, query);
-      var matchF = !activeFilter || (FILTER_MAP[activeFilter] && FILTER_MAP[activeFilter](paper));
+      var matchF = paperMatchesFilter(paper, activeFilter);
       return matchQ && matchF;
     });
 
@@ -402,23 +416,8 @@ class PaperCard extends React.Component {
     var copiedFormat = this.state.copiedFormat;
     var MAX_TAGS = 3;
 
-    // Authors: show all if ≤4; otherwise first 2 + "+N others" + self (if not already in first 2)
     var authors = paper.authors;
-    var displayAuthors;
-    if (authors.length <= 4) {
-      displayAuthors = authors.map(function(a) { return a.name; });
-    } else {
-      var first2Names = authors.slice(0, 2).map(function(a) { return a.name; });
-      var selfAuthor = authors.find(function(a) { return a.self; });
-      var selfName = selfAuthor ? selfAuthor.name : "Sauvik Das";
-      var selfInFirst2 = first2Names.indexOf(selfName) >= 0;
-      if (selfInFirst2) {
-        // self already shown — just collapse the rest
-        displayAuthors = first2Names.concat(["+" + (authors.length - 2) + " others"]);
-      } else {
-        displayAuthors = first2Names.concat(["+" + (authors.length - 3) + " others", selfName]);
-      }
-    }
+    var displayAuthors = authors.slice();
 
     // Tags: split from semicolon string
     var allTags = paper.tags ? paper.tags.split(";").map(function(t) { return t.trim(); }).filter(Boolean) : [];
@@ -432,8 +431,8 @@ class PaperCard extends React.Component {
     var pdfLink = paper.html_paper_url || ("/papers/" + paper.id + "/serve");
     var hasPDF = paper.pdf || paper.html_paper_url;
 
-    // Summary link
-    var summaryLink = paper.summary;
+    // Summary link (tweet thread)
+    var summaryLink = paper.tweets;
 
     return (
       <div className="pub-card">
@@ -473,9 +472,10 @@ class PaperCard extends React.Component {
             </a>
 
             <div className="pub-authors">
-              {displayAuthors.map(function(name, i) {
-                var isSelf = name === "Sauvik Das";
-                var isPlaceholder = name.charAt(0) === '+';
+              {displayAuthors.map(function(author, i) {
+                var name = author.name;
+                var isSelf = author.self;
+                var isPlaceholder = author.placeholder;
                 return (
                   <span key={i}>
                     {i > 0 ? ', ' : ''}
@@ -555,7 +555,7 @@ class PaperCard extends React.Component {
                   aria-label={"Read summary: " + paper.title}
                 >
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M2 2h12v2H2V2zm0 4h8v2H2V6zm0 4h10v2H2v-2z"/>
+                    <path d="M14 1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3.5l2.5 3 2.5-3H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/>
                   </svg>
                   {' '}Summary
                 </a>
@@ -568,7 +568,12 @@ class PaperCard extends React.Component {
                   target="_blank"
                   aria-label={"View slides: " + paper.title}
                   onClick={function() { gaSendEvent('Publications', 'SlidesDownload', paper.id); }}
-                >Slides</a>
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M1 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9v1h1.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1H7v-1H2a1 1 0 0 1-1-1V3zm13 0H2v8h12V3zM4 6h8v1H4V6zm0 2.5h5v1H4v-1z"/>
+                  </svg>
+                  {' '}Slides
+                </a>
               )}
 
               {paper.video_url && (
@@ -577,7 +582,26 @@ class PaperCard extends React.Component {
                   href={paper.video_url}
                   target="_blank"
                   aria-label={"Watch video: " + paper.title}
-                >Video</a>
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M3 2.5v11l10-5.5L3 2.5z"/>
+                  </svg>
+                  {' '}Video
+                </a>
+              )}
+
+              {paper.presentation_url && (
+                <a
+                  className="pub-action-secondary"
+                  href={paper.presentation_url}
+                  target="_blank"
+                  aria-label={"View presentation: " + paper.title}
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M6 1a1 1 0 0 0-1 1v1H2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.5l-1 2h-1a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-1l-1-2H13a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-3V2a1 1 0 0 0-1-1H6zm0 1h4v1H6V2zm-4 2h12v6H2V4z"/>
+                  </svg>
+                  {' '}Talk
+                </a>
               )}
 
               <div className="cite-wrapper" ref={this.citeWrapRef}>

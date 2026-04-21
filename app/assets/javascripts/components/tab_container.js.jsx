@@ -5,13 +5,15 @@ class TabContainer extends React.Component {
       activeTab: 'publications',
       query: '',
       activeFilter: null,
-      resultCount: null
+      resultCount: null,
+      topTags: []
     };
     this.searchRef = React.createRef();
     this._keyHandler = null;
     this.handleQueryChange = this.handleQueryChange.bind(this);
     this.handleFilterToggle = this.handleFilterToggle.bind(this);
     this.handleResultCount = this.handleResultCount.bind(this);
+    this.handleTopTags = this.handleTopTags.bind(this);
   }
 
   componentDidMount() {
@@ -74,9 +76,13 @@ class TabContainer extends React.Component {
     }
   }
 
+  handleTopTags(tags) {
+    this.setState({ topTags: tags });
+  }
+
   render() {
-    const { activeTab, query, activeFilter, resultCount } = this.state;
-    const FILTERS = ["Recent", "AI & Privacy", "Security", "Award-winning"];
+    const { activeTab, query, activeFilter, resultCount, topTags } = this.state;
+    const FILTERS = ["Award-winning"].concat(topTags);
 
     return (
       <div className="pubs-section">
@@ -145,6 +151,7 @@ class TabContainer extends React.Component {
             query={query}
             activeFilter={activeFilter}
             onResultCount={this.handleResultCount}
+            onTopTags={this.handleTopTags}
           />
         )}
 
