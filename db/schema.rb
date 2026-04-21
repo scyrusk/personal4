@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2021_02_21_194356) do
+ActiveRecord::Schema[7.0].define(version: 2026_04_21_102340) do
   create_table "authors", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", precision: nil, null: false
@@ -62,6 +62,7 @@ ActiveRecord::Schema[7.0].define(version: 2021_02_21_194356) do
     t.string "video_url"
     t.text "tags"
     t.string "tweets"
+    t.string "project_page_url"
   end
 
   create_table "travels", force: :cascade do |t|

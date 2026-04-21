@@ -119,7 +119,8 @@ class Paper < ActiveRecord::Base
       presentation_url: self.presentation_url,
       video_url: self.video_url,
       tweets: self.tweets,
-      tags: self.tags
+      tags: self.tags,
+      project_page_url: self.project_page_url
     }
   end
 end

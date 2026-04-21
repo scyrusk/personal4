@@ -17,13 +17,31 @@ class TabContainer extends React.Component {
   }
 
   componentDidMount() {
+    const isTypingTarget = (el) => {
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+    };
+
     this._keyHandler = (e) => {
-      if (e.key === '/' && document.activeElement !== this.searchRef.current && this.state.activeTab === 'publications') {
-        e.preventDefault();
-        if (this.searchRef.current) this.searchRef.current.focus();
-      }
+      const active = document.activeElement;
+
       if (e.key === 'Escape') {
         if (this.searchRef.current) this.searchRef.current.blur();
+        return;
+      }
+
+      if (isTypingTarget(active)) return;
+
+      if (e.key === '/') {
+        e.preventDefault();
+        this.setState({ activeTab: 'publications' }, () => {
+          if (this.searchRef.current) this.searchRef.current.focus();
+        });
+      } else if (e.key === 'j') {
+        window.scrollBy({ top: 80, behavior: 'smooth' });
+      } else if (e.key === 'k') {
+        window.scrollBy({ top: -80, behavior: 'smooth' });
       }
     };
     window.addEventListener('keydown', this._keyHandler);

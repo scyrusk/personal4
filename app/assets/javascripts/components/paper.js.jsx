@@ -363,12 +363,14 @@ class PaperCard extends React.Component {
     this.state = {
       tagsExpanded: false,
       citeOpen: false,
-      copiedFormat: null
+      copiedFormat: null,
+      flipped: false
     };
     this.citeWrapRef = React.createRef();
     this.handleCiteToggle = this.handleCiteToggle.bind(this);
     this.handleCopyFormat = this.handleCopyFormat.bind(this);
     this.handleDocClick = this.handleDocClick.bind(this);
+    this.handleCardClick = this.handleCardClick.bind(this);
   }
 
   componentDidMount() {
@@ -406,6 +408,21 @@ class PaperCard extends React.Component {
     gaSendEvent('Publications', 'CopyCitation', fmt);
   }
 
+  isInteractiveTarget(target) {
+    if (!target || !target.closest) return false;
+    return !!target.closest(
+      'a, button, input, textarea, select, label, [role="button"], [role="menuitem"], .pub-author-link, .pub-venue-link, .pub-tag, .pub-tag-more, .cite-dropdown'
+    );
+  }
+
+  handleCardClick(e) {
+    if (!this.props.paper.summary) return;
+    if (this.isInteractiveTarget(e.target)) return;
+    this.setState(function(prev) {
+      return { flipped: !prev.flipped, citeOpen: false };
+    });
+  }
+
   setFilter(value) {
     window.dispatchEvent(new CustomEvent('setSearchFilter', { detail: { value: value } }));
     gaSendEvent('Interaction', 'Search', value);
@@ -416,7 +433,9 @@ class PaperCard extends React.Component {
     var tagsExpanded = this.state.tagsExpanded;
     var citeOpen = this.state.citeOpen;
     var copiedFormat = this.state.copiedFormat;
+    var flipped = this.state.flipped;
     var MAX_TAGS = 3;
+    var isFlippable = !!paper.summary;
 
     var authors = paper.authors;
     var displayAuthors = authors.slice();
@@ -426,8 +445,7 @@ class PaperCard extends React.Component {
     var visibleTags = tagsExpanded ? allTags : allTags.slice(0, MAX_TAGS);
     var hiddenCount = allTags.length - MAX_TAGS;
 
-    // Award: first award body
-    var firstAward = paper.awards && paper.awards.length > 0 ? paper.awards[0].body : null;
+    var allAwards = paper.awards && paper.awards.length > 0 ? paper.awards : [];
 
     // PDF link
     var pdfLink = paper.html_paper_url || ("/papers/" + paper.id + "/serve");
@@ -437,7 +455,23 @@ class PaperCard extends React.Component {
     var summaryLink = paper.tweets;
 
     return (
-      <div className="pub-card">
+      <div className={'pub-card' + (flipped ? ' is-flipped' : '') + (isFlippable ? ' is-flippable' : '')} onClick={this.handleCardClick}>
+        <div className="pub-card-flipper">
+
+        {/* Back face — one-sentence takeaway */}
+        <div className="pub-card-face pub-card-back">
+          <div className="pub-takeaway-back">
+            <button className="pub-back-close" onClick={() => this.setState({ flipped: false })}>↺ back</button>
+            <div className="pub-takeaway-text">{paper.summary}</div>
+            <div className="pub-takeaway-title">{paper.title}</div>
+          </div>
+        </div>
+
+        {/* Front face */}
+        <div className="pub-card-face pub-card-front">
+        {isFlippable && (
+          <div className="pub-flip-cue" aria-hidden="true">↺ takeaway</div>
+        )}
         <div className="pub-card-inner">
           <div className="pub-thumb">
             {this.props.thumbnail ? (
@@ -455,14 +489,16 @@ class PaperCard extends React.Component {
           </div>
 
           <div className="pub-content">
-            {firstAward && (
-              <div className="pub-award">
-                <svg width="11" height="11" viewBox="0 0 11 11" fill="currentColor">
-                  <path d="M5.5 1l1.18 2.4 2.65.38-1.92 1.87.45 2.64L5.5 7.1 3.14 8.29l.45-2.64L1.67 3.78l2.65-.38z"/>
-                </svg>
-                {firstAward}
-              </div>
-            )}
+            {allAwards.map(function(award) {
+              return (
+                <div key={award.id || award.body} className="pub-award">
+                  <svg width="11" height="11" viewBox="0 0 11 11" fill="currentColor">
+                    <path d="M5.5 1l1.18 2.4 2.65.38-1.92 1.87.45 2.64L5.5 7.1 3.14 8.29l.45-2.64L1.67 3.78l2.65-.38z"/>
+                  </svg>
+                  {award.body}
+                </div>
+              );
+            })}
 
             <a
               className="pub-title"
@@ -534,9 +570,23 @@ class PaperCard extends React.Component {
             )}
 
             <div className="pub-actions">
-              {hasPDF && (
+              {paper.project_page_url && (
                 <a
                   className="pub-action-primary"
+                  href={paper.project_page_url}
+                  target="_blank"
+                  aria-label={"Project page: " + paper.title}
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v9a1.5 1.5 0 0 1-1.5 1.5H9v1h1.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1H7v-1H2.5A1.5 1.5 0 0 1 1 11.5v-9zM2.5 2a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-11z"/>
+                  </svg>
+                  {' '}Project Page
+                </a>
+              )}
+
+              {hasPDF && (
+                <a
+                  className={paper.project_page_url ? 'pub-action-secondary' : 'pub-action-primary'}
                   href={pdfLink}
                   target="_blank"
                   aria-label={"View PDF: " + paper.title}
@@ -554,7 +604,7 @@ class PaperCard extends React.Component {
                   className="pub-action-secondary"
                   href={summaryLink}
                   target="_blank"
-                  aria-label={"Read summary: " + paper.title}
+                  aria-label={"Tweet thread: " + paper.title}
                 >
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M14 1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3.5l2.5 3 2.5-3H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/>
@@ -655,6 +705,9 @@ class PaperCard extends React.Component {
             </div>
           </div>
         </div>
+        </div>{/* pub-card-front */}
+
+        </div>{/* pub-card-flipper */}
       </div>
     );
   }
@@ -706,32 +759,65 @@ class Paper extends React.Component {
 class PaperForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = props.paper;
+    var p = props.paper || {};
+    this.state = {
+      title:            p.title || '',
+      venue:            p.venue || '',
+      selfOrder:        p.selfOrder != null ? String(p.selfOrder) : '',
+      year:             p.year != null ? String(p.year) : '',
+      authors:          (p.authors || []).map(function(a) { return a.name; }).join(', '),
+      awards:           (p.awards || []).map(function(a) { return a.body; }).join(', '),
+      type:             p.type != null ? p.type : '',
+      thumbnail:        null,
+      pdf:              null,
+      downloads:        p.downloads != null ? String(p.downloads) : '',
+      slides:           null,
+      html_slides_url:  p.html_slides_url || '',
+      html_paper_url:   p.html_paper_url || '',
+      presentation_url: p.presentation_url || '',
+      project_page_url: p.project_page_url || '',
+      video_url:        p.video_url || '',
+      summary:          p.summary || '',
+      tweets:           p.tweets || '',
+      tags:             p.tags || ''
+    };
     this._handleSubmit = this._handleSubmit.bind(this);
+    this._set = this._set.bind(this);
+  }
+
+  _set(field) {
+    var self = this;
+    return function(value) {
+      var update = {};
+      update[field] = value;
+      self.setState(update);
+    };
   }
 
   _handleSubmit(e) {
     e.preventDefault();
+    var s = this.state;
     var paper = {
       paper: {
-        title: this.refs.title.getValue(),
-        venue: this.refs.venue.getValue(),
-        year: this.refs.year.getValue(),
-        self_order: this.refs.selfOrder.getValue(),
-        authors: this.refs.authors.getValue(),
-        awards: this.refs.awards.getValue(),
-        backing_type: this.refs.type.getValue(),
-        thumbnail: this.refs.thumbnail.getValue(),
-        pdf: this.refs.pdf.getValue(),
-        downloads: this.refs.downloads.getValue(),
-        slides: this.refs.slides.getValue(),
-        html_slides_url: this.refs.htmlSlides.getValue(),
-        html_paper_url: this.refs.htmlPaper.getValue(),
-        presentation_url: this.refs.presentation.getValue(),
-        video_url: this.refs.video.getValue(),
-        summary: this.refs.summary.getValue(),
-        tweets: this.refs.tweets.getValue(),
-        tags: this.refs.tags.getValue()
+        title:            s.title,
+        venue:            s.venue,
+        year:             s.year,
+        self_order:       s.selfOrder,
+        authors:          s.authors,
+        awards:           s.awards,
+        backing_type:     s.type,
+        thumbnail:        s.thumbnail,
+        pdf:              s.pdf,
+        downloads:        s.downloads,
+        slides:           s.slides,
+        html_slides_url:  s.html_slides_url,
+        html_paper_url:   s.html_paper_url,
+        presentation_url: s.presentation_url,
+        project_page_url: s.project_page_url,
+        video_url:        s.video_url,
+        summary:          s.summary,
+        tweets:           s.tweets,
+        tags:             s.tags
       }
     };
 
@@ -756,28 +842,28 @@ class PaperForm extends React.Component {
   }
 
   render() {
-    var authorsValue = this.state.authors.map(function(a) { return a.name; }).join(", ");
-    var awardsValue = this.state.awards.map(function(a) { return a.body; }).join(", ");
-
+    var s = this.state;
     return (
       <form className="paper-form form-horizontal" onSubmit={this._handleSubmit} encType="multipart/form-data">
-        <InputField name="Title" type="text" value={this.state.title} ref="title" />
-        <InputField name="Venue" type="text" value={this.state.venue} ref="venue" />
-        <InputField name="Self Order" type="number" value={this.state.selfOrder} ref="selfOrder" />
-        <InputField name="Year" type="number" value={this.state.year} ref="year" />
-        <InputField type="text" name="Authors" value={authorsValue} ref="authors" />
-        <InputField type="text" name="Awards" value={awardsValue} ref="awards" />
-        <SelectField name="Type" options={this._paperTypeOptions()} value={this.state.type} ref="type" />
-        <FileField name="Thumbnail" ref="thumbnail" />
-        <FileField name="PDF" ref="pdf" />
-        <FileField name="Slides" ref="slides" />
-        <InputField type="text" name="HTML Slides" value={this.state.html_slides_url} ref="htmlSlides" />
-        <InputField type="text" name="HTML Paper" value={this.state.html_paper_url} ref="htmlPaper" />
-        <InputField type="text" name="Presentation URL" value={this.state.presentation_url} ref="presentation" />
-        <InputField type="text" name="Video URL" value={this.state.video_url} ref="video" />
-        <InputField type="text" name="Tweet URL" value={this.state.tweets} ref="tweets" />
-        <InputField type="text" name="Summary" value={this.state.summary} ref="summary" />
-        <InputField name="Downloads" type="number" value={this.state.downloads} ref="downloads" />
+        <InputField name="Title"         type="text"   value={s.title}            onChange={this._set('title')} />
+        <InputField name="Venue"         type="text"   value={s.venue}            onChange={this._set('venue')} />
+        <InputField name="Self Order"    type="number" value={s.selfOrder}        onChange={this._set('selfOrder')} />
+        <InputField name="Year"          type="number" value={s.year}             onChange={this._set('year')} />
+        <InputField name="Authors"       type="text"   value={s.authors}          onChange={this._set('authors')} />
+        <InputField name="Awards"        type="text"   value={s.awards}           onChange={this._set('awards')} />
+        <SelectField name="Type" options={this._paperTypeOptions()} value={s.type} onChange={this._set('type')} />
+        <FileField name="Thumbnail" onChange={this._set('thumbnail')} />
+        <FileField name="PDF"       onChange={this._set('pdf')} />
+        <FileField name="Slides"    onChange={this._set('slides')} />
+        <InputField name="HTML Slides"     type="text" value={s.html_slides_url}  onChange={this._set('html_slides_url')} />
+        <InputField name="HTML Paper"      type="text" value={s.html_paper_url}   onChange={this._set('html_paper_url')} />
+        <InputField name="Presentation URL" type="text" value={s.presentation_url} onChange={this._set('presentation_url')} />
+        <InputField name="Project Page URL" type="text" value={s.project_page_url} onChange={this._set('project_page_url')} />
+        <InputField name="Video URL"       type="text" value={s.video_url}        onChange={this._set('video_url')} />
+        <InputField name="Tweet URL"       type="text" value={s.tweets}           onChange={this._set('tweets')} />
+        <InputField name="Tags"            type="text" value={s.tags}             onChange={this._set('tags')} />
+        <InputField name="Summary"         type="text" value={s.summary}          onChange={this._set('summary')} />
+        <InputField name="Downloads"       type="number" value={s.downloads}      onChange={this._set('downloads')} />
         <SubmitButton/>
       </form>
     );

@@ -82,19 +82,31 @@ class PaperAward extends React.Component {
 class AwardForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = props.award;
+    var a = props.award || {};
+    this.state = {
+      year:     a.year != null ? String(a.year) : '',
+      body:     a.body || '',
+      pinned:   !!a.pinned,
+      paper_id: a.paper ? a.paper.id : ''
+    };
     this._handleSubmit = this._handleSubmit.bind(this);
-    this._awardPaperOptions = this._awardPaperOptions.bind(this);
+    this._set = this._set.bind(this);
+  }
+
+  _set(field) {
+    var self = this;
+    return function(value) { var u = {}; u[field] = value; self.setState(u); };
   }
 
   _handleSubmit(e) {
     e.preventDefault();
+    var s = this.state;
     var award = {
       award: {
-        year: this.refs.year.getValue(),
-        body: this.refs.body.getValue(),
-        pinned: this.refs.pinned.getChecked(),
-        paper_id: this.refs.paperID.getValue()
+        year:     s.year,
+        body:     s.body,
+        pinned:   s.pinned,
+        paper_id: s.paper_id
       }
     };
 
@@ -110,19 +122,17 @@ class AwardForm extends React.Component {
     return false;
   }
 
-  _awardPaperOptions() {
-    return this.props.papers.map(function(paper) {
-      return { "value": paper.id, "rendered": paper.title };
-    });
-  }
-
   render() {
+    var s = this.state;
+    var paperOptions = this.props.papers.map(function(paper) {
+      return { value: paper.id, rendered: paper.title };
+    });
     return (
       <form className="paper-form form-horizontal" onSubmit={this._handleSubmit}>
-        <InputField name="Year" type="number" value={this.state.year} ref="year" />
-        <InputField type="text" name="Body" value={this.state.body} ref="body" />
-        <SelectField name="Paper" options={this._awardPaperOptions()} value={this.state.paper.id} ref="paperID" />
-        <Checkbox name="Pinned" label="Pinned?" ref="pinned" checked={this.state.pinned} />
+        <InputField name="Year"   type="number" value={s.year}     onChange={this._set('year')} />
+        <InputField name="Body"   type="text"   value={s.body}     onChange={this._set('body')} />
+        <SelectField name="Paper" options={paperOptions}  value={s.paper_id} onChange={this._set('paper_id')} />
+        <Checkbox name="Pinned" label="Pinned?" checked={s.pinned} onChange={this._set('pinned')} />
         <SubmitButton/>
       </form>
     );

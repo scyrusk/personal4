@@ -101,19 +101,31 @@ class Update extends React.Component  {
 };
 
 class UpdateForm extends React.Component {
-  constructor (props) {
+  constructor(props) {
     super(props);
-    this.state = props.update;
+    var u = props.update || {};
+    this.state = {
+      date:         u.wireDate || '',
+      text:         u.text || '',
+      backing_type: u.backing_type != null ? u.backing_type : ''
+    };
     this._handleSubmit = this._handleSubmit.bind(this);
+    this._set = this._set.bind(this);
+  }
+
+  _set(field) {
+    var self = this;
+    return function(value) { var u = {}; u[field] = value; self.setState(u); };
   }
 
   _handleSubmit(e) {
     e.preventDefault();
+    var s = this.state;
     var update = {
       update: {
-        date: this.refs.date.getValue(),
-        text: this.refs.text.getValue(),
-        backing_type: this.refs.type.getValue()
+        date:         s.date,
+        text:         s.text,
+        backing_type: s.backing_type
       }
     };
 
@@ -122,23 +134,20 @@ class UpdateForm extends React.Component {
       dataType: 'json',
       type: this.props.action,
       data: update,
-      success: function(data) {
-        window.location.href = "/"
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
+      success: function(data) { window.location.href = "/"; }.bind(this),
+      error: function(xhr, status, err) { console.error(this.props.url, status, err.toString()); }.bind(this)
     });
 
     return false;
   }
 
   render() {
+    var s = this.state;
     return (
       <form className="paper-form form-horizontal" onSubmit={this._handleSubmit}>
-        <InputField name="Date" type="date" value={this.state.wireDate} ref="date" />
-        <InputField name="Text" type="text" value={this.state.text} ref="text" />
-        <SelectField name="Type" options={this.props.updateTypes} value={this.state.backing_type} ref="type" />
+        <InputField name="Date" type="date" value={s.date}         onChange={this._set('date')} />
+        <InputField name="Text" type="text" value={s.text}         onChange={this._set('text')} />
+        <SelectField name="Type" options={this.props.updateTypes}  value={s.backing_type} onChange={this._set('backing_type')} />
         <SubmitButton/>
       </form>
     );

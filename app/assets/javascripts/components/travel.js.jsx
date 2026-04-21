@@ -90,18 +90,31 @@ class Travel extends React.createClass {
 class TravelForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = props.travel;
+    var t = props.travel || {};
+    this.state = {
+      date:     t.wireDate || '',
+      title:    t.title || '',
+      location: t.location || '',
+      link:     t.link || ''
+    };
     this._handleSubmit = this._handleSubmit.bind(this);
+    this._set = this._set.bind(this);
+  }
+
+  _set(field) {
+    var self = this;
+    return function(value) { var u = {}; u[field] = value; self.setState(u); };
   }
 
   _handleSubmit(e) {
     e.preventDefault();
+    var s = this.state;
     var travel = {
       travel: {
-        date: this.refs.date.getValue(),
-        title: this.refs.title.getValue(),
-        location: this.refs.location.getValue(),
-        link: this.refs.link.getValue()
+        date:     s.date,
+        title:    s.title,
+        location: s.location,
+        link:     s.link
       }
     };
 
@@ -110,24 +123,21 @@ class TravelForm extends React.Component {
       dataType: 'json',
       type: this.props.action,
       data: travel,
-      success: function(data) {
-        window.location.href = "/"
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
+      success: function(data) { window.location.href = "/"; }.bind(this),
+      error: function(xhr, status, err) { console.error(this.props.url, status, err.toString()); }.bind(this)
     });
 
     return false;
   }
 
   render() {
+    var s = this.state;
     return (
       <form className="update-form form-horizontal" onSubmit={this._handleSubmit}>
-        <InputField name="Date" type="date" value={this.state.wireDate} ref="date" />
-        <InputField name="Title" type="text" value={this.state.title} ref="title" />
-        <InputField name="Location" type="text" value={this.state.location} ref="location" />
-        <InputField name="Link" type="text" value={this.state.link} ref="link" />
+        <InputField name="Date"     type="date" value={s.date}     onChange={this._set('date')} />
+        <InputField name="Title"    type="text" value={s.title}    onChange={this._set('title')} />
+        <InputField name="Location" type="text" value={s.location} onChange={this._set('location')} />
+        <InputField name="Link"     type="text" value={s.link}     onChange={this._set('link')} />
         <SubmitButton/>
       </form>
     );

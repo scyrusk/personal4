@@ -1,19 +1,16 @@
 class InputField extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { value: this.props.value };
-    this.getValue = this.getValue.bind(this);
+    this.state = { value: this.props.value != null ? this.props.value : '' };
     this.handleChange = this.handleChange.bind(this);
   }
 
-  getValue() {
-    return this.state.value;
-  }
+  getValue() { return this.state.value; }
 
-  handleChange() {
-    this.setState({
-      value: this.refs[this.props.name].value
-    });
+  handleChange(e) {
+    var value = e.target.value;
+    this.setState({ value: value });
+    if (this.props.onChange) this.props.onChange(value);
   }
 
   render() {
@@ -26,7 +23,6 @@ class InputField extends React.Component {
           <input
             type={this.props.type}
             value={this.state.value}
-            ref={this.props.name}
             onChange={this.handleChange}
             className="form-control" />
         </div>
@@ -38,26 +34,16 @@ class InputField extends React.Component {
 class FileField extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { value: this.props.value };
-    this.getValue = this.getValue.bind(this);
     this.handleFile = this.handleFile.bind(this);
-  }
-
-  getValue() {
-    return this.state.value;
   }
 
   handleFile(e) {
     var self = this;
     var reader = new FileReader();
     var file = e.target.files[0];
-
     reader.onload = function(upload) {
-      self.setState({
-        value: upload.target.result,
-      });
-    }
-
+      if (self.props.onChange) self.props.onChange(upload.target.result);
+    };
     reader.readAsDataURL(file);
   }
 
@@ -70,7 +56,6 @@ class FileField extends React.Component {
         <div className="col-xs-offset-1 col-xs-10">
           <input
             type="file"
-            ref={this.props.name}
             className="form-control"
             onChange={this.handleFile} />
         </div>
@@ -83,18 +68,13 @@ class SelectField extends React.Component {
   constructor(props) {
     super(props);
     this.state = { value: this.props.value };
-    this.getValue = this.getValue.bind(this);
     this.handleSelection = this.handleSelection.bind(this);
   }
 
-  getValue() {
-    return this.state.value;
-  }
-
   handleSelection(e) {
-    this.setState({
-      value: e.target.value
-    });
+    var value = e.target.value;
+    this.setState({ value: value });
+    if (this.props.onChange) this.props.onChange(value);
   }
 
   render() {
@@ -113,7 +93,6 @@ class SelectField extends React.Component {
         </label>
         <div className="col-xs-offset-1 col-xs-10">
           <select
-            ref={this.props.name}
             className="form-control"
             onChange={this.handleSelection}
             value={this.state.value}>
@@ -141,21 +120,14 @@ class SubmitButton extends React.Component {
 class Checkbox extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { isChecked: this.props.checked };
-    this.getChecked = this.getChecked.bind(this);
+    this.state = { isChecked: !!this.props.checked };
     this.toggleCheckbox = this.toggleCheckbox.bind(this);
   }
 
-  getChecked() {
-    return this.state.isChecked;
-  }
-
   toggleCheckbox() {
-    this.setState({
-      isChecked: ! this.state.isChecked
-    });
-
-    // this.props.handleCheckboxChange(this.props.label);
+    var next = !this.state.isChecked;
+    this.setState({ isChecked: next });
+    if (this.props.onChange) this.props.onChange(next);
   }
 
   render() {
@@ -165,12 +137,11 @@ class Checkbox extends React.Component {
           {this.props.label}
         </label>
         <div className="col-xs-offset-1 col-xs-10">
-            <input
-              type="checkbox"
-              value={this.props.label}
-              checked={this.state.isChecked}
-              ref={this.props.name}
-              onChange={this.toggleCheckbox} />
+          <input
+            type="checkbox"
+            value={this.props.label}
+            checked={this.state.isChecked}
+            onChange={this.toggleCheckbox} />
         </div>
       </div>
     );
