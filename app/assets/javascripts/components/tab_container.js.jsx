@@ -100,7 +100,7 @@ class TabContainer extends React.Component {
 
   render() {
     const { activeTab, query, activeFilter, resultCount, topTags } = this.state;
-    const FILTERS = ["Award-winning"].concat(topTags);
+    const FILTERS = ["Award-winning", "Most downloaded"].concat(topTags);
 
     return (
       <div className="pubs-section">

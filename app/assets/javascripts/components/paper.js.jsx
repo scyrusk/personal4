@@ -135,6 +135,7 @@ function randomString(n) {
 var FILTER_MAP = {
   "Award-winning": function(p) { return p.awards && p.awards.length > 0; }
 };
+var MOST_DOWNLOADED_FILTER = "Most downloaded";
 
 function getTopTags(papers, n) {
   var counts = {};
@@ -150,11 +151,40 @@ function getTopTags(papers, n) {
 
 function paperMatchesFilter(paper, activeFilter) {
   if (!activeFilter) return true;
+  if (activeFilter === MOST_DOWNLOADED_FILTER) return true;
   if (FILTER_MAP[activeFilter]) return FILTER_MAP[activeFilter](paper);
   // Tag-based filter (case-insensitive)
   var needle = activeFilter.toLowerCase();
   var tags = (paper.tags || "").split(";").map(function(t) { return t.trim().toLowerCase(); });
   return tags.indexOf(needle) >= 0;
+}
+
+function parseDownloads(downloads) {
+  var parsed = parseInt(downloads, 10);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+function sortByDownloadsThenRecency(a, b) {
+  var downloadDiff = parseDownloads(b.downloads) - parseDownloads(a.downloads);
+  if (downloadDiff !== 0) return downloadDiff;
+  if (b.year !== a.year) return b.year - a.year;
+  return b.id - a.id;
+}
+
+function getVisiblePapers(papers, query, activeFilter) {
+  var base = papers.filter(function(paper) {
+    var matchQ = paperMatchesQuery(paper, query);
+    var matchF = paperMatchesFilter(paper, activeFilter);
+    return matchQ && matchF;
+  });
+
+  if (activeFilter === MOST_DOWNLOADED_FILTER) {
+    return base.slice().sort(sortByDownloadsThenRecency).slice(0, 10);
+  }
+
+  return base.slice().sort(function(a, b) {
+    return b.year !== a.year ? b.year - a.year : b.id - a.id;
+  });
 }
 
 function escapeRegExp(string) {
@@ -218,11 +248,7 @@ class PaperContainer extends React.Component {
   getFilteredCount() {
     var query = (this.props.query || "").toLowerCase().trim();
     var activeFilter = this.props.activeFilter;
-    return this.state.data.filter(function(paper) {
-      var matchQ = paperMatchesQuery(paper, query);
-      var matchF = paperMatchesFilter(paper, activeFilter);
-      return matchQ && matchF;
-    }).length;
+    return getVisiblePapers(this.state.data, query, activeFilter).length;
   }
 
   render() {
@@ -245,17 +271,26 @@ class PaperList extends React.Component {
     var assets = this.props.assets;
     var noThumb = assets && assets["noThumb"];
 
-    // Filter papers
-    var filtered = this.props.data.filter(function(paper) {
-      var matchQ = paperMatchesQuery(paper, query);
-      var matchF = paperMatchesFilter(paper, activeFilter);
-      return matchQ && matchF;
-    });
+    // Filter and sort papers based on active mode
+    var filtered = getVisiblePapers(this.props.data, query, activeFilter);
 
-    // Sort: by year desc, then id desc
-    filtered = filtered.slice().sort(function(a, b) {
-      return b.year !== a.year ? b.year - a.year : b.id - a.id;
-    });
+    if (activeFilter === MOST_DOWNLOADED_FILTER) {
+      return (
+        <div className="paper-list">
+          {filtered.map(function(paper) {
+            var thumb = paper.thumbnail || noThumb;
+            return (
+              <PaperCard
+                key={paper.id}
+                paper={paper}
+                thumbnail={thumb}
+                assets={assets}
+              />
+            );
+          })}
+        </div>
+      );
+    }
 
     // Group by year
     var byYear = {};
@@ -570,23 +605,9 @@ class PaperCard extends React.Component {
             )}
 
             <div className="pub-actions">
-              {paper.project_page_url && (
-                <a
-                  className="pub-action-primary"
-                  href={paper.project_page_url}
-                  target="_blank"
-                  aria-label={"Project page: " + paper.title}
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v9a1.5 1.5 0 0 1-1.5 1.5H9v1h1.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1H7v-1H2.5A1.5 1.5 0 0 1 1 11.5v-9zM2.5 2a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-11z"/>
-                  </svg>
-                  {' '}Project Page
-                </a>
-              )}
-
               {hasPDF && (
                 <a
-                  className={paper.project_page_url ? 'pub-action-secondary' : 'pub-action-primary'}
+                  className="pub-action-primary"
                   href={pdfLink}
                   target="_blank"
                   aria-label={"View PDF: " + paper.title}
@@ -596,6 +617,20 @@ class PaperCard extends React.Component {
                     <path d="M9 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5L9 1zm0 1.5L12.5 5H9V2.5zM5.5 9.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1zm0-2h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1zm0 4h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1 0-1z"/>
                   </svg>
                   {' '}View PDF
+                </a>
+              )}
+
+              {paper.project_page_url && (
+                <a
+                  className="pub-action-secondary"
+                  href={paper.project_page_url}
+                  target="_blank"
+                  aria-label={"Project page: " + paper.title}
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v9a1.5 1.5 0 0 1-1.5 1.5H9v1h1.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1H7v-1H2.5A1.5 1.5 0 0 1 1 11.5v-9zM2.5 2a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-11z"/>
+                  </svg>
+                  {' '}Project Page
                 </a>
               )}
 
