@@ -162,14 +162,15 @@ function escapeRegExp(string) {
 
 function paperMatchesQuery(paper, ft) {
   if (ft === "") return true;
-  var re = escapeRegExp(ft);
+  var q = ft.toLowerCase();
+  var re = new RegExp(escapeRegExp(q), 'i');
   return (
-    paper.title.toLowerCase().search(re) >= 0 ||
-    paper.venue.toLowerCase().indexOf(ft) >= 0 ||
-    paper.year.toString().indexOf(ft) >= 0 ||
-    paper.authors.some(function(a) { return a.name.toLowerCase().search(re) >= 0; }) ||
-    paper.awards.some(function(a) { return a.body.toLowerCase().search(re) >= 0; }) ||
-    (paper.tags || "").toLowerCase().search(re) >= 0
+    re.test(paper.title) ||
+    re.test(paper.venue) ||
+    paper.year.toString().indexOf(q) >= 0 ||
+    paper.authors.some(function(a) { return re.test(a.name); }) ||
+    paper.awards.some(function(a) { return re.test(a.body); }) ||
+    re.test(paper.tags || "")
   );
 }
 
