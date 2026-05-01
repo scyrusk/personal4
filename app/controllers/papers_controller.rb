@@ -123,6 +123,8 @@ class PapersController < ApplicationController
           :slides,
           :html_slides_url,
           :html_paper_url,
+          :doi,
+          :bibtex,
           :summary,
           :presentation_url,
           :video_url,

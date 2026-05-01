@@ -16,6 +16,7 @@
   --bg:          #fafaf8;
   --bg-card:     #ffffff;
   --border:      #e2e2dc;
+  --focus-ring:  #1f6fe5;
   --serif:       'IBM Plex Serif', Georgia, serif;
   --sans:        'IBM Plex Sans', system-ui, sans-serif;
   --mono:        'IBM Plex Mono', monospace;
@@ -43,6 +44,11 @@ a:hover {
   text-decoration: none;
   color: var(--green);
   background-color: transparent;
+}
+
+a:focus-visible, button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 ::-webkit-scrollbar { width: 6px; }
@@ -81,7 +87,6 @@ a:hover {
   border-radius: 50%;
   overflow: hidden;
   margin-bottom: 14px;
-  background: var(--green-light);
 
   img {
     width: 100%;
@@ -167,6 +172,18 @@ a:hover {
   }
 }
 
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .sidebar-link {
+    &.active {
+      font-weight: 700;
+    }
+  }
+}
+
 /* ─── MAIN CONTENT ──────────────────────────────────────── */
 .main {
   flex: 1;
@@ -190,6 +207,7 @@ a:hover {
 /* ─── ABOUT ─────────────────────────────────────────────── */
 .about-section {
   margin-bottom: 40px;
+  scroll-margin-top: 84px;
 }
 
 .about-text {
@@ -248,6 +266,31 @@ a:hover {
   border-radius: 8px;
   padding: 20px 24px;
   margin-bottom: 40px;
+}
+
+.recruiting-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.recruiting-faq {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+
+  a {
+    font-size: 12px;
+    color: var(--green);
+    text-decoration: underline;
+  }
+}
+
+.recruiting-faq-body p {
+  font-size: 12px;
+  color: var(--text-mid);
+  margin: 0 0 4px;
 }
 
 .recruiting-status {
@@ -337,6 +380,7 @@ a:hover {
 /* ─── STUDENTS ──────────────────────────────────────────── */
 .students-section {
   margin-bottom: 48px;
+  scroll-margin-top: 84px;
 }
 
 .students-section-head {
@@ -423,6 +467,7 @@ a:hover {
 
 /* ─── PUBLICATIONS STICKY HEADER ────────────────────────── */
 .pubs-section { margin-bottom: 48px; }
+.pubs-section { scroll-margin-top: 84px; }
 
 .pubs-sticky-header {
   position: sticky;
@@ -542,6 +587,31 @@ a:hover {
   &.active { background: var(--green); color: white; border-color: var(--green); }
 }
 
+.pubs-active-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+}
+
+.active-filter-pill {
+  font-size: 12px;
+  border: 1px solid var(--green-mid);
+  color: var(--green);
+  background: var(--green-light);
+  border-radius: 14px;
+  padding: 5px 10px;
+}
+
+.active-filter-reset {
+  border: none;
+  background: transparent;
+  color: var(--text-mid);
+  text-decoration: underline;
+  font-size: 12px;
+}
+
 /* ─── PUB CARDS ─────────────────────────────────────────── */
 .year-group { margin-top: 28px; }
 
@@ -570,9 +640,49 @@ a:hover {
   margin-bottom: 10px;
   transition: border-color 0.15s, box-shadow 0.15s;
   perspective: 1200px;
+  position: relative;
+  z-index: 1;
 
   &:hover { border-color: #c5d9ca; box-shadow: 0 2px 8px rgba(42,107,60,0.06); }
   &.unselected { opacity: 0.45; }
+}
+
+.pub-card.has-overlay-open {
+  z-index: 60;
+}
+
+.featured-papers {
+  margin-top: 18px;
+}
+
+.featured-papers-head {
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--green);
+  margin-bottom: 10px;
+}
+
+.pub-card.is-featured {
+  border-color: #bfd6c5;
+  box-shadow: 0 2px 10px rgba(42, 107, 60, 0.08);
+}
+
+.pub-featured-badge {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  z-index: 3;
+  background: #fff7e0;
+  color: #8a5e00;
+  border: 1px solid #f0d87a;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .pub-card.is-flippable {
@@ -675,14 +785,12 @@ a:hover {
 }
 
 .pub-takeaway-text {
-  font-family: var(--serif);
+  font-family: var(--sans);
   font-size: 15px;
   line-height: 1.65;
   color: var(--text);
-  font-style: italic;
-
-  &::before { content: '\201C'; color: var(--green); font-size: 1.4em; line-height: 0; vertical-align: -0.3em; margin-right: 2px; }
-  &::after  { content: '\201D'; color: var(--green); font-size: 1.4em; line-height: 0; vertical-align: -0.3em; margin-left:  2px; }
+  font-style: normal;
+  font-weight: 500;
 }
 
 .pub-takeaway-title {
@@ -790,6 +898,11 @@ a:hover {
 
 .pub-author-link, .pub-venue-link {
   cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
   &:hover { color: var(--green); text-decoration: underline; }
 }
 
@@ -823,6 +936,8 @@ a:hover {
   color: var(--green);
   border: 1px solid var(--green-mid);
   font-weight: 500;
+  cursor: pointer;
+  font-family: var(--sans);
 }
 
 .pub-tag-more {
@@ -900,6 +1015,44 @@ a:hover {
   display: inline-flex;
 }
 
+.pub-more-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.pub-more-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 190px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  z-index: 80;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pub-more-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-mid);
+  text-decoration: none;
+  padding: 7px 8px;
+  border-radius: 6px;
+
+  &:hover {
+    background: var(--green-light);
+    color: var(--green);
+    text-decoration: none;
+  }
+}
+
 .cite-dropdown {
   position: absolute;
   bottom: calc(100% + 6px);
@@ -909,8 +1062,23 @@ a:hover {
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 6px 24px rgba(0,0,0,0.12);
-  z-index: 30;
+  z-index: 80;
   overflow: hidden;
+}
+
+.papers-load-more-wrap {
+  padding-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.papers-load-more {
+  border: 1px solid var(--green-mid);
+  background: #fff;
+  color: var(--green);
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 8px 14px;
 }
 
 .cite-row {
@@ -970,6 +1138,28 @@ a:hover {
   padding: 8px 10px;
   margin: 0;
   color: var(--text);
+}
+
+@media (max-width: 1024px) {
+  :root { --sidebar-w: 200px; }
+
+  .page-wrap {
+    padding: 0 14px;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    width: 100%;
+    min-width: 0;
+    padding: 20px 0 12px;
+  }
+
+  .main {
+    padding: 26px 0 60px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1079,15 +1269,15 @@ a:hover {
 
 .mobile-menu-btn {
   background: none;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 7px 10px;
+  border: none;
+  padding: 4px;
   cursor: pointer;
-  font-size: 13px;
   color: var(--text-mid);
-  font-family: var(--sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  &:hover { border-color: var(--green); color: var(--green); }
+  &:hover { color: var(--green); }
 }
 
 /* ─── MOBILE DRAWER ─────────────────────────────────────── */
@@ -1101,29 +1291,47 @@ a:hover {
 }
 
 .mobile-drawer-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
+  display: none;
 }
 
 .mobile-drawer-panel {
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 260px;
+  inset: 0;
   background: var(--bg);
-  padding: 24px 20px;
+  padding: 56px 0 24px;
   overflow-y: auto;
+
+  .sidebar-photo,
+  .sidebar-name,
+  .sidebar-tagline,
+  .sidebar-social,
+  .sidebar-label {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
+  .sidebar-name { font-size: 22px; }
+  .sidebar-tagline { font-size: 15px; }
+
+  .sidebar-section { margin-top: 24px; }
+
+  .sidebar-nav { gap: 0; }
+
+  .sidebar-link {
+    display: block;
+    padding: 13px 28px;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
 }
 
 .mobile-drawer-close {
   position: absolute;
   top: 16px;
-  right: 16px;
+  right: 20px;
   background: none;
   border: none;
-  font-size: 22px;
+  font-size: 24px;
   cursor: pointer;
   color: var(--text-muted);
   line-height: 1;
@@ -1165,6 +1373,19 @@ a:hover {
   .pub-thumb { width: 100%; height: 120px; }
 
   .pubs-sticky-header { top: 53px; }
+  .pub-actions {
+    align-items: stretch;
+  }
+  .pub-action-primary, .pub-action-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+  .pub-more-wrap, .cite-wrapper {
+    width: 100%;
+  }
+  .pub-more-menu, .cite-dropdown {
+    width: 100%;
+  }
 }
 
 /* ─── ADMIN (keep bootstrap grid working) ───────────────── */

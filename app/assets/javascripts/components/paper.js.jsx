@@ -133,9 +133,11 @@ function randomString(n) {
 
 // ── FILTER HELPERS ──────────────────────────────────────
 var FILTER_MAP = {
-  "Award-winning": function(p) { return p.awards && p.awards.length > 0; }
+  "Award-winning": function(p) { return p.awards && p.awards.length > 0; },
+  "Featured": function(p) { return computeFeaturedScore(p) > 0; }
 };
 var MOST_DOWNLOADED_FILTER = "Most downloaded";
+var FEATURED_FILTER = "Featured";
 
 function getTopTags(papers, n) {
   var counts = {};
@@ -162,6 +164,24 @@ function paperMatchesFilter(paper, activeFilter) {
 function parseDownloads(downloads) {
   var parsed = parseInt(downloads, 10);
   return isNaN(parsed) ? 0 : parsed;
+}
+
+function computeFeaturedScore(paper) {
+  var awardsWeight = (paper.awards || []).length * 8;
+  var downloadsWeight = Math.min(parseDownloads(paper.downloads), 500) / 80;
+  var recencyWeight = Math.max(0, (paper.year || 0) - 2019) * 0.7;
+  var resourceCount = [paper.project_page_url, paper.video_url, paper.presentation_url, paper.slides, paper.tweets].filter(Boolean).length;
+  var resourceWeight = resourceCount * 0.9;
+  return awardsWeight + downloadsWeight + recencyWeight + resourceWeight;
+}
+
+function getFeaturedPapers(papers, maxCount) {
+  return papers.slice().sort(function(a, b) {
+    var diff = computeFeaturedScore(b) - computeFeaturedScore(a);
+    if (diff !== 0) return diff;
+    if (b.year !== a.year) return b.year - a.year;
+    return b.id - a.id;
+  }).slice(0, maxCount);
 }
 
 function sortByDownloadsThenRecency(a, b) {
@@ -209,8 +229,9 @@ function paperMatchesQuery(paper, ft) {
 class PaperContainer extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { data: [] };
+    this.state = { data: [], visibleCount: 50 };
     this.loadPapersFromServer = this.loadPapersFromServer.bind(this);
+    this.handleShowMore = this.handleShowMore.bind(this);
   }
 
   loadPapersFromServer() {
@@ -243,12 +264,21 @@ class PaperContainer extends React.Component {
         if (this.props.onTopTags) this.props.onTopTags(getTopTags(this.state.data, 5));
       }
     }
+    if (prevProps.query !== this.props.query || prevProps.activeFilter !== this.props.activeFilter) {
+      this.setState({ visibleCount: 50 });
+    }
   }
 
   getFilteredCount() {
     var query = (this.props.query || "").toLowerCase().trim();
     var activeFilter = this.props.activeFilter;
     return getVisiblePapers(this.state.data, query, activeFilter).length;
+  }
+
+  handleShowMore() {
+    this.setState(function(prev) {
+      return { visibleCount: prev.visibleCount + 50 };
+    });
   }
 
   render() {
@@ -258,6 +288,8 @@ class PaperContainer extends React.Component {
         assets={this.props.assets}
         query={this.props.query || ""}
         activeFilter={this.props.activeFilter || null}
+        visibleCount={this.state.visibleCount}
+        onShowMore={this.handleShowMore}
       />
     );
   }
@@ -270,14 +302,20 @@ class PaperList extends React.Component {
     var activeFilter = this.props.activeFilter;
     var assets = this.props.assets;
     var noThumb = assets && assets["noThumb"];
+    var visibleCount = this.props.visibleCount || 50;
 
     // Filter and sort papers based on active mode
     var filtered = getVisiblePapers(this.props.data, query, activeFilter);
+    var featured = getFeaturedPapers(filtered, 8);
+    var shouldShowFeatured = false;
+    var renderedCount = Math.min(filtered.length, visibleCount);
+    var paged = filtered.slice(0, renderedCount);
+    var hasMore = filtered.length > renderedCount;
 
     if (activeFilter === MOST_DOWNLOADED_FILTER) {
       return (
         <div className="paper-list">
-          {filtered.map(function(paper) {
+          {paged.map(function(paper) {
             var thumb = paper.thumbnail || noThumb;
             return (
               <PaperCard
@@ -288,13 +326,18 @@ class PaperList extends React.Component {
               />
             );
           })}
+          {hasMore && (
+            <div className="papers-load-more-wrap">
+              <button className="papers-load-more" onClick={this.props.onShowMore}>Render 50 more</button>
+            </div>
+          )}
         </div>
       );
     }
 
     // Group by year
     var byYear = {};
-    filtered.forEach(function(paper) {
+    paged.forEach(function(paper) {
       if (!byYear[paper.year]) byYear[paper.year] = [];
       byYear[paper.year].push(paper);
     });
@@ -310,6 +353,23 @@ class PaperList extends React.Component {
 
     return (
       <div className="paper-list">
+        {shouldShowFeatured && (
+          <div className="featured-papers">
+            <div className="featured-papers-head">Selected Publications · Start Here</div>
+            {featured.map(function(paper) {
+              var thumb = paper.thumbnail || noThumb;
+              return (
+                <PaperCard
+                  key={'featured-' + paper.id}
+                  paper={paper}
+                  thumbnail={thumb}
+                  assets={assets}
+                  featured={true}
+                />
+              );
+            })}
+          </div>
+        )}
         {years.map(function(year) {
           return (
             <div key={year} className="year-group">
@@ -328,6 +388,11 @@ class PaperList extends React.Component {
             </div>
           );
         })}
+        {hasMore && (
+          <div className="papers-load-more-wrap">
+            <button className="papers-load-more" onClick={this.props.onShowMore}>Render 50 more</button>
+          </div>
+        )}
       </div>
     );
   }
@@ -399,13 +464,16 @@ class PaperCard extends React.Component {
       tagsExpanded: false,
       citeOpen: false,
       copiedFormat: null,
-      flipped: false
+      flipped: false,
+      moreOpen: false
     };
     this.citeWrapRef = React.createRef();
+    this.moreWrapRef = React.createRef();
     this.handleCiteToggle = this.handleCiteToggle.bind(this);
     this.handleCopyFormat = this.handleCopyFormat.bind(this);
     this.handleDocClick = this.handleDocClick.bind(this);
     this.handleCardClick = this.handleCardClick.bind(this);
+    this.handleMoreToggle = this.handleMoreToggle.bind(this);
   }
 
   componentDidMount() {
@@ -421,12 +489,22 @@ class PaperCard extends React.Component {
     if (this.citeWrapRef.current && !this.citeWrapRef.current.contains(e.target)) {
       if (this.state.citeOpen) this.setState({ citeOpen: false });
     }
+    if (this.moreWrapRef.current && !this.moreWrapRef.current.contains(e.target)) {
+      if (this.state.moreOpen) this.setState({ moreOpen: false });
+    }
   }
 
   handleCiteToggle(e) {
     e.stopPropagation();
     this.setState(function(prev) {
-      return { citeOpen: !prev.citeOpen, copiedFormat: null };
+      return { citeOpen: !prev.citeOpen, copiedFormat: null, moreOpen: false };
+    });
+  }
+
+  handleMoreToggle(e) {
+    e.stopPropagation();
+    this.setState(function(prev) {
+      return { moreOpen: !prev.moreOpen, citeOpen: false };
     });
   }
 
@@ -446,7 +524,7 @@ class PaperCard extends React.Component {
   isInteractiveTarget(target) {
     if (!target || !target.closest) return false;
     return !!target.closest(
-      'a, button, input, textarea, select, label, [role="button"], [role="menuitem"], .pub-author-link, .pub-venue-link, .pub-tag, .pub-tag-more, .cite-dropdown'
+      'a, button, input, textarea, select, label, [role="button"], [role="menuitem"], .pub-author-link, .pub-venue-link, .pub-tag, .pub-tag-more, .cite-dropdown, .pub-more-menu'
     );
   }
 
@@ -463,12 +541,22 @@ class PaperCard extends React.Component {
     gaSendEvent('Interaction', 'Search', value);
   }
 
+  renderMoreAction(href, label, iconPath, eventLabel) {
+    return (
+      <a className="pub-more-item" href={href} target="_blank" rel="noopener noreferrer" onClick={eventLabel ? function() { gaSendEvent('Publications', eventLabel, this.props.paper.id); }.bind(this) : null}>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d={iconPath} /></svg>
+        {label}
+      </a>
+    );
+  }
+
   render() {
     var paper = this.props.paper;
     var tagsExpanded = this.state.tagsExpanded;
     var citeOpen = this.state.citeOpen;
     var copiedFormat = this.state.copiedFormat;
     var flipped = this.state.flipped;
+    var moreOpen = this.state.moreOpen;
     var MAX_TAGS = 3;
     var isFlippable = !!paper.summary;
 
@@ -488,9 +576,16 @@ class PaperCard extends React.Component {
 
     // Summary link (tweet thread)
     var summaryLink = paper.tweets;
+    var hasSecondaryActions = !!(paper.project_page_url || summaryLink || paper.slides || paper.video_url || paper.presentation_url);
 
     return (
-      <div className={'pub-card' + (flipped ? ' is-flipped' : '') + (isFlippable ? ' is-flippable' : '')} onClick={this.handleCardClick}>
+      <div className={
+        'pub-card' +
+        (flipped ? ' is-flipped' : '') +
+        (isFlippable ? ' is-flippable' : '') +
+        (this.props.featured ? ' is-featured' : '') +
+        ((moreOpen || citeOpen) ? ' has-overlay-open' : '')
+      } onClick={this.handleCardClick}>
         <div className="pub-card-flipper">
 
         {/* Back face — one-sentence takeaway */}
@@ -504,13 +599,16 @@ class PaperCard extends React.Component {
 
         {/* Front face */}
         <div className="pub-card-face pub-card-front">
+        {this.props.featured && (
+          <div className="pub-featured-badge">Featured</div>
+        )}
         {isFlippable && (
           <div className="pub-flip-cue" aria-hidden="true">↺ takeaway</div>
         )}
         <div className="pub-card-inner">
           <div className="pub-thumb">
             {this.props.thumbnail ? (
-              <img src={this.props.thumbnail} alt="" />
+              <img src={this.props.thumbnail} alt="" loading="lazy" decoding="async" />
             ) : (
               <div className="pub-thumb-placeholder">
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -557,11 +655,13 @@ class PaperCard extends React.Component {
                     ) : isSelf ? (
                       <strong>{name}</strong>
                     ) : (
-                      <span
+                      <button
+                        type="button"
                         className="pub-author-link"
                         onClick={() => this.setFilter(name)}
                         title={"Filter by " + name}
-                      >{name}</span>
+                        aria-label={"Filter by author " + name}
+                      >{name}</button>
                     )}
                   </span>
                 );
@@ -569,34 +669,40 @@ class PaperCard extends React.Component {
             </div>
 
             <div className="pub-venue">
-              <span
+              <button
+                type="button"
                 className="pub-venue-link"
                 onClick={() => this.setFilter(paper.venue)}
                 title={"Filter by venue"}
-              >{paper.venue}</span>
+                aria-label={"Filter by venue " + paper.venue}
+              >{paper.venue}</button>
               {' · '}
-              <span
+              <button
+                type="button"
                 className="pub-venue-link"
                 onClick={() => this.setFilter(paper.year.toString())}
                 title={"Filter by year"}
-              >{paper.year}</span>
+                aria-label={"Filter by year " + paper.year}
+              >{paper.year}</button>
             </div>
 
             {allTags.length > 0 && (
               <div className="pub-tags">
                 {visibleTags.map(function(tag) {
                   return (
-                    <span
+                    <button
+                      type="button"
                       key={tag}
                       className="pub-tag"
                       onClick={() => this.setFilter(tag)}
                       title={"Filter by tag: " + tag}
-                      style={{cursor: 'pointer'}}
-                    >{tag}</span>
+                      aria-label={"Filter by tag " + tag}
+                    >{tag}</button>
                   );
                 }.bind(this))}
                 {!tagsExpanded && hiddenCount > 0 && (
                   <button
+                    type="button"
                     className="pub-tag-more"
                     onClick={() => this.setState({ tagsExpanded: true })}
                   >+{hiddenCount} more</button>
@@ -620,79 +726,9 @@ class PaperCard extends React.Component {
                 </a>
               )}
 
-              {paper.project_page_url && (
-                <a
-                  className="pub-action-secondary"
-                  href={paper.project_page_url}
-                  target="_blank"
-                  aria-label={"Project page: " + paper.title}
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v9a1.5 1.5 0 0 1-1.5 1.5H9v1h1.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1H7v-1H2.5A1.5 1.5 0 0 1 1 11.5v-9zM2.5 2a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-11z"/>
-                  </svg>
-                  {' '}Project Page
-                </a>
-              )}
-
-              {summaryLink && (
-                <a
-                  className="pub-action-secondary"
-                  href={summaryLink}
-                  target="_blank"
-                  aria-label={"Tweet thread: " + paper.title}
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M14 1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3.5l2.5 3 2.5-3H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/>
-                  </svg>
-                  {' '}Summary
-                </a>
-              )}
-
-              {paper.slides && (
-                <a
-                  className="pub-action-secondary"
-                  href={paper.slides}
-                  target="_blank"
-                  aria-label={"View slides: " + paper.title}
-                  onClick={function() { gaSendEvent('Publications', 'SlidesDownload', paper.id); }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M1 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9v1h1.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1H7v-1H2a1 1 0 0 1-1-1V3zm13 0H2v8h12V3zM4 6h8v1H4V6zm0 2.5h5v1H4v-1z"/>
-                  </svg>
-                  {' '}Slides
-                </a>
-              )}
-
-              {paper.video_url && (
-                <a
-                  className="pub-action-secondary"
-                  href={paper.video_url}
-                  target="_blank"
-                  aria-label={"Watch video: " + paper.title}
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M3 2.5v11l10-5.5L3 2.5z"/>
-                  </svg>
-                  {' '}Video
-                </a>
-              )}
-
-              {paper.presentation_url && (
-                <a
-                  className="pub-action-secondary"
-                  href={paper.presentation_url}
-                  target="_blank"
-                  aria-label={"View presentation: " + paper.title}
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M6 1a1 1 0 0 0-1 1v1H2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.5l-1 2h-1a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-1l-1-2H13a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-3V2a1 1 0 0 0-1-1H6zm0 1h4v1H6V2zm-4 2h12v6H2V4z"/>
-                  </svg>
-                  {' '}Talk
-                </a>
-              )}
-
               <div className="cite-wrapper" ref={this.citeWrapRef}>
                 <button
+                  type="button"
                   className={'pub-action-secondary' + (citeOpen ? ' cite-active' : '')}
                   onClick={this.handleCiteToggle}
                   aria-haspopup="true"
@@ -718,6 +754,7 @@ class PaperCard extends React.Component {
                           <div className="cite-row-header">
                             <span className="cite-format-badge">{fmt}</span>
                             <button
+                              type="button"
                               className={'cite-copy-btn' + (isCopied ? ' copied' : '')}
                               onClick={function(e) { this.handleCopyFormat(fmt, e); }.bind(this)}
                             >
@@ -737,6 +774,50 @@ class PaperCard extends React.Component {
                   </div>
                 )}
               </div>
+              {hasSecondaryActions && (
+                <div className="pub-more-wrap" ref={this.moreWrapRef}>
+                  <button
+                    type="button"
+                    className={'pub-action-secondary pub-action-more' + (moreOpen ? ' cite-active' : '')}
+                    aria-haspopup="menu"
+                    aria-expanded={moreOpen}
+                    aria-label={"More resources for " + paper.title}
+                    onClick={this.handleMoreToggle}
+                  >
+                    More {moreOpen ? '▲' : '▾'}
+                  </button>
+                  {moreOpen && (
+                    <div className="pub-more-menu" role="menu" aria-label="Additional resources">
+                      {paper.project_page_url && this.renderMoreAction(
+                        paper.project_page_url,
+                        'Project page',
+                        'M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v9a1.5 1.5 0 0 1-1.5 1.5H9v1h1.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1H7v-1H2.5A1.5 1.5 0 0 1 1 11.5v-9zM2.5 2a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-11z'
+                      )}
+                      {summaryLink && this.renderMoreAction(
+                        summaryLink,
+                        'Summary thread',
+                        'M14 1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3.5l2.5 3 2.5-3H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z'
+                      )}
+                      {paper.slides && this.renderMoreAction(
+                        paper.slides,
+                        'Slides',
+                        'M1 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9v1h1.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1H7v-1H2a1 1 0 0 1-1-1V3zm13 0H2v8h12V3zM4 6h8v1H4V6zm0 2.5h5v1H4v-1z',
+                        'SlidesDownload'
+                      )}
+                      {paper.video_url && this.renderMoreAction(
+                        paper.video_url,
+                        'Video',
+                        'M3 2.5v11l10-5.5L3 2.5z'
+                      )}
+                      {paper.presentation_url && this.renderMoreAction(
+                        paper.presentation_url,
+                        'Talk',
+                        'M6 1a1 1 0 0 0-1 1v1H2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.5l-1 2h-1a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-1l-1-2H13a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-3V2a1 1 0 0 0-1-1H6zm0 1h4v1H6V2zm-4 2h12v6H2V4z'
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -783,6 +864,8 @@ class Paper extends React.Component {
       tags: this.props.tags || "",
       pdf: this.props.pdf,
       html_paper_url: this.props.html_paper_url,
+      doi: this.props.doi,
+      bibtex: this.props.bibtex,
       summary: this.props.summary,
       slides: this.props.slides,
       video_url: this.props.video_url
@@ -809,6 +892,8 @@ class PaperForm extends React.Component {
       slides:           null,
       html_slides_url:  p.html_slides_url || '',
       html_paper_url:   p.html_paper_url || '',
+      doi:              p.doi || '',
+      bibtex:           p.bibtex || '',
       presentation_url: p.presentation_url || '',
       project_page_url: p.project_page_url || '',
       video_url:        p.video_url || '',
@@ -847,6 +932,8 @@ class PaperForm extends React.Component {
         slides:           s.slides,
         html_slides_url:  s.html_slides_url,
         html_paper_url:   s.html_paper_url,
+        doi:              s.doi,
+        bibtex:           s.bibtex,
         presentation_url: s.presentation_url,
         project_page_url: s.project_page_url,
         video_url:        s.video_url,
@@ -892,6 +979,8 @@ class PaperForm extends React.Component {
         <FileField name="Slides"    onChange={this._set('slides')} />
         <InputField name="HTML Slides"     type="text" value={s.html_slides_url}  onChange={this._set('html_slides_url')} />
         <InputField name="HTML Paper"      type="text" value={s.html_paper_url}   onChange={this._set('html_paper_url')} />
+        <InputField name="DOI"             type="text" value={s.doi}              onChange={this._set('doi')} />
+        <InputField name="BibTeX"          type="text" value={s.bibtex}           onChange={this._set('bibtex')} />
         <InputField name="Presentation URL" type="text" value={s.presentation_url} onChange={this._set('presentation_url')} />
         <InputField name="Project Page URL" type="text" value={s.project_page_url} onChange={this._set('project_page_url')} />
         <InputField name="Video URL"       type="text" value={s.video_url}        onChange={this._set('video_url')} />

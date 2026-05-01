@@ -115,6 +115,8 @@ class Paper < ActiveRecord::Base
       slides: self.slides_url,
       html_slides_url: self.html_slides_url,
       html_paper_url: self.html_paper_url,
+      doi: self.doi,
+      bibtex: self.bibtex,
       thumbnail: self.thumbnail_url,
       presentation_url: self.presentation_url,
       video_url: self.video_url,

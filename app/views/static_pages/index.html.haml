@@ -1,4 +1,4 @@
-.about-section
+.about-section#about
   .about-text
     I am an Associate Professor (without indefinite tenure) at
     =link_to "Carnegie Mellon University's", "https://www.cmu.edu"
@@ -55,8 +55,8 @@
         A few of my papers have been recognized with awards
       \: a best paper at UbiComp (2013) and CHI (2024), a distinguished paper at SOUPS (2020) and USENIX Security (2024), five best paper honorable mentions at CHI (2016, 2017, 2020, 2024, 2026), a best paper honorable mention at CSCW (2021), and an honorable mention for the NSA's Best Scientific Cybersecurity Paper (2014). My lab's work has been generously supported by the NSF, Facebook, Georgia Tech, and CMU. My work has also been covered by the popular press, including features on The Atlantic, The Financial Times and Dark Reading.
 
-.recruiting-box
-  .recruiting-status Not Recruiting
+.recruiting-box#recruiting
+  .recruiting-status Recruiting Status: Not Recruiting
   %p.recruiting-title Prospective Ph.D. Students
   .recruiting-body
     While I am not currently looking for new Ph.D. students, I encourage you to apply to the
@@ -67,6 +67,7 @@
     = link_to "Watch PhD Application Advice Video", "https://www.youtube.com/watch?v=JqD2arlzXVE", class: "btn-sd btn-sd-secondary", target: "_blank"
     = link_to "Read Academic Blog", "https://sauvik-das.medium.com/", class: "btn-sd btn-sd-ghost", target: "_blank"
     = link_to "Browse Publications", "#publications", class: "btn-sd btn-sd-ghost"
+
 
 %div#students
   = react_component('StudentsContainer', currentStudents: @currentStudents, alums: @alums)
@@ -80,6 +81,11 @@
     courses: @courses,
     currentStudents: @currentStudents,
     alums: @alums)
+%noscript
+  .about-text
+    JavaScript is disabled. You can still access papers directly via the
+    = link_to "publications index", papers_path(format: :json)
+    and each PDF link from that list.
 
 :javascript
   (function() {
@@ -93,3 +99,7 @@
       }, 300);
     });
   })();
+
+- if @structured_papers.present?
+  %script{type: "application/ld+json"}
+    = raw(@structured_papers_json_ld)
