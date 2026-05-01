@@ -2,6 +2,8 @@ class StaticPagesController < ApplicationController
   before_action :authenticate, :except => [:index]
 
   def index
+    @recruiting_status_updated_at = "April 2026"
+
     @updateAssetMap = {
       Update::Type::PAPER.to_s => ActionController::Base.helpers.asset_url("paper_update.png"),
       Update::Type::AWARD.to_s => ActionController::Base.helpers.asset_url("award_update.png"),
@@ -168,6 +170,30 @@ class StaticPagesController < ApplicationController
     # Separate current students and alums
     @currentStudents = all_students.select { |student| !student[:alum] }
     @alums = all_students.select { |student| student[:alum] }
+
+    @structured_papers = Paper.includes(:paper_author_links => :author).order(year: :desc, id: :desc).limit(60)
+    @structured_papers_json_ld = {
+      "@context" => "https://schema.org",
+      "@graph" => @structured_papers.map do |paper|
+        structured_authors = paper.authors.map(&:name)
+        if paper.self_order.present? && paper.self_order > 0 && paper.self_order <= structured_authors.length + 1
+          structured_authors.insert(paper.self_order - 1, "Sauvik Das")
+        elsif structured_authors.exclude?("Sauvik Das")
+          structured_authors.unshift("Sauvik Das")
+        end
+
+        {
+          "@type" => "ScholarlyArticle",
+          "headline" => paper.title,
+          "author" => structured_authors.map { |name| { "@type" => "Person", "name" => name } },
+          "datePublished" => paper.year.to_s,
+          "isPartOf" => paper.venue,
+          "url" => (paper.html_paper_url.presence || "https://sauvikdas.com/papers/#{paper.id}/serve"),
+          "sameAs" => paper.doi.present? ? "https://doi.org/#{paper.doi}" : nil,
+          "identifier" => paper.doi
+        }.compact
+      end
+    }.to_json
   end
 
   def dktest
