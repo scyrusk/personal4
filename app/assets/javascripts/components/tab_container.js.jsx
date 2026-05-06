@@ -22,6 +22,7 @@ class TabContainer extends React.Component {
     this.emitQueryChanged = this.emitQueryChanged.bind(this);
     this.emitQueryAndSyncState = this.emitQueryAndSyncState.bind(this);
     this.syncUrlState = this.syncUrlState.bind(this);
+    this.scrollPublicationsToTop = this.scrollPublicationsToTop.bind(this);
   }
 
   getInitialStateFromUrl() {
@@ -92,6 +93,18 @@ class TabContainer extends React.Component {
     };
     window.addEventListener('setActiveFilter', this._setActiveFilterHandler);
     this.emitQueryAndSyncState();
+
+    if (this.state.activeFilter && !window.location.hash) {
+      this.scrollPublicationsToTop();
+      window.requestAnimationFrame(this.scrollPublicationsToTop);
+      window.setTimeout(this.scrollPublicationsToTop, 250);
+      window.setTimeout(this.scrollPublicationsToTop, 750);
+      if (document.readyState === 'complete') {
+        window.setTimeout(this.scrollPublicationsToTop, 0);
+      } else {
+        window.addEventListener('load', this.scrollPublicationsToTop, { once: true });
+      }
+    }
   }
 
   componentWillUnmount() {
@@ -99,6 +112,7 @@ class TabContainer extends React.Component {
     if (this._studentFilterHandler) window.removeEventListener('studentFilterChanged', this._studentFilterHandler);
     if (this._setSearchHandler) window.removeEventListener('setSearchFilter', this._setSearchHandler);
     if (this._setActiveFilterHandler) window.removeEventListener('setActiveFilter', this._setActiveFilterHandler);
+    window.removeEventListener('load', this.scrollPublicationsToTop);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -139,6 +153,14 @@ class TabContainer extends React.Component {
       var nextUrl = window.location.pathname + (nextQuery ? '?' + nextQuery : '') + window.location.hash;
       window.history.replaceState({}, '', nextUrl);
     } catch (_) {}
+  }
+
+  scrollPublicationsToTop() {
+    var pubsEl = document.getElementById('publications');
+    if (!pubsEl) return;
+
+    var top = pubsEl.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop || 0);
+    window.scrollTo({ top: top, behavior: 'smooth' });
   }
 
   handleQueryChange(query) {
