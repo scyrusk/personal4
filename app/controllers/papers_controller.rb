@@ -117,6 +117,7 @@ class PapersController < ApplicationController
           :authors,
           :awards,
           :backing_type,
+          :featured,
           :thumbnail,
           :downloads,
           :pdf,

@@ -3,6 +3,14 @@ class StaticPagesController < ApplicationController
 
   def index
     @recruiting_status_updated_at = "April 2026"
+    @recruiting_status = "Not recruiting"
+    @recruiting_cycle  = "2026–27 cycle"
+
+    @canonical_url   = root_url
+    @page_description = "Sauvik Das — Associate Professor at Carnegie Mellon's HCI Institute. " \
+      "I design human-centered security, privacy, and AI systems that give people more agency " \
+      "over their personal data and experiences online."
+    @og_image_url = "#{request.base_url}#{ActionController::Base.helpers.asset_path("sauvik_bio_sphere.png")}"
 
     @updateAssetMap = {
       Update::Type::PAPER.to_s => ActionController::Base.helpers.asset_url("paper_update.png"),
@@ -172,27 +180,49 @@ class StaticPagesController < ApplicationController
     @alums = all_students.select { |student| student[:alum] }
 
     @structured_papers = Paper.includes(:paper_author_links => :author).order(year: :desc, id: :desc).limit(60)
+
+    person_node = {
+      "@type" => "Person",
+      "name" => "Sauvik Das",
+      "jobTitle" => "Associate Professor",
+      "affiliation" => {
+        "@type" => "Organization",
+        "name" => "Carnegie Mellon University, Human-Computer Interaction Institute",
+        "url" => "https://www.hcii.cmu.edu"
+      },
+      "url" => @canonical_url,
+      "image" => @og_image_url,
+      "sameAs" => [
+        "https://bsky.app/profile/sauvik.me",
+        "https://www.linkedin.com/in/sauvik-das-71b66a1b",
+        "https://hci.social/@sauvik",
+        "https://sauvik-das.medium.com/"
+      ]
+    }
+
+    article_nodes = @structured_papers.map do |paper|
+      structured_authors = paper.authors.map(&:name)
+      if paper.self_order.present? && paper.self_order > 0 && paper.self_order <= structured_authors.length + 1
+        structured_authors.insert(paper.self_order - 1, "Sauvik Das")
+      elsif structured_authors.exclude?("Sauvik Das")
+        structured_authors.unshift("Sauvik Das")
+      end
+
+      {
+        "@type" => "ScholarlyArticle",
+        "headline" => paper.title,
+        "author" => structured_authors.map { |name| { "@type" => "Person", "name" => name } },
+        "datePublished" => paper.year.to_s,
+        "isPartOf" => paper.venue,
+        "url" => (paper.html_paper_url.presence || "https://sauvikdas.com/papers/#{paper.id}/serve"),
+        "sameAs" => paper.doi.present? ? "https://doi.org/#{paper.doi}" : nil,
+        "identifier" => paper.doi
+      }.compact
+    end
+
     @structured_papers_json_ld = {
       "@context" => "https://schema.org",
-      "@graph" => @structured_papers.map do |paper|
-        structured_authors = paper.authors.map(&:name)
-        if paper.self_order.present? && paper.self_order > 0 && paper.self_order <= structured_authors.length + 1
-          structured_authors.insert(paper.self_order - 1, "Sauvik Das")
-        elsif structured_authors.exclude?("Sauvik Das")
-          structured_authors.unshift("Sauvik Das")
-        end
-
-        {
-          "@type" => "ScholarlyArticle",
-          "headline" => paper.title,
-          "author" => structured_authors.map { |name| { "@type" => "Person", "name" => name } },
-          "datePublished" => paper.year.to_s,
-          "isPartOf" => paper.venue,
-          "url" => (paper.html_paper_url.presence || "https://sauvikdas.com/papers/#{paper.id}/serve"),
-          "sameAs" => paper.doi.present? ? "https://doi.org/#{paper.doi}" : nil,
-          "identifier" => paper.doi
-        }.compact
-      end
+      "@graph" => [person_node] + article_nodes
     }.to_json
   end
 

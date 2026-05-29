@@ -6,8 +6,14 @@ class TabContainer extends React.Component {
       activeTab: initialState.activeTab,
       query: initialState.query,
       activeFilter: initialState.activeFilter,
-      resultCount: null,
-      topTags: []
+      pubsView: initialState.pubsView,
+      rendered: null,
+      total: null,
+      topTags: [],
+      allTags: [],
+      chipCounts: {},
+      moreFiltersOpen: false,
+      tagQuery: ''
     };
     this.tabRefs = {};
     this.searchRef = React.createRef();
@@ -15,7 +21,10 @@ class TabContainer extends React.Component {
     this.handleQueryChange = this.handleQueryChange.bind(this);
     this.handleFilterToggle = this.handleFilterToggle.bind(this);
     this.handleResultCount = this.handleResultCount.bind(this);
+    this.handleChipCounts = this.handleChipCounts.bind(this);
+    this.handleViewChange = this.handleViewChange.bind(this);
     this.handleTopTags = this.handleTopTags.bind(this);
+    this.handleAllTags = this.handleAllTags.bind(this);
     this.handleTabKeyDown = this.handleTabKeyDown.bind(this);
     this.handleResetFilters = this.handleResetFilters.bind(this);
     this.registerTabRef = this.registerTabRef.bind(this);
@@ -32,9 +41,10 @@ class TabContainer extends React.Component {
       var query = params.get('q') || '';
       var activeFilter = params.get('filter') || null;
       var validTab = ['publications', 'awards', 'teaching'].indexOf(tab) >= 0 ? tab : 'publications';
-      return { activeTab: validTab, query: query, activeFilter: activeFilter };
+      var view = params.get('view') === 'all' ? 'all' : 'featured';
+      return { activeTab: validTab, query: query, activeFilter: activeFilter, pubsView: view };
     } catch (_) {
-      return { activeTab: 'publications', query: '', activeFilter: null };
+      return { activeTab: 'publications', query: '', activeFilter: null, pubsView: 'featured' };
     }
   }
 
@@ -119,7 +129,8 @@ class TabContainer extends React.Component {
     if (
       prevState.activeTab !== this.state.activeTab ||
       prevState.query !== this.state.query ||
-      prevState.activeFilter !== this.state.activeFilter
+      prevState.activeFilter !== this.state.activeFilter ||
+      prevState.pubsView !== this.state.pubsView
     ) {
       this.syncUrlState();
       if (prevState.query !== this.state.query) this.emitQueryChanged();
@@ -149,6 +160,8 @@ class TabContainer extends React.Component {
       else params.delete('q');
       if (this.state.activeFilter) params.set('filter', this.state.activeFilter);
       else params.delete('filter');
+      if (this.state.pubsView === 'all') params.set('view', 'all');
+      else params.delete('view');
       var nextQuery = params.toString();
       var nextUrl = window.location.pathname + (nextQuery ? '?' + nextQuery : '') + window.location.hash;
       window.history.replaceState({}, '', nextUrl);
@@ -197,20 +210,47 @@ class TabContainer extends React.Component {
     }.bind(this));
   }
 
-  handleResultCount(count) {
-    if (this.state.resultCount !== count) {
-      this.setState({ resultCount: count });
+  handleResultCount(info) {
+    var rendered = info && typeof info === 'object' ? info.rendered : info;
+    var total = info && typeof info === 'object' ? info.total : info;
+    if (this.state.rendered !== rendered || this.state.total !== total) {
+      this.setState({ rendered: rendered, total: total });
     }
+  }
+
+  handleChipCounts(counts) {
+    this.setState({ chipCounts: counts || {} });
+  }
+
+  handleViewChange(view) {
+    this.setState({ pubsView: view, activeTab: 'publications' });
   }
 
   handleTopTags(tags) {
     this.setState({ topTags: tags });
   }
 
+  handleAllTags(tags) {
+    this.setState({ allTags: tags });
+  }
+
   render() {
-    const { activeTab, query, activeFilter, resultCount, topTags } = this.state;
-    const FILTERS = ["Featured", "Award-winning", "Most downloaded"].concat(topTags);
+    const { activeTab, query, activeFilter, pubsView, rendered, total, topTags, allTags, chipCounts, moreFiltersOpen, tagQuery } = this.state;
+    const hasFeatured = chipCounts['Featured'] > 0;
+    const baseFilters = hasFeatured ? ["Featured", "Award-winning", "Most downloaded"] : ["Award-winning", "Most downloaded"];
+    const FILTERS = baseFilters.concat(topTags);
     const hasActiveFilters = !!(query || activeFilter);
+    const labelWithCount = (key, label) => {
+      var c = chipCounts[key];
+      return (c === null || c === undefined) ? label : label + ' ' + c;
+    };
+    const inFeaturedView = hasFeatured && pubsView === 'featured' && !query && !activeFilter;
+    var countText = '';
+    if (inFeaturedView) {
+      countText = (total !== null && total !== undefined && total > 0) ? ('Showing selected work · ' + total + ' papers total') : '';
+    } else if (total !== null && total !== undefined) {
+      countText = total === 0 ? 'No papers' : ('Showing 1–' + rendered + ' of ' + total + ' papers');
+    }
 
     return (
       <div className="pubs-section">
@@ -251,53 +291,101 @@ class TabContainer extends React.Component {
           {activeTab === 'publications' && (
             <div>
               <div className="pubs-search-row">
-                <div className="pubs-search-wrap">
+                <label htmlFor="pubs-search-input" className="sr-only">Search publications by title, author, venue, or tag</label>
+                <div className="pubs-search-wrap pubs-search-elevated">
                   <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"
                     style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-muted)',pointerEvents:'none'}}>
                     <circle cx="6.5" cy="6.5" r="4"/>
                     <line x1="10" y1="10" x2="14" y2="14"/>
                   </svg>
                   <input
+                    id="pubs-search-input"
                     ref={this.searchRef}
                     type="text"
                     className="pubs-search"
-                    placeholder="Search by title, author, venue, or tag"
+                    placeholder="Search papers, authors, venues…"
                     value={query}
                     onChange={e => this.handleQueryChange(e.target.value)}
                   />
-                  {query && (
-                    <button className="pubs-search-clear" aria-label="Clear search" onClick={() => this.handleQueryChange('')}>×</button>
-                  )}
+                  {query
+                    ? <button className="pubs-search-clear" aria-label="Clear search" onClick={() => this.handleQueryChange('')}>×</button>
+                    : <kbd className="pubs-search-kbd" aria-hidden="true">/</kbd>}
                 </div>
-                <span className="pubs-result-count">
-                  {resultCount !== null ? resultCount + ' papers' : ''}
-                </span>
               </div>
               <div className="pubs-filters">
+                <button
+                  aria-pressed={!activeFilter}
+                  className={'pubs-filter-chip' + (!activeFilter ? ' active' : '')}
+                  onClick={() => this.setState({ activeFilter: null, activeTab: 'publications' })}
+                >{labelWithCount('All', 'All')}</button>
                 {FILTERS.map(f => (
                   <button
                     key={f}
                     aria-pressed={activeFilter === f}
                     className={'pubs-filter-chip' + (activeFilter === f ? ' active' : '')}
                     onClick={() => this.handleFilterToggle(f)}
-                  >{f}</button>
+                  >{labelWithCount(f, f)}</button>
                 ))}
-              </div>
-              {hasActiveFilters && (
-                <div className="pubs-active-filters" aria-label="Active filters">
-                  {activeFilter && (
-                    <button className="active-filter-pill" onClick={() => this.setState({ activeFilter: null })}>
-                      Filter: {activeFilter} ×
-                    </button>
-                  )}
-                  {query && (
-                    <button className="active-filter-pill" onClick={() => this.setState({ query: '' })}>
-                      Query: {query} ×
-                    </button>
-                  )}
-                  <button className="active-filter-reset" onClick={this.handleResetFilters}>
-                    Reset filters
+                {allTags.length > topTags.length && (
+                  <button
+                    className="pubs-filter-chip pubs-more-filters"
+                    aria-haspopup="dialog"
+                    onClick={() => this.setState({ moreFiltersOpen: true })}
+                  >
+                    <span aria-hidden="true">⚙ </span>More filters
                   </button>
+                )}
+                {hasActiveFilters && (
+                  <button className="pubs-clear-all" onClick={this.handleResetFilters}>Clear all</button>
+                )}
+              </div>
+              <div className="pubs-results-bar">
+                <span className="pubs-result-count" aria-live="polite">{countText}</span>
+                {hasActiveFilters && (
+                  <span className="pubs-active-filters" aria-label="Active filters">
+                    {activeFilter && (
+                      <button className="active-filter-pill" onClick={() => this.setState({ activeFilter: null })}>
+                        {activeFilter} ×
+                      </button>
+                    )}
+                    {query && (
+                      <button className="active-filter-pill" onClick={() => this.setState({ query: '' })}>
+                        “{query}” ×
+                      </button>
+                    )}
+                  </span>
+                )}
+              </div>
+              {moreFiltersOpen && (
+                <div className="tag-sheet-overlay" onClick={() => this.setState({ moreFiltersOpen: false, tagQuery: '' })}>
+                  <div className="tag-sheet" role="dialog" aria-label="All topics" onClick={e => e.stopPropagation()}>
+                    <div className="tag-sheet-head">
+                      <span>All topics</span>
+                      <button className="tag-sheet-close" aria-label="Close" onClick={() => this.setState({ moreFiltersOpen: false, tagQuery: '' })}>×</button>
+                    </div>
+                    <input
+                      className="tag-sheet-search"
+                      type="text"
+                      placeholder="Search topics…"
+                      value={tagQuery}
+                      onChange={e => this.setState({ tagQuery: e.target.value })}
+                    />
+                    <div className="tag-sheet-list">
+                      {allTags
+                        .filter(t => t.toLowerCase().indexOf((tagQuery || '').toLowerCase()) >= 0)
+                        .map(t => (
+                          <button
+                            key={t}
+                            className={'tag-sheet-item' + (activeFilter === t ? ' active' : '')}
+                            onClick={() => {
+                              this.setState({ activeFilter: t, activeTab: 'publications', moreFiltersOpen: false, tagQuery: '' });
+                              var pubsEl = document.getElementById('publications');
+                              if (pubsEl) pubsEl.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                          >{labelWithCount(t, t)}</button>
+                        ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -315,8 +403,13 @@ class TabContainer extends React.Component {
               alums={this.props.alums}
               query={query}
               activeFilter={activeFilter}
+              view={pubsView}
+              filters={FILTERS}
+              onViewChange={this.handleViewChange}
               onResultCount={this.handleResultCount}
+              onChipCounts={this.handleChipCounts}
               onTopTags={this.handleTopTags}
+              onAllTags={this.handleAllTags}
             />
           </div>
         )}

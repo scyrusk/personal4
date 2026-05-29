@@ -107,6 +107,7 @@ class Paper < ActiveRecord::Base
       awards: self.awards.map { |a| { id: a.id, body: a.body, year: a.year } },
       venue: self.venue,
       year: self.year,
+      featured: self.featured,
       downloads: self.downloads,
       summary: self.summary,
       likes: self.likes,
