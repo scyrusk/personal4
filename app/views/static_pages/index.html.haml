@@ -1,3 +1,15 @@
+.hero
+  .hero-main
+    %p.hero-eyebrow Associate Professor · CMU HCII
+    %h1.hero-name Sauvik Das
+    %p.hero-pitch I design systems that give people more agency over their personal data and experiences online.
+    .hero-ctas
+      = link_to "Publications", "#publications", class: "btn-sd btn-sd-primary"
+      = link_to "Recruiting", "#recruiting", class: "btn-sd btn-sd-secondary"
+      = link_to "CV / Résumé", asset_path("cv.pdf"), class: "btn-sd btn-sd-ghost", target: "_blank"
+  .hero-avatar
+    = image_tag "sauvik_bio_sphere.png", alt: "Sauvik Das"
+
 .about-section#about
   .about-text
     I am an Associate Professor (without indefinite tenure) at
@@ -56,23 +68,24 @@
       \: a best paper at UbiComp (2013) and CHI (2024), a distinguished paper at SOUPS (2020) and USENIX Security (2024), five best paper honorable mentions at CHI (2016, 2017, 2020, 2024, 2026), a best paper honorable mention at CSCW (2021), and an honorable mention for the NSA's Best Scientific Cybersecurity Paper (2014). My lab's work has been generously supported by the NSF, Facebook, Georgia Tech, and CMU. My work has also been covered by the popular press, including features on The Atlantic, The Financial Times and Dark Reading.
 
 .recruiting-box#recruiting
-  .recruiting-status Recruiting Status: Not Recruiting
-  %p.recruiting-title Prospective Ph.D. Students
+  %p.recruiting-status= "#{@recruiting_status} · #{@recruiting_cycle}"
+  %h2.recruiting-title Prospective Ph.D. Students
   .recruiting-body
-    While I am not currently looking for new Ph.D. students, I encourage you to apply to the
-    =link_to "HCII Ph.D. program", "https://www.hcii.cmu.edu/academics/phd-hci"
-    at Carnegie Mellon and mention my name in your application. I'm afraid that I am unlikely to respond
-    to cold e-mails due to time constraints.
+    %p
+      While I do not plan on accepting any new students at this time, I encourage you to apply to the
+      = link_to "HCII Ph.D. program", "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank"
+      at CMU to work with my fantastic colleagues.
   .recruiting-ctas
-    = link_to "Watch PhD Application Advice Video", "https://www.youtube.com/watch?v=JqD2arlzXVE", class: "btn-sd btn-sd-secondary", target: "_blank"
-    = link_to "Read Academic Blog", "https://sauvik-das.medium.com/", class: "btn-sd btn-sd-ghost", target: "_blank"
-    = link_to "Browse Publications", "#publications", class: "btn-sd btn-sd-ghost"
+    = link_to "Apply via HCII", "https://www.hcii.cmu.edu/academics/phd-hci", class: "btn-sd btn-sd-primary", target: "_blank"
+    = link_to "Read advice for applicants", "https://www.youtube.com/watch?v=JqD2arlzXVE", class: "btn-sd btn-sd-secondary", target: "_blank"
+  %p.recruiting-updated= "Last updated #{@recruiting_status_updated_at}"
 
 
 %div#students
   = react_component('StudentsContainer', currentStudents: @currentStudents, alums: @alums)
 
 %div#publications
+  %h2.sr-only Publications
 = react_component('TabContainer',
     papersUrl: papers_url(format: :json),
     paperAssets: @paperAssetMap,

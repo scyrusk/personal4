@@ -2,7 +2,27 @@
 %html
   %head
     %meta{:content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
-    %title Sauvik Das's Personal Homepage
+    %title Sauvik Das · Human-Centered Security, Privacy & AI
+    - if defined?(@page_description) && @page_description.present?
+      %meta{name: "description", content: @page_description}/
+    - if defined?(@canonical_url) && @canonical_url.present?
+      %link{rel: "canonical", href: @canonical_url}/
+    -# Open Graph
+    %meta{property: "og:title", content: "Sauvik Das · Human-Centered Security, Privacy & AI"}/
+    - if defined?(@page_description) && @page_description.present?
+      %meta{property: "og:description", content: @page_description}/
+    %meta{property: "og:type", content: "profile"}/
+    - if defined?(@canonical_url) && @canonical_url.present?
+      %meta{property: "og:url", content: @canonical_url}/
+    - if defined?(@og_image_url) && @og_image_url.present?
+      %meta{property: "og:image", content: @og_image_url}/
+    -# Twitter card
+    %meta{name: "twitter:card", content: "summary_large_image"}/
+    %meta{name: "twitter:title", content: "Sauvik Das · Human-Centered Security, Privacy & AI"}/
+    - if defined?(@page_description) && @page_description.present?
+      %meta{name: "twitter:description", content: @page_description}/
+    - if defined?(@og_image_url) && @og_image_url.present?
+      %meta{name: "twitter:image", content: @og_image_url}/
     %link{rel: "preconnect", href: "https://fonts.googleapis.com"}/
     %link{rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"}/
     = stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true
@@ -32,12 +52,22 @@
     %meta{:content => "width=device-width, initial-scale=1.0", :name => "viewport"}/
   %body
     .mobile-header#mobileHeader
-      %span.mobile-name Sauvik Das
-      %button.mobile-menu-btn#drawerToggle{"aria-label" => "Open menu"}
-        %svg{width: "22", height: "22", viewBox: "0 0 22 22", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round"}
-          %line{x1: "3", y1: "6", x2: "19", y2: "6"}
-          %line{x1: "3", y1: "11", x2: "19", y2: "11"}
-          %line{x1: "3", y1: "16", x2: "19", y2: "16"}
+      .mobile-header-row
+        %span.mobile-name Sauvik Das
+        %button.mobile-menu-btn#drawerToggle{"aria-label" => "Open menu"}
+          %svg{width: "22", height: "22", viewBox: "0 0 22 22", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round"}
+            %line{x1: "3", y1: "6", x2: "19", y2: "6"}
+            %line{x1: "3", y1: "11", x2: "19", y2: "11"}
+            %line{x1: "3", y1: "16", x2: "19", y2: "16"}
+      .mobile-actionbar
+        - if @recruiting_status.present?
+          %span.mobile-recruit-badge= @recruiting_status
+        %a.mobile-action-email{href: "mailto:sauvik@cmu.edu", "aria-label" => "Email Sauvik"}
+          %svg{width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round"}
+            %rect{x: "3", y: "5", width: "18", height: "14", rx: "2"}
+            %path{d: "M3 7l9 6 9-6"}
+          %span Email
+        %a.mobile-action-pub{href: "#publications"} Publications →
     .page-wrap
       %aside.sidebar
         = render partial: "layouts/sidebar"

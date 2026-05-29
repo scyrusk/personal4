@@ -134,7 +134,7 @@ function randomString(n) {
 // ── FILTER HELPERS ──────────────────────────────────────
 var FILTER_MAP = {
   "Award-winning": function(p) { return p.awards && p.awards.length > 0; },
-  "Featured": function(p) { return computeFeaturedScore(p) > 0; }
+  "Featured": function(p) { return !!p.featured; }
 };
 var MOST_DOWNLOADED_FILTER = "Most downloaded";
 var FEATURED_FILTER = "Featured";
@@ -166,22 +166,14 @@ function parseDownloads(downloads) {
   return isNaN(parsed) ? 0 : parsed;
 }
 
-function computeFeaturedScore(paper) {
-  var awardsWeight = (paper.awards || []).length * 8;
-  var downloadsWeight = Math.min(parseDownloads(paper.downloads), 500) / 80;
-  var recencyWeight = Math.max(0, (paper.year || 0) - 2019) * 0.7;
-  var resourceCount = [paper.project_page_url, paper.video_url, paper.presentation_url, paper.slides, paper.tweets].filter(Boolean).length;
-  var resourceWeight = resourceCount * 0.9;
-  return awardsWeight + downloadsWeight + recencyWeight + resourceWeight;
-}
-
+// "Featured" is a manually-set flag on each paper (Paper#featured), not a computed score.
 function getFeaturedPapers(papers, maxCount) {
-  return papers.slice().sort(function(a, b) {
-    var diff = computeFeaturedScore(b) - computeFeaturedScore(a);
-    if (diff !== 0) return diff;
+  var featured = papers.filter(function(p) { return !!p.featured; });
+  featured.sort(function(a, b) {
     if (b.year !== a.year) return b.year - a.year;
     return b.id - a.id;
-  }).slice(0, maxCount);
+  });
+  return maxCount ? featured.slice(0, maxCount) : featured;
 }
 
 function sortByDownloadsThenRecency(a, b) {
@@ -255,24 +247,50 @@ class PaperContainer extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevProps.query !== this.props.query ||
-        prevProps.activeFilter !== this.props.activeFilter ||
-        prevState.data !== this.state.data) {
-      if (this.props.onResultCount) {
-        var count = this.getFilteredCount();
-        this.props.onResultCount(count);
-        if (this.props.onTopTags) this.props.onTopTags(getTopTags(this.state.data, 5));
-      }
+    var filtersKey = (this.props.filters || []).join('|');
+    var prevFiltersKey = (prevProps.filters || []).join('|');
+    var changed = prevProps.query !== this.props.query ||
+                  prevProps.activeFilter !== this.props.activeFilter ||
+                  prevState.data !== this.state.data ||
+                  prevState.visibleCount !== this.state.visibleCount ||
+                  filtersKey !== prevFiltersKey;
+    if (changed) this.reportCounts();
+    if (prevState.data !== this.state.data) {
+      if (this.props.onTopTags) this.props.onTopTags(getTopTags(this.state.data, 5));
+      if (this.props.onAllTags) this.props.onAllTags(getTopTags(this.state.data, 1000));
     }
     if (prevProps.query !== this.props.query || prevProps.activeFilter !== this.props.activeFilter) {
       this.setState({ visibleCount: 50 });
     }
   }
 
-  getFilteredCount() {
+  reportCounts() {
+    var data = this.state.data;
     var query = (this.props.query || "").toLowerCase().trim();
     var activeFilter = this.props.activeFilter;
-    return getVisiblePapers(this.state.data, query, activeFilter).length;
+
+    // Result range reflects the current query/filter.
+    var filteredTotal = getVisiblePapers(data, query, activeFilter).length;
+    var rendered = Math.min(filteredTotal, this.state.visibleCount);
+    if (this.props.onResultCount) this.props.onResultCount({ rendered: rendered, total: filteredTotal });
+
+    // Chip counts are category totals (query-independent) so they stay stable while typing.
+    // "Featured" is always computed so the chip/toggle can be shown only when featured papers exist.
+    if (this.props.onChipCounts) {
+      var counts = {};
+      counts['All'] = data.length;
+      counts[FEATURED_FILTER] = getVisiblePapers(data, '', FEATURED_FILTER).length;
+      counts['Award-winning'] = getVisiblePapers(data, '', 'Award-winning').length;
+      counts[MOST_DOWNLOADED_FILTER] = getVisiblePapers(data, '', MOST_DOWNLOADED_FILTER).length;
+      var filters = this.props.filters || [];
+      for (var i = 0; i < filters.length; i++) {
+        var f = filters[i];
+        if (!Object.prototype.hasOwnProperty.call(counts, f)) {
+          counts[f] = getVisiblePapers(data, '', f).length;
+        }
+      }
+      this.props.onChipCounts(counts);
+    }
   }
 
   handleShowMore() {
@@ -288,6 +306,8 @@ class PaperContainer extends React.Component {
         assets={this.props.assets}
         query={this.props.query || ""}
         activeFilter={this.props.activeFilter || null}
+        view={this.props.view || 'featured'}
+        onViewChange={this.props.onViewChange}
         visibleCount={this.state.visibleCount}
         onShowMore={this.handleShowMore}
       />
@@ -296,41 +316,204 @@ class PaperContainer extends React.Component {
 }
 
 // ── PAPER LIST ────────────────────────────────────────────
+function isBestPaper(paper) {
+  if (!paper.awards) return false;
+  return paper.awards.some(function(a) {
+    var b = (a.body || '').toLowerCase();
+    return b.indexOf('best paper') >= 0 && b.indexOf('honorable') < 0 && b.indexOf('nominee') < 0;
+  });
+}
+
 class PaperList extends React.Component {
+  constructor(props) {
+    super(props);
+    this.sentinelRef = React.createRef();
+    this._io = null;
+    this._observed = null;
+    this.setupObserver = this.setupObserver.bind(this);
+    this.onYearJump = this.onYearJump.bind(this);
+  }
+
+  onYearJump(e) {
+    var year = e.target.value;
+    if (!year) return;
+    var scrollTo = function() {
+      var el = document.getElementById('year-' + year);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return !!el;
+    };
+    if (!scrollTo() && this.props.onShowMore) {
+      // Year not loaded yet — load the next page, then scroll.
+      this.props.onShowMore();
+      setTimeout(scrollTo, 80);
+    }
+  }
+
+  renderJumpToYear(years) {
+    if (!years || years.length < 2) return null;
+    var self = this;
+    return (
+      <div className="pubs-jump-year">
+        <label htmlFor="jump-year" className="sr-only">Jump to year</label>
+        <select id="jump-year" className="pubs-jump-select" defaultValue="" onChange={self.onYearJump}>
+          <option value="" disabled>Jump to year…</option>
+          {years.map(function(y) { return <option key={y} value={y}>{y}</option>; })}
+        </select>
+      </div>
+    );
+  }
+
+  componentDidMount() { this.setupObserver(); }
+  componentDidUpdate() { this.setupObserver(); }
+  componentWillUnmount() {
+    if (this._io) { this._io.disconnect(); this._io = null; }
+    this._observed = null;
+  }
+
+  // IntersectionObserver auto-load (manual button stays as fallback)
+  setupObserver() {
+    if (typeof IntersectionObserver === 'undefined') return;
+    var node = this.sentinelRef.current;
+    if (!node) {
+      if (this._io) this._io.disconnect();
+      this._observed = null;
+      return;
+    }
+    if (this._observed === node) return;
+    var self = this;
+    if (!this._io) {
+      this._io = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting && self.props.onShowMore) self.props.onShowMore();
+        });
+      }, { rootMargin: '300px 0px' });
+    } else {
+      this._io.disconnect();
+    }
+    this._io.observe(node);
+    this._observed = node;
+  }
+
+  renderToggle(show) {
+    if (!show) return null;
+    var self = this;
+    var view = this.props.view || 'featured';
+    return (
+      <div className="pubs-view-toggle" role="group" aria-label="Publication view">
+        <button
+          type="button"
+          className={'pubs-view-btn' + (view === 'featured' ? ' active' : '')}
+          aria-pressed={view === 'featured'}
+          onClick={function() { if (self.props.onViewChange) self.props.onViewChange('featured'); }}
+        >Featured</button>
+        <button
+          type="button"
+          className={'pubs-view-btn' + (view === 'all' ? ' active' : '')}
+          aria-pressed={view === 'all'}
+          onClick={function() { if (self.props.onViewChange) self.props.onViewChange('all'); }}
+        >All papers</button>
+      </div>
+    );
+  }
+
+  renderSelectedRow(paper) {
+    var pdfLink = paper.html_paper_url || ("/papers/" + paper.id + "/serve");
+    var hasPDF = paper.pdf || paper.html_paper_url;
+    var best = isBestPaper(paper);
+    return (
+      <div key={'sel-' + paper.id} className="sw-row">
+        <div className="sw-titleline">
+          <a
+            className="sw-title"
+            href={hasPDF ? pdfLink : "#"}
+            target={hasPDF ? "_blank" : undefined}
+            rel="noopener noreferrer"
+            onClick={hasPDF ? function() { gaSendEvent('Publications', 'PDFDownload', paper.id); } : function(e) { e.preventDefault(); }}
+          >{paper.title}</a>
+          {best && <span className="sw-badge">Best Paper</span>}
+        </div>
+        <div className="sw-venue">{paper.venue} · {paper.year}</div>
+        {paper.summary && (
+          <div className="sw-why"><span className="sw-why-label">Why it matters</span> — {paper.summary}</div>
+        )}
+        {hasPDF && (
+          <a
+            className="sw-pdf"
+            href={pdfLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={"View PDF: " + paper.title + " (opens in new tab)"}
+            onClick={function() { gaSendEvent('Publications', 'PDFDownload', paper.id); }}
+          >
+            View PDF<span className="pub-ext-cue" aria-hidden="true">↗</span>
+            <span className="sr-only">(opens in new tab)</span>
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  renderLoadMore(renderedCount, total, hasMore) {
+    if (!hasMore) return null;
+    var pct = total > 0 ? Math.round((renderedCount / total) * 100) : 0;
+    return (
+      <div className="papers-load-more-wrap">
+        <div className="papers-progress">
+          <div className="papers-progress-text">Showing {renderedCount} of {total} papers</div>
+          <div className="papers-progress-bar"><div className="papers-progress-fill" style={{width: pct + '%'}}></div></div>
+        </div>
+        <button type="button" className="papers-load-more" onClick={this.props.onShowMore}>
+          <span aria-hidden="true">⌄</span> Load 50 more papers
+        </button>
+        <div ref={this.sentinelRef} className="papers-sentinel" aria-hidden="true"></div>
+      </div>
+    );
+  }
+
   render() {
     var query = (this.props.query || "").toLowerCase().trim();
     var activeFilter = this.props.activeFilter;
     var assets = this.props.assets;
     var noThumb = assets && assets["noThumb"];
     var visibleCount = this.props.visibleCount || 50;
+    var view = this.props.view || 'featured';
+    var self = this;
 
-    // Filter and sort papers based on active mode
     var filtered = getVisiblePapers(this.props.data, query, activeFilter);
-    var featured = getFeaturedPapers(filtered, 8);
-    var shouldShowFeatured = false;
-    var renderedCount = Math.min(filtered.length, visibleCount);
+    var total = filtered.length;
+    var renderedCount = Math.min(total, visibleCount);
     var paged = filtered.slice(0, renderedCount);
-    var hasMore = filtered.length > renderedCount;
+    var hasMore = total > renderedCount;
 
+    var hasFeatured = this.props.data.some(function(p) { return !!p.featured; });
+    var showToggle = hasFeatured && !query && !activeFilter && this.props.data.length > 0;
+    var showFeatured = hasFeatured && view === 'featured' && !query && !activeFilter;
+
+    // Selected work / "Start here" view (progressive summarization)
+    if (showFeatured) {
+      var sel = getFeaturedPapers(this.props.data);
+      return (
+        <div className="paper-list">
+          {this.renderToggle(showToggle)}
+          <div className="selected-work">
+            <div className="selected-work-head">Start here · Selected work</div>
+            {sel.map(function(paper) { return self.renderSelectedRow(paper); })}
+          </div>
+        </div>
+      );
+    }
+
+    // "Most downloaded" — flat top-10 list, no year groups
     if (activeFilter === MOST_DOWNLOADED_FILTER) {
       return (
         <div className="paper-list">
           {paged.map(function(paper) {
             var thumb = paper.thumbnail || noThumb;
             return (
-              <PaperCard
-                key={paper.id}
-                paper={paper}
-                thumbnail={thumb}
-                assets={assets}
-              />
+              <PaperCard key={paper.id} paper={paper} thumbnail={thumb} assets={assets} />
             );
           })}
-          {hasMore && (
-            <div className="papers-load-more-wrap">
-              <button className="papers-load-more" onClick={this.props.onShowMore}>Render 50 more</button>
-            </div>
-          )}
+          {this.renderLoadMore(renderedCount, total, hasMore)}
         </div>
       );
     }
@@ -345,54 +528,39 @@ class PaperList extends React.Component {
 
     if (years.length === 0) {
       return (
-        <div style={{padding: '40px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px'}}>
-          No papers match your search.
+        <div className="paper-list">
+          {this.renderToggle(showToggle)}
+          <div style={{padding: '40px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px'}}>
+            No papers match your search.
+          </div>
         </div>
       );
     }
 
+    var allYearsSet = {};
+    filtered.forEach(function(p) { allYearsSet[p.year] = true; });
+    var allYears = Object.keys(allYearsSet).sort(function(a, b) { return b - a; });
+
     return (
       <div className="paper-list">
-        {shouldShowFeatured && (
-          <div className="featured-papers">
-            <div className="featured-papers-head">Selected Publications · Start Here</div>
-            {featured.map(function(paper) {
-              var thumb = paper.thumbnail || noThumb;
-              return (
-                <PaperCard
-                  key={'featured-' + paper.id}
-                  paper={paper}
-                  thumbnail={thumb}
-                  assets={assets}
-                  featured={true}
-                />
-              );
-            })}
-          </div>
-        )}
+        <div className="pubs-list-controls">
+          {this.renderToggle(showToggle)}
+          {this.renderJumpToYear(allYears)}
+        </div>
         {years.map(function(year) {
           return (
-            <div key={year} className="year-group">
+            <div key={year} id={'year-' + year} className="year-group">
               <div className="year-label">{year}</div>
               {byYear[year].map(function(paper) {
                 var thumb = paper.thumbnail || noThumb;
                 return (
-                  <PaperCard
-                    key={paper.id}
-                    paper={paper}
-                    thumbnail={thumb}
-                    assets={assets}
-                  />
+                  <PaperCard key={paper.id} paper={paper} thumbnail={thumb} assets={assets} />
                 );
               })}
             </div>
           );
         })}
-        {hasMore && (
-          <div className="papers-load-more-wrap">
-            <button className="papers-load-more" onClick={this.props.onShowMore}>Render 50 more</button>
-          </div>
-        )}
+        {this.renderLoadMore(renderedCount, total, hasMore)}
       </div>
     );
   }
@@ -716,13 +884,31 @@ class PaperCard extends React.Component {
                   className="pub-action-primary"
                   href={pdfLink}
                   target="_blank"
-                  aria-label={"View PDF: " + paper.title}
+                  rel="noopener noreferrer"
+                  aria-label={"View PDF: " + paper.title + " (opens in new tab)"}
                   onClick={function() { gaSendEvent('Publications', 'PDFDownload', paper.id); }}
                 >
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M9 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5L9 1zm0 1.5L12.5 5H9V2.5zM5.5 9.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1zm0-2h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1zm0 4h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1 0-1z"/>
                   </svg>
                   {' '}View PDF
+                  <span className="pub-ext-cue" aria-hidden="true">↗</span>
+                  <span className="sr-only">(opens in new tab)</span>
+                </a>
+              )}
+
+              {paper.doi && (
+                <a
+                  className="pub-action-doi"
+                  href={"https://doi.org/" + paper.doi}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={"DOI for " + paper.title + " (opens in new tab)"}
+                  onClick={function() { gaSendEvent('Publications', 'DOI', paper.id); }}
+                >
+                  DOI
+                  <span className="pub-ext-cue" aria-hidden="true">↗</span>
+                  <span className="sr-only">(opens in new tab)</span>
                 </a>
               )}
 
@@ -899,7 +1085,8 @@ class PaperForm extends React.Component {
       video_url:        p.video_url || '',
       summary:          p.summary || '',
       tweets:           p.tweets || '',
-      tags:             p.tags || ''
+      tags:             p.tags || '',
+      featured:         !!p.featured
     };
     this._handleSubmit = this._handleSubmit.bind(this);
     this._set = this._set.bind(this);
@@ -939,7 +1126,8 @@ class PaperForm extends React.Component {
         video_url:        s.video_url,
         summary:          s.summary,
         tweets:           s.tweets,
-        tags:             s.tags
+        tags:             s.tags,
+        featured:         s.featured
       }
     };
 
@@ -986,6 +1174,7 @@ class PaperForm extends React.Component {
         <InputField name="Video URL"       type="text" value={s.video_url}        onChange={this._set('video_url')} />
         <InputField name="Tweet URL"       type="text" value={s.tweets}           onChange={this._set('tweets')} />
         <InputField name="Tags"            type="text" value={s.tags}             onChange={this._set('tags')} />
+        <Checkbox name="Featured" label="Featured" checked={s.featured} onChange={this._set('featured')} />
         <InputField name="Summary"         type="text" value={s.summary}          onChange={this._set('summary')} />
         <InputField name="Downloads"       type="number" value={s.downloads}      onChange={this._set('downloads')} />
         <SubmitButton/>

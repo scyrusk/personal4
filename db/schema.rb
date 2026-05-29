@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_04_24_165000) do
+ActiveRecord::Schema[7.0].define(version: 2026_05_29_031323) do
   create_table "authors", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", precision: nil, null: false
@@ -65,6 +65,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_04_24_165000) do
     t.string "project_page_url"
     t.string "doi"
     t.text "bibtex"
+    t.boolean "featured", default: false, null: false
   end
 
   create_table "travels", force: :cascade do |t|
