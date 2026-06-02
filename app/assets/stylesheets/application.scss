@@ -1648,6 +1648,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   :root { --sidebar-w: 200px; }
 
   .page-wrap {
+    flex-direction: column;
     padding: 0 14px;
   }
 
