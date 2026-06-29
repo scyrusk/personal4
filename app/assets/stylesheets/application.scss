@@ -1069,6 +1069,22 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   pointer-events: none;
 }
 
+.pub-download-count {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--sans);
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
 .pub-card-back {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;

@@ -124,6 +124,13 @@ class CiteButton extends React.Component {
   }
 }
 
+function formatDownloadCount(n) {
+  var d = parseDownloads(n);
+  if (!d) return null;
+  if (d >= 1000) return (d / 1000).toFixed(d >= 10000 ? 0 : 1).replace(/\.0$/, '') + 'k';
+  return String(d);
+}
+
 function randomString(n) {
   var s = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   return Array.apply(null, Array(n)).map(function() {
@@ -772,6 +779,14 @@ class PaperCard extends React.Component {
         )}
         {isFlippable && (
           <div className="pub-flip-cue" aria-hidden="true">↺ takeaway</div>
+        )}
+        {formatDownloadCount(paper.downloads) && (
+          <div className="pub-download-count" aria-label={parseDownloads(paper.downloads) + ' downloads'} title={parseDownloads(paper.downloads) + ' downloads'}>
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 1a.5.5 0 0 1 .5.5v7.793l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V1.5A.5.5 0 0 1 8 1zM2.5 12a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/>
+            </svg>
+            {formatDownloadCount(paper.downloads)}
+          </div>
         )}
         <div className="pub-card-inner">
           <div className="pub-thumb">
