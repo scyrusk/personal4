@@ -16,9 +16,9 @@
 one:
   year: 1
   body: MyText
-  paper_id_id: 
+  paper_id:
 
 two:
   year: 1
   body: MyText
-  paper_id_id: 
+  paper_id:
