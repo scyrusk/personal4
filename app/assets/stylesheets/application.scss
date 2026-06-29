@@ -1946,16 +1946,16 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
   .pubs-tab { padding: 10px 12px; font-size: 12px; }
 
-  /* SF-11 — let filter chips wrap instead of horizontal scroll */
-  .pubs-filters {
-    flex-wrap: wrap;
-    overflow-x: visible;
-  }
+  /* Hide filter chips on mobile — too many rows of pills eat the screen in the pubs section */
+  .pubs-filters { display: none; }
+
+  /* Hide action bar (email + pubs button + recruit badge) on mobile — accessible via drawer */
+  .mobile-actionbar { display: none; }
 
   .pub-card-inner { flex-direction: column; }
   .pub-thumb { display: none; }
 
-  .pubs-sticky-header { top: 96px; }
+  .pubs-sticky-header { top: 59px; }
   .pub-actions {
     align-items: stretch;
   }
