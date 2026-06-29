@@ -89,7 +89,7 @@ class Update extends React.Component  {
     return (
       <div className="update row well well-sm">
         <div className="update-icon col-xs-2">
-          <img src={this.props.pic} className="update-icon-img" />
+          <img src={this.props.pic} className="update-icon-img" loading="lazy" decoding="async" />
         </div>
         <div className="update-date col-xs-2">
           {this.props.date}

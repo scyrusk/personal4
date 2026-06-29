@@ -38,7 +38,7 @@ class BioPic extends React.Component {
         className="personal-image-container"
         onMouseUp={this._handleMouseOut}
         onMouseDown={this._handleMouseOver} >
-        <img src={picSrc} className="personal-image"/>
+        <img src={picSrc} className="personal-image" loading="lazy" decoding="async"/>
       </div>
     );
   }

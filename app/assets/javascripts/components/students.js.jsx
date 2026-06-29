@@ -66,7 +66,7 @@ class StudentsContainer extends React.Component {
           onClick={function(e) { handleStudentClick(student.name, e); }}>
           <div className="student-avatar">
             {student.image ? (
-              <img src={student.image} alt={student.name} />
+              <img src={student.image} alt={student.name} loading="lazy" decoding="async" />
             ) : (
               getInitials(student.name)
             )}
