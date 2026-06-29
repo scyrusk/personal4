@@ -618,7 +618,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 /* ─── PUBLICATIONS STICKY HEADER ────────────────────────── */
-.pubs-section { margin-bottom: 48px; }
+.pubs-section { margin-bottom: 48px; min-height: 100vh; }
 .pubs-section { scroll-margin-top: 84px; }
 
 .pubs-sticky-header {

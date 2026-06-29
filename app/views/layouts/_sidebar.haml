@@ -22,15 +22,15 @@
       %path{d: "M3 7l9 6 9-6"}
     Email me
   - if defined?(@recruiting_status) && @recruiting_status.present?
-    %a.sidebar-recruit-badge{href: "#recruiting"}= "#{@recruiting_status} · #{@recruiting_cycle}"
+    %a.sidebar-recruit-badge{href: "#recruiting", "data-turbolinks" => "false"}= "#{@recruiting_status} · #{@recruiting_cycle}"
 
 .sidebar-section
   %span.sidebar-label Navigate
   %nav.sidebar-nav{"aria-label" => "Section navigation"}
-    %a.sidebar-link{href: "#about"} About
-    %a.sidebar-link{href: "#recruiting"} Recruiting
-    %a.sidebar-link{href: "#students"} Students
-    %a.sidebar-link{href: "#publications"} Publications
+    %a.sidebar-link{href: "#about", "data-turbolinks" => "false"} About
+    %a.sidebar-link{href: "#recruiting", "data-turbolinks" => "false"} Recruiting
+    %a.sidebar-link{href: "#students", "data-turbolinks" => "false"} Students
+    %a.sidebar-link{href: "#publications", "data-turbolinks" => "false"} Publications
 
 .sidebar-section
   %span.sidebar-label Links

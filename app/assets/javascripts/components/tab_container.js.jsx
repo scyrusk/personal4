@@ -115,6 +115,20 @@ class TabContainer extends React.Component {
         window.addEventListener('load', this.scrollPublicationsToTop, { once: true });
       }
     }
+
+    // When the page loads with a hash in the URL, the browser scrolls before React has
+    // mounted and laid out dynamic sections (students, publications), landing at the wrong
+    // position. A single rAF fires after React has rendered, re-scrolling instantly to the
+    // correct position. 'instant' avoids a visible smooth-scroll animation on page load.
+    var hash = window.location.hash.slice(1);
+    if (hash) {
+      window.requestAnimationFrame(function() {
+        var el = document.getElementById(hash);
+        if (!el) return;
+        var top = el.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop || 0);
+        window.scrollTo({ top: top, behavior: 'instant' });
+      });
+    }
   }
 
   componentWillUnmount() {
