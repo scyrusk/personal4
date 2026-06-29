@@ -1771,6 +1771,23 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   padding: 14px 20px;
 }
 
+.mobile-header-social {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.mobile-social-btn {
+  display: flex;
+  align-items: center;
+  color: var(--text-mid);
+  text-decoration: none;
+  &:hover { color: var(--green); }
+}
+
 .mobile-actionbar {
   display: flex;
   align-items: center;
@@ -1953,7 +1970,20 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   .mobile-actionbar { display: none; }
 
   .pub-card-inner { flex-direction: column; }
-  .pub-thumb { display: none; }
+  .pub-thumb {
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    min-height: 80px;
+    border-radius: 6px;
+
+    img {
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      object-fit: initial;
+    }
+  }
 
   .pubs-sticky-header { top: 59px; }
   .pub-actions {
