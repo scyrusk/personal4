@@ -286,9 +286,8 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   align-items: flex-start;
   justify-content: space-between;
   gap: 28px;
-  padding-bottom: 28px;
+  padding-bottom: 0;
   margin-bottom: 28px;
-  border-bottom: 1px solid var(--border);
 }
 
 .hero-main { flex: 1; min-width: 0; }
