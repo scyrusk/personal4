@@ -6,6 +6,7 @@
       %span#liveCount= analytics_number(@current_visitors)
       active now
   .analytics-header-links
+    = link_to "Export CSV", admin_analytics_export_path(period: @period)
     = link_to "Admin", admin_path
     = link_to "View site", root_path
 %p.analytics-subtitle

@@ -136,4 +136,61 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
       get admin_analytics_realtime_url, headers: @auth
     end
   end
+
+  test "csv export requires basic auth" do
+    get admin_analytics_export_url
+    assert_response :unauthorized
+  end
+
+  test "csv export contains the time series, totals, and breakdowns for the period" do
+    record_pageview(occurred_at: 1.day.ago, visitor: 'a', source: 'Google', medium: 'search',
+                    referrer_host: 'www.google.com')
+    record_pageview(occurred_at: 2.days.ago, visitor: 'b', utm_campaign: 'launch-week')
+    record_pageview(occurred_at: 20.days.ago, visitor: 'old', source: 'Bing')
+    AnalyticsEvent.create!(event_name: 'download', visitor_token: 'a', path: '/papers/1/serve',
+                           occurred_at: 1.day.ago, props: { 'title' => 'A Great Paper' })
+
+    get admin_analytics_export_url(period: '7d'), headers: @auth
+    assert_response :success
+    assert_match %r{\Atext/csv}, response.content_type
+    assert_match(/analytics-7d-\d{4}-\d{2}-\d{2}\.csv/, response.headers['Content-Disposition'])
+
+    rows = CSV.parse(response.body)
+    assert_equal ['Analytics export', 'Last 7 days'], rows.first
+    assert_includes rows, %w[Date Visitors Pageviews]
+    assert_includes rows, [1.day.ago.to_date.iso8601, '1', '1']
+    assert_includes rows, %w[Totals Value]
+    assert_includes rows, %w[Visitors 2]
+    assert_includes rows, ['Paper downloads', '1']
+    assert_includes rows, %w[Google 1]
+    assert_includes rows, ['A Great Paper', '1']
+    assert_includes rows, ['launch-week', '1']
+    # 20-day-old Bing visit is outside the 7d period
+    assert_not_includes response.body, 'Bing'
+  end
+
+  test "csv export of the today period uses hourly buckets" do
+    travel_to Time.zone.local(2026, 7, 3, 14, 30) do
+      record_pageview(occurred_at: Time.zone.local(2026, 7, 3, 9, 15), visitor: 'a')
+
+      get admin_analytics_export_url(period: 'today'), headers: @auth
+      assert_response :success
+
+      rows = CSV.parse(response.body)
+      assert_includes rows, %w[Hour Visitors Pageviews]
+      assert_includes rows, ['2026-07-03 09:00', '1', '1']
+    end
+  end
+
+  test "downloading the csv export is itself never tracked" do
+    assert_no_difference('AnalyticsEvent.count') do
+      get admin_analytics_export_url, headers: @auth
+    end
+  end
+
+  test "dashboard links to the csv export for the current period" do
+    get admin_analytics_url(period: '7d'), headers: @auth
+    assert_response :success
+    assert_select '.analytics-header-links a[href=?]', '/admin/analytics/export?period=7d', 'Export CSV'
+  end
 end
