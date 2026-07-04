@@ -59,6 +59,10 @@ class AnalyticsEvent < ActiveRecord::Base
       pageviews.between(range).group(:browser).distinct.count(:visitor_token)
     end
 
+    def os_breakdown(range)
+      pageviews.between(range).group(:os).distinct.count(:visitor_token)
+    end
+
     def event_counts(range)
       between(range).group(:event_name).count
     end

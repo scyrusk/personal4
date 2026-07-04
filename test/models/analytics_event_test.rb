@@ -61,6 +61,16 @@ class AnalyticsEventTest < ActiveSupport::TestCase
     assert_equal({ 'paper_id' => 5 }, AnalyticsEvent.where(event_name: 'download').first.props)
   end
 
+  test "os_breakdown counts distinct visitors per OS" do
+    now = Time.current
+    build_event(visitor_token: 'a', os: 'macOS', occurred_at: now)
+    build_event(visitor_token: 'a', os: 'macOS', occurred_at: now)
+    build_event(visitor_token: 'b', os: 'iOS', occurred_at: now)
+
+    breakdown = AnalyticsEvent.os_breakdown(1.day.ago..Time.current)
+    assert_equal({ 'macOS' => 1, 'iOS' => 1 }, breakdown)
+  end
+
   test "top_downloads ranks paper titles by download count within the range" do
     now = Time.current
     2.times do |i|

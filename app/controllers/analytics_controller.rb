@@ -37,5 +37,6 @@ class AnalyticsController < ApplicationController
     @devices       = AnalyticsEvent.device_breakdown(@range).sort_by { |_, c| -c }
                                    .map { |device, count| [device&.capitalize, count] }
     @browsers      = AnalyticsEvent.browser_breakdown(@range).sort_by { |_, c| -c }
+    @oses          = AnalyticsEvent.os_breakdown(@range).sort_by { |_, c| -c }
   end
 end

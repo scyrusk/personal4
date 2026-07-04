@@ -72,6 +72,8 @@
     empty: "No device data yet."
   = render "breakdown", title: "Browsers", rows: @browsers, unit: "visitors",
     empty: "No browser data yet."
+  = render "breakdown", title: "Operating systems", rows: @oses, unit: "visitors",
+    empty: "No OS data yet."
 
 %script#analyticsData{type: "application/json"}
   = raw({ dates: @daily_visitors.keys.map(&:iso8601),
