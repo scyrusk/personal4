@@ -75,6 +75,12 @@ class AnalyticsEvent < ActiveRecord::Base
       between(range).group(:event_name).count
     end
 
+    # Distinct visitors active in the trailing window (GA-style "realtime").
+    # Counts all event types: any tracked activity means the visitor is here.
+    def current_visitors(window: 30.minutes)
+      between(window.ago..Time.current).distinct.count(:visitor_token)
+    end
+
     # [[paper title, download count], ...] from the 'download' custom event.
     # props is a serialized JSON text column, so aggregation happens in Ruby.
     def top_downloads(range, limit: 10)

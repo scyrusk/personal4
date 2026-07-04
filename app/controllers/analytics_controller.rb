@@ -12,6 +12,7 @@ class AnalyticsController < ApplicationController
     '365d'  => { label: 'Last year',    days: 365 }
   }.freeze
   DEFAULT_PERIOD = '30d'.freeze
+  REALTIME_WINDOW = 30.minutes
 
   def index
     @period = PERIODS.key?(params[:period]) ? params[:period] : DEFAULT_PERIOD
@@ -38,5 +39,12 @@ class AnalyticsController < ApplicationController
                                    .map { |device, count| [device&.capitalize, count] }
     @browsers      = AnalyticsEvent.browser_breakdown(@range).sort_by { |_, c| -c }
     @oses          = AnalyticsEvent.os_breakdown(@range).sort_by { |_, c| -c }
+
+    @current_visitors = AnalyticsEvent.current_visitors(window: REALTIME_WINDOW)
+  end
+
+  # Polled by the dashboard to keep the "active now" badge live.
+  def realtime
+    render json: { current_visitors: AnalyticsEvent.current_visitors(window: REALTIME_WINDOW) }
   end
 end

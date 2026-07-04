@@ -45,11 +45,51 @@
 
   h1 { font-size: 22px; font-weight: 600; margin: 0; }
 
+  .analytics-header-title {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .analytics-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text-mid);
+    font-size: 12.5px;
+    white-space: nowrap;
+
+    #liveCount { font-weight: 600; color: var(--text); }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: live-pulse 2.4s ease-out infinite;
+    }
+  }
+
   .analytics-header-links {
     font-size: 13px;
     a { color: var(--text-mid); text-decoration: none; margin-left: 14px; }
     a:hover { color: var(--accent); text-decoration: underline; }
   }
+}
+
+@keyframes live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(42, 107, 60, 0.35); }
+  70%  { box-shadow: 0 0 0 6px rgba(42, 107, 60, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(42, 107, 60, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .analytics-body .analytics-live .live-dot { animation: none; }
 }
 
 .analytics-subtitle {

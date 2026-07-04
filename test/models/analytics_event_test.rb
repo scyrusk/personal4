@@ -99,4 +99,14 @@ class AnalyticsEventTest < ActiveSupport::TestCase
     downloads = AnalyticsEvent.top_downloads(1.day.ago..Time.current)
     assert_equal [['Paper One', 2], ['Paper Two', 1], ['Unknown paper', 1]], downloads
   end
+
+  test "current_visitors counts distinct visitors in the window across all event types" do
+    build_event(visitor_token: 'a', occurred_at: 5.minutes.ago)
+    build_event(visitor_token: 'a', occurred_at: 2.minutes.ago)
+    build_event(event_name: 'download', visitor_token: 'b', occurred_at: 10.minutes.ago,
+                props: { 'paper_id' => 1, 'title' => 'Paper One' })
+    build_event(visitor_token: 'stale', occurred_at: 45.minutes.ago)
+
+    assert_equal 2, AnalyticsEvent.current_visitors(window: 30.minutes)
+  end
 end

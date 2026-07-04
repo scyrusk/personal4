@@ -89,4 +89,32 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select 'a[href=?]', '/admin/analytics'
   end
+
+  test "dashboard header shows the realtime active-now badge" do
+    record_pageview(occurred_at: 5.minutes.ago, visitor: 'live-a')
+    record_pageview(occurred_at: 10.minutes.ago, visitor: 'live-b')
+    record_pageview(occurred_at: 2.hours.ago, visitor: 'stale')
+
+    get admin_analytics_url, headers: @auth
+    assert_response :success
+    assert_select '.analytics-live #liveCount', '2'
+  end
+
+  test "realtime endpoint requires auth and returns the active visitor count" do
+    get admin_analytics_realtime_url
+    assert_response :unauthorized
+
+    record_pageview(occurred_at: 3.minutes.ago, visitor: 'live-a')
+    record_pageview(occurred_at: 45.minutes.ago, visitor: 'stale')
+
+    get admin_analytics_realtime_url, headers: @auth
+    assert_response :success
+    assert_equal 1, JSON.parse(response.body)['current_visitors']
+  end
+
+  test "polling the realtime endpoint is itself never tracked" do
+    assert_no_difference('AnalyticsEvent.count') do
+      get admin_analytics_realtime_url, headers: @auth
+    end
+  end
 end

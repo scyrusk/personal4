@@ -1,5 +1,10 @@
 .analytics-header
-  %h1 Analytics
+  .analytics-header-title
+    %h1 Analytics
+    .analytics-live{title: "Distinct visitors with activity in the last 30 minutes"}
+      %span.live-dot{"aria-hidden" => "true"}
+      %span#liveCount= analytics_number(@current_visitors)
+      active now
   .analytics-header-links
     = link_to "Admin", admin_path
     = link_to "View site", root_path
@@ -81,6 +86,18 @@
           pageviews: @daily_visitors.keys.map { |d| @daily_pageviews[d] || 0 } }.to_json)
 
 :javascript
+  // Keep the "active now" badge live (GA-style realtime, 60s poll).
+  (function() {
+    var count = document.getElementById('liveCount');
+    if (!count || !window.fetch) return;
+    setInterval(function() {
+      fetch('#{admin_analytics_realtime_path}', { headers: { 'Accept': 'application/json' } })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(d) { if (d) count.textContent = d.current_visitors.toLocaleString(); })
+        .catch(function() {});
+    }, 60000);
+  })();
+
   (function() {
     var container = document.getElementById('visitorsChart');
     if (!container) return;
