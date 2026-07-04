@@ -35,8 +35,8 @@
     = analytics_delta_tag(@downloads, @prev_downloads)
 
 .card.chart-card
-  %h2.card-title Visitors & pageviews per day
-  - if @daily_pageviews.values.sum.zero? && @daily_visitors.values.sum.zero?
+  %h2.card-title Visitors & pageviews per #{@granularity}
+  - if @chart_pageviews.values.sum.zero? && @chart_visitors.values.sum.zero?
     .chart-empty No traffic recorded in this period yet.
   - else
     .chart-legend
@@ -47,22 +47,22 @@
         %span.legend-key
         Pageviews
     #visitorsChart.chart-container{tabindex: "0", role: "img",
-      "aria-label" => "Line chart of daily visitors and pageviews. Data available in the table below."}
+      "aria-label" => "Line chart of #{@granularity == 'hour' ? 'hourly' : 'daily'} visitors and pageviews. Data available in the table below."}
       #chartTooltip.chart-tooltip
     %details.chart-table
       %summary View data table
       %table
         %thead
           %tr
-            %th Date
+            %th= @granularity == 'hour' ? 'Hour' : 'Date'
             %th Visitors
             %th Pageviews
         %tbody
-          - @daily_visitors.each do |day, visitors|
+          - @chart_visitors.each do |bucket, visitors|
             %tr
-              %td= day.strftime("%b %-d, %Y")
+              %td= analytics_chart_label(bucket, long: true)
               %td= visitors
-              %td= @daily_pageviews[day]
+              %td= @chart_pageviews[bucket]
 
 .panel-grid
   = render "breakdown", title: "Top sources", rows: @top_sources, unit: "visitors",
@@ -81,9 +81,10 @@
     empty: "No OS data yet."
 
 %script#analyticsData{type: "application/json"}
-  = raw({ dates: @daily_visitors.keys.map(&:iso8601),
-          visitors: @daily_visitors.values,
-          pageviews: @daily_visitors.keys.map { |d| @daily_pageviews[d] || 0 } }.to_json)
+  = raw({ labels: @chart_visitors.keys.map { |k| analytics_chart_label(k) },
+          labelsLong: @chart_visitors.keys.map { |k| analytics_chart_label(k, long: true) },
+          visitors: @chart_visitors.values,
+          pageviews: @chart_visitors.keys.map { |k| @chart_pageviews[k] || 0 } }.to_json)
 
 :javascript
   // Keep the "active now" badge live (GA-style realtime, 60s poll).
@@ -110,16 +111,9 @@
       { key: 'pageviews', name: 'Pageviews', color: '#2a78d6' }
     ];
     var PAD = { top: 12, right: 16, bottom: 26, left: 46 };
-    var n = data.dates.length;
+    var n = data.labels.length;
     var hoverIdx = -1;
     var svg = null, geom = null;
-
-    function fmtDate(iso, withYear) {
-      var d = new Date(iso + 'T00:00:00');
-      var opts = { month: 'short', day: 'numeric' };
-      if (withYear) opts.year = 'numeric';
-      return d.toLocaleDateString(undefined, opts);
-    }
 
     // Smallest "nice" ceiling (1/2/5 × 10^k) at or above the data max.
     function niceMax(max) {
@@ -180,7 +174,7 @@
           x: xAt(i), y: h - 6, 'text-anchor': 'middle',
           fill: '#7a7a72', 'font-size': 11
         });
-        xl.textContent = fmtDate(data.dates[i]);
+        xl.textContent = data.labels[i];
         svg.appendChild(xl);
       }
 
@@ -234,7 +228,7 @@
       tooltip.textContent = '';
       var dateEl = document.createElement('div');
       dateEl.className = 'tt-date';
-      dateEl.textContent = fmtDate(data.dates[hoverIdx], true);
+      dateEl.textContent = data.labelsLong[hoverIdx];
       tooltip.appendChild(dateEl);
       SERIES.forEach(function(s) {
         var row = document.createElement('div');

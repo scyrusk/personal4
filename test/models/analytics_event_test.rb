@@ -29,6 +29,29 @@ class AnalyticsEventTest < ActiveSupport::TestCase
     assert_equal 0, counts[today - 3.days]
   end
 
+  test "hourly buckets follow the local hour and zero-fill through the current hour only" do
+    travel_to Time.zone.local(2026, 7, 3, 14, 30) do
+      build_event(visitor_token: 'a', occurred_at: Time.zone.local(2026, 7, 3, 9, 5))
+      build_event(visitor_token: 'a', occurred_at: Time.zone.local(2026, 7, 3, 9, 40))
+      build_event(visitor_token: 'b', occurred_at: Time.zone.local(2026, 7, 3, 9, 50))
+      build_event(visitor_token: 'c', occurred_at: Time.zone.local(2026, 7, 2, 23, 0))
+
+      range = Time.current.beginning_of_day..Time.current.end_of_day
+      visitors = AnalyticsEvent.hourly_visitors(range)
+
+      # 12 AM through the current (2 PM) hour, no future hours.
+      assert_equal 15, visitors.size
+      assert_equal Time.zone.local(2026, 7, 3, 0), visitors.keys.first
+      assert_equal Time.zone.local(2026, 7, 3, 14), visitors.keys.last
+      assert_equal 2, visitors[Time.zone.local(2026, 7, 3, 9)]
+      assert_equal 0, visitors[Time.zone.local(2026, 7, 3, 10)]
+
+      pageviews = AnalyticsEvent.hourly_pageviews(range)
+      assert_equal 3, pageviews[Time.zone.local(2026, 7, 3, 9)]
+      assert_equal 15, pageviews.size
+    end
+  end
+
   test "top_sources ranks by unique visitors and excludes internal navigation" do
     now = Time.current
     build_event(visitor_token: 'a', source: 'Google', medium: 'organic', occurred_at: now)

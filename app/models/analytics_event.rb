@@ -32,6 +32,24 @@ class AnalyticsEvent < ActiveRecord::Base
       zero_fill(range, counts)
     end
 
+    # { Time (hour start) => distinct visitor count } for intraday views.
+    # Zero-filled hourly, capped at the current hour so a partial day doesn't
+    # trail future zeros.
+    def hourly_visitors(range)
+      counts = pageviews.between(range).pluck(:occurred_at, :visitor_token)
+        .group_by { |occurred_at, _| occurred_at.in_time_zone.beginning_of_hour }
+        .transform_values { |rows| rows.map(&:last).uniq.size }
+      zero_fill_hours(range, counts)
+    end
+
+    # { Time (hour start) => pageview count }, zero-filled like hourly_visitors.
+    def hourly_pageviews(range)
+      counts = pageviews.between(range).pluck(:occurred_at)
+        .group_by { |occurred_at| occurred_at.in_time_zone.beginning_of_hour }
+        .transform_values(&:size)
+      zero_fill_hours(range, counts)
+    end
+
     def total_visitors(range)
       pageviews.between(range).distinct.count(:visitor_token)
     end
@@ -95,6 +113,18 @@ class AnalyticsEvent < ActiveRecord::Base
 
     def zero_fill(range, counts)
       (range.first.to_date..range.last.to_date).index_with { |day| counts[day] || 0 }
+    end
+
+    def zero_fill_hours(range, counts)
+      first = range.first.in_time_zone.beginning_of_hour
+      last = [range.last.in_time_zone, Time.current].min.beginning_of_hour
+      hours = []
+      hour = first
+      while hour <= last
+        hours << hour
+        hour += 1.hour
+      end
+      hours.index_with { |h| counts[h] || 0 }
     end
   end
 end

@@ -54,8 +54,24 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
     assert_select '.card-title', 'Operating systems'
     assert_select '.bd-text', /iOS/
     assert_select '.bd-text', /macOS/
-    # Chart data table is present and reachable without JS
+    # Multi-day periods chart by day; data table is reachable without JS
+    assert_select '.chart-card .card-title', 'Visitors & pageviews per day'
     assert_select '.chart-table table tbody tr', 7
+  end
+
+  test "the today period charts by hour in the local time zone" do
+    travel_to Time.zone.local(2026, 7, 3, 14, 30) do
+      record_pageview(occurred_at: Time.zone.local(2026, 7, 3, 9, 15), visitor: 'a')
+
+      get admin_analytics_url(period: 'today'), headers: @auth
+      assert_response :success
+
+      assert_select '.chart-card .card-title', 'Visitors & pageviews per hour'
+      assert_select '.chart-table table thead th', 'Hour'
+      # 12 AM through the current (2 PM) hour — no future hours trailing zeros
+      assert_select '.chart-table table tbody tr', 15
+      assert_select '.chart-table td', 'Jul 3, 9 AM'
+    end
   end
 
   test "falls back to the default period for unknown period params" do

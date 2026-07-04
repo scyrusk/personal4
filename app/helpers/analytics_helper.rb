@@ -15,6 +15,17 @@ module AnalyticsHelper
                 class: "stat-delta stat-delta-#{direction}")
   end
 
+  # Chart bucket label. Keys are Dates for daily buckets and hour-start Times
+  # for hourly buckets; labels render server-side so hours stay in the site's
+  # time zone regardless of the viewer's browser.
+  def analytics_chart_label(key, long: false)
+    if key.acts_like?(:time)
+      key.strftime(long ? '%b %-d, %-l %p' : '%-l %p')
+    else
+      key.strftime(long ? '%b %-d, %Y' : '%b %-d')
+    end
+  end
+
   # 1284 -> "1,284"; large values compact: 12900 -> "12.9K"
   def analytics_number(value)
     return number_with_delimiter(value) if value < 10_000

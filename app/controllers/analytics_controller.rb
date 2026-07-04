@@ -21,8 +21,16 @@ class AnalyticsController < ApplicationController
     @range = (now - (days - 1).days).beginning_of_day..now.end_of_day
     prev_range = (@range.first - days.days)..(@range.first - 1.second)
 
-    @daily_visitors  = AnalyticsEvent.daily_visitors(@range)
-    @daily_pageviews = AnalyticsEvent.daily_pageviews(@range)
+    # GA-style granularity: the single-day "Today" view charts by hour.
+    if @period == 'today'
+      @granularity = 'hour'
+      @chart_visitors  = AnalyticsEvent.hourly_visitors(@range)
+      @chart_pageviews = AnalyticsEvent.hourly_pageviews(@range)
+    else
+      @granularity = 'day'
+      @chart_visitors  = AnalyticsEvent.daily_visitors(@range)
+      @chart_pageviews = AnalyticsEvent.daily_pageviews(@range)
+    end
     @total_visitors  = AnalyticsEvent.total_visitors(@range)
     @total_pageviews = AnalyticsEvent.total_pageviews(@range)
     @downloads       = AnalyticsEvent.event_counts(@range)['download'] || 0
