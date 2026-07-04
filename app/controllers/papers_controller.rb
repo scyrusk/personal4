@@ -82,6 +82,15 @@ class PapersController < ApplicationController
     @paper.downloads = @paper.downloads.present? ? @paper.downloads + 1 : 1
     @paper.save
 
+    unless session[:authenticated]
+      begin
+        Analytics::Tracker.track(request, event_name: 'download',
+                                 properties: { 'paper_id' => @paper.id, 'title' => @paper.title })
+      rescue StandardError => e
+        Rails.logger.error("[analytics] failed to track download: #{e.class}: #{e.message}")
+      end
+    end
+
     pdf_path =  Rails.root.join('public', @paper.pdf.path)
 
     begin

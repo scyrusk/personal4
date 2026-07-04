@@ -1,49 +1,48 @@
 require 'test_helper'
 
-class TravelsControllerTest < ActionController::TestCase
+class TravelsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @travel = travels(:one)
+    ENV['PERSONAL_UN'] = 'testadmin'
+    ENV['PERSONAL_PASS'] = 'testpass'
+    @auth = { 'HTTP_AUTHORIZATION' =>
+              ActionController::HttpAuthentication::Basic.encode_credentials('testadmin', 'testpass') }
   end
 
-  test "should get index" do
-    get :index
+  test "index is public and returns json" do
+    get travels_url(format: :json)
     assert_response :success
-    assert_not_nil assigns(:travels)
+    assert_kind_of Array, JSON.parse(response.body)
   end
 
-  test "should get new" do
-    get :new
+  test "new requires authentication" do
+    get new_travel_url
+    assert_response :unauthorized
+
+    get new_travel_url, headers: @auth
     assert_response :success
   end
 
-  test "should create travel" do
+  test "create makes a travel" do
     assert_difference('Travel.count') do
-      post :create, travel: {  }
+      post travels_url(format: :js),
+           params: { travel: { title: 'Talk', location: 'Pittsburgh', date: '2026-07-01' } },
+           headers: @auth
     end
-
-    assert_redirected_to travel_path(assigns(:travel))
-  end
-
-  test "should show travel" do
-    get :show, id: @travel
     assert_response :success
   end
 
-  test "should get edit" do
-    get :edit, id: @travel
+  test "update changes a travel" do
+    patch travel_url(@travel, format: :js),
+          params: { travel: { location: 'NYC' } }, headers: @auth
     assert_response :success
+    assert_equal 'NYC', @travel.reload.location
   end
 
-  test "should update travel" do
-    patch :update, id: @travel, travel: {  }
-    assert_redirected_to travel_path(assigns(:travel))
-  end
-
-  test "should destroy travel" do
+  test "destroy removes a travel" do
     assert_difference('Travel.count', -1) do
-      delete :destroy, id: @travel
+      delete travel_url(@travel), headers: @auth
     end
-
-    assert_redirected_to travels_path
+    assert_redirected_to admin_path
   end
 end
