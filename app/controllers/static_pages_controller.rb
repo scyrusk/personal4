@@ -45,7 +45,7 @@ class StaticPagesController < ApplicationController
       courseName: "Usable Privacy & Security",
       semester: "Spring 2019",
       link: "http://cs8803.sauvik.me"
-    }, { 
+    }, {
       courseCode: "GT CS4873",
       courseName: "Computing, Society & Professionalism",
       semester: "Fall 2020",
@@ -56,7 +56,7 @@ class StaticPagesController < ApplicationController
       semester: "Spring 2022",
       link: "http://cs8803.sauvik.me"
     },
-    { 
+    {
       courseCode: "CMU 05-120 A1",
       courseName: "Intro to HCI",
       semester: "Fall 2022",
