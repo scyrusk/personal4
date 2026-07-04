@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   match "admin", to: 'static_pages#admin', via: :get, as: :admin
+  match "admin/analytics", to: 'analytics#index', via: :get, as: :admin_analytics
   match "dktest", to: 'static_pages#dktest', via: :get
   root 'static_pages#index'
 

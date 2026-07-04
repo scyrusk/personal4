@@ -1,0 +1,253 @@
+/*
+ * analytics.scss — admin analytics dashboard (standalone layout).
+ * Uses the site's design language (IBM Plex, green accent) but is not
+ * included in application.scss, so it never ships to public pages.
+ */
+
+.analytics-body {
+  --accent:      #2a6b3c;   /* series 1: visitors (site green) */
+  --series-2:    #2a78d6;   /* series 2: pageviews (blue) */
+  --accent-wash: #e8f3ec;   /* meter track — light step of the green ramp */
+  --text:        #1a1a18;
+  --text-mid:    #4a4a45;
+  --text-muted:  #7a7a72;
+  --bg:          #fafaf8;
+  --bg-card:     #ffffff;
+  --border:      #e2e2dc;
+  --grid:        #eeeee8;
+  --down:        #a33a3a;
+  --sans:        'IBM Plex Sans', system-ui, sans-serif;
+  --mono:        'IBM Plex Mono', monospace;
+  --radius:      6px;
+
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.analytics-wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+}
+
+/* ─── Header & filter row ─────────────────────────────── */
+.analytics-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+
+  h1 { font-size: 22px; font-weight: 600; margin: 0; }
+
+  .analytics-header-links {
+    font-size: 13px;
+    a { color: var(--text-mid); text-decoration: none; margin-left: 14px; }
+    a:hover { color: var(--accent); text-decoration: underline; }
+  }
+}
+
+.analytics-subtitle {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 0 0 18px;
+}
+
+.period-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+
+  a {
+    display: inline-block;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text-mid);
+    font-size: 13px;
+    text-decoration: none;
+
+    &:hover { border-color: var(--accent); color: var(--accent); }
+    &.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 500;
+    }
+  }
+}
+
+/* ─── Cards ───────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+
+.card-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+}
+
+/* ─── KPI row ─────────────────────────────────────────── */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.stat-tile {
+  .stat-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+  .stat-value { font-size: 30px; font-weight: 600; line-height: 1.1; }
+  .stat-delta { display: block; font-size: 12px; margin-top: 6px; }
+  .stat-delta-up   { color: #006300; }
+  .stat-delta-down { color: var(--down); }
+  .stat-delta-none { color: var(--text-muted); }
+}
+
+/* ─── Chart card ──────────────────────────────────────── */
+.chart-card { margin-bottom: 14px; }
+
+.chart-legend {
+  display: flex;
+  gap: 18px;
+  font-size: 12px;
+  color: var(--text-mid);
+  margin-bottom: 8px;
+
+  .legend-key {
+    display: inline-block;
+    width: 14px;
+    height: 0;
+    border-top: 2px solid;
+    border-radius: 2px;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  .legend-visitors  .legend-key { border-color: var(--accent); }
+  .legend-pageviews .legend-key { border-color: var(--series-2); }
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  outline: none;
+
+  svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+  &:focus-visible { box-shadow: 0 0 0 2px #1f6fe5; border-radius: 4px; }
+}
+
+.chart-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(26, 26, 24, 0.10);
+  padding: 8px 10px;
+  font-size: 12px;
+  min-width: 130px;
+  z-index: 5;
+  display: none;
+
+  .tt-date { color: var(--text-muted); margin-bottom: 4px; }
+  .tt-row { display: flex; align-items: center; gap: 6px; }
+  .tt-key {
+    width: 10px; height: 0;
+    border-top: 2px solid; border-radius: 2px;
+  }
+  .tt-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tt-name { color: var(--text-mid); }
+}
+
+.chart-empty {
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.chart-table {
+  margin-top: 10px;
+  font-size: 12px;
+
+  summary { color: var(--text-muted); cursor: pointer; }
+  table { margin-top: 8px; width: auto; }
+  th { text-align: left; padding-right: 18px; color: var(--text-muted); font-weight: 500; }
+  td { padding-right: 18px; font-variant-numeric: tabular-nums; }
+}
+
+/* ─── Breakdown panels ────────────────────────────────── */
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.breakdown {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 5px 0;
+  }
+
+  .bd-label {
+    position: relative;
+    min-width: 0;
+    padding: 3px 8px;
+    border-radius: 3px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 13px;
+  }
+
+  /* meter fill behind the label — a wash of the accent ramp */
+  .bd-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--accent-wash);
+    border-radius: 3px;
+    z-index: 0;
+  }
+  .bd-text { position: relative; z-index: 1; }
+  .bd-text a { color: var(--text); text-decoration: none; }
+  .bd-text a:hover { color: var(--accent); text-decoration: underline; }
+
+  .bd-count {
+    font-variant-numeric: tabular-nums;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-mid);
+  }
+}
+
+.panel-empty { color: var(--text-muted); font-size: 13px; }
+
+@media (max-width: 640px) {
+  .analytics-wrap { padding: 20px 14px 48px; }
+  .stat-tile .stat-value { font-size: 24px; }
+}

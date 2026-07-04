@@ -234,12 +234,4 @@ class StaticPagesController < ApplicationController
   def admin
   end
 
-  protected
-    def authenticate
-      authenticate_or_request_with_http_basic do |user, password|
-        retval = user == ENV['PERSONAL_UN'] && password == ENV['PERSONAL_PASS']
-        session[:authenticated] = true if retval
-        retval
-      end
-    end
 end

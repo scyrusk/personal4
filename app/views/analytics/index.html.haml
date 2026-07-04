@@ -1,0 +1,275 @@
+.analytics-header
+  %h1 Analytics
+  .analytics-header-links
+    = link_to "Admin", admin_path
+    = link_to "View site", root_path
+%p.analytics-subtitle
+  Self-hosted, cookieless analytics. Visitors are unique per day (the visitor token rotates daily),
+  so multi-day totals are sums of daily uniques.
+
+.period-row
+  - AnalyticsController::PERIODS.each do |key, cfg|
+    = link_to cfg[:label], admin_analytics_path(period: key), class: ("active" if key == @period)
+
+.stat-row
+  .card.stat-tile
+    .stat-label Visitors
+    .stat-value= analytics_number(@total_visitors)
+    = analytics_delta_tag(@total_visitors, @prev_visitors)
+  .card.stat-tile
+    .stat-label Pageviews
+    .stat-value= analytics_number(@total_pageviews)
+    = analytics_delta_tag(@total_pageviews, @prev_pageviews)
+  .card.stat-tile
+    .stat-label Views per visitor
+    .stat-value= @total_visitors.zero? ? "—" : (@total_pageviews.to_f / @total_visitors).round(1)
+    %span.stat-delta.stat-delta-none this period
+  .card.stat-tile
+    .stat-label Paper downloads
+    .stat-value= analytics_number(@downloads)
+    = analytics_delta_tag(@downloads, @prev_downloads)
+
+.card.chart-card
+  %h2.card-title Visitors & pageviews per day
+  - if @daily_pageviews.values.sum.zero? && @daily_visitors.values.sum.zero?
+    .chart-empty No traffic recorded in this period yet.
+  - else
+    .chart-legend
+      %span.legend-visitors
+        %span.legend-key
+        Visitors
+      %span.legend-pageviews
+        %span.legend-key
+        Pageviews
+    #visitorsChart.chart-container{tabindex: "0", role: "img",
+      "aria-label" => "Line chart of daily visitors and pageviews. Data available in the table below."}
+      #chartTooltip.chart-tooltip
+    %details.chart-table
+      %summary View data table
+      %table
+        %thead
+          %tr
+            %th Date
+            %th Visitors
+            %th Pageviews
+        %tbody
+          - @daily_visitors.each do |day, visitors|
+            %tr
+              %td= day.strftime("%b %-d, %Y")
+              %td= visitors
+              %td= @daily_pageviews[day]
+
+.panel-grid
+  = render "breakdown", title: "Top sources", rows: @top_sources, unit: "visitors",
+    empty: "No external traffic yet."
+  = render "breakdown", title: "Top pages", rows: @top_pages, unit: "views",
+    empty: "No pageviews yet.", linkify: true
+  = render "breakdown", title: "Top referrers", rows: @top_referrers, unit: "visitors",
+    empty: "No referrers yet."
+  = render "breakdown", title: "Devices", rows: @devices, unit: "visitors",
+    empty: "No device data yet."
+  = render "breakdown", title: "Browsers", rows: @browsers, unit: "visitors",
+    empty: "No browser data yet."
+
+%script#analyticsData{type: "application/json"}
+  = raw({ dates: @daily_visitors.keys.map(&:iso8601),
+          visitors: @daily_visitors.values,
+          pageviews: @daily_visitors.keys.map { |d| @daily_pageviews[d] || 0 } }.to_json)
+
+:javascript
+  (function() {
+    var container = document.getElementById('visitorsChart');
+    if (!container) return;
+
+    var data = JSON.parse(document.getElementById('analyticsData').textContent);
+    var tooltip = document.getElementById('chartTooltip');
+    var SVG_NS = 'http://www.w3.org/2000/svg';
+    var SERIES = [
+      { key: 'visitors',  name: 'Visitors',  color: '#2a6b3c' },
+      { key: 'pageviews', name: 'Pageviews', color: '#2a78d6' }
+    ];
+    var PAD = { top: 12, right: 16, bottom: 26, left: 46 };
+    var n = data.dates.length;
+    var hoverIdx = -1;
+    var svg = null, geom = null;
+
+    function fmtDate(iso, withYear) {
+      var d = new Date(iso + 'T00:00:00');
+      var opts = { month: 'short', day: 'numeric' };
+      if (withYear) opts.year = 'numeric';
+      return d.toLocaleDateString(undefined, opts);
+    }
+
+    // Smallest "nice" ceiling (1/2/5 × 10^k) at or above the data max.
+    function niceMax(max) {
+      if (max <= 0) return 1;
+      var pow = Math.pow(10, Math.floor(Math.log(max) / Math.LN10));
+      var candidates = [pow, 2 * pow, 5 * pow, 10 * pow];
+      for (var i = 0; i < candidates.length; i++) {
+        if (candidates[i] >= max) return candidates[i];
+      }
+      return 10 * pow;
+    }
+
+    function el(name, attrs) {
+      var node = document.createElementNS(SVG_NS, name);
+      for (var k in attrs) node.setAttribute(k, attrs[k]);
+      return node;
+    }
+
+    function render() {
+      var w = container.clientWidth;
+      var h = container.clientHeight;
+      if (svg) svg.remove();
+      svg = el('svg', { width: w, height: h, viewBox: '0 0 ' + w + ' ' + h });
+
+      var plotW = w - PAD.left - PAD.right;
+      var plotH = h - PAD.top - PAD.bottom;
+      var dataMax = Math.max.apply(null, data.visitors.concat(data.pageviews).concat([1]));
+      // Integer "nice" tick step so every gridline label is a clean number.
+      var yStep = Math.max(1, niceMax(dataMax / 4));
+      var yMax = yStep * 4;
+      var xAt = function(i) {
+        return n === 1 ? PAD.left + plotW / 2 : PAD.left + (i * plotW) / (n - 1);
+      };
+      var yAt = function(v) { return PAD.top + plotH * (1 - v / yMax); };
+      geom = { xAt: xAt, yAt: yAt, w: w, h: h };
+
+      // Gridlines + y tick labels (4 divisions, clean numbers).
+      var ticks = 4;
+      for (var t = 0; t <= ticks; t++) {
+        var val = yStep * t;
+        var y = yAt(val);
+        svg.appendChild(el('line', {
+          x1: PAD.left, x2: w - PAD.right, y1: y, y2: y,
+          stroke: t === 0 ? '#c3c2b7' : '#eeeee8', 'stroke-width': 1
+        }));
+        var label = el('text', {
+          x: PAD.left - 8, y: y + 4, 'text-anchor': 'end',
+          fill: '#7a7a72', 'font-size': 11
+        });
+        label.textContent = val >= 1000 ? (val / 1000) + 'K' : Math.round(val).toLocaleString();
+        svg.appendChild(label);
+      }
+
+      // Sparse x labels (~6).
+      var step = Math.max(1, Math.ceil(n / 6));
+      for (var i = 0; i < n; i += step) {
+        var xl = el('text', {
+          x: xAt(i), y: h - 6, 'text-anchor': 'middle',
+          fill: '#7a7a72', 'font-size': 11
+        });
+        xl.textContent = fmtDate(data.dates[i]);
+        svg.appendChild(xl);
+      }
+
+      // Series lines with an end marker (2px surface ring).
+      SERIES.forEach(function(s) {
+        var vals = data[s.key];
+        if (n > 1) {
+          var pts = vals.map(function(v, i) { return xAt(i) + ',' + yAt(v); }).join(' ');
+          svg.appendChild(el('polyline', {
+            points: pts, fill: 'none', stroke: s.color,
+            'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'
+          }));
+        }
+        svg.appendChild(el('circle', {
+          cx: xAt(n - 1), cy: yAt(vals[n - 1]), r: 4,
+          fill: s.color, stroke: '#ffffff', 'stroke-width': 2
+        }));
+      });
+
+      // Crosshair + hover dots, hidden until hover/focus.
+      var hoverLayer = el('g', { 'data-hover': '1', visibility: 'hidden' });
+      hoverLayer.appendChild(el('line', {
+        x1: 0, x2: 0, y1: PAD.top, y2: h - PAD.bottom,
+        stroke: '#c3c2b7', 'stroke-width': 1
+      }));
+      SERIES.forEach(function(s) {
+        hoverLayer.appendChild(el('circle', {
+          r: 4, fill: s.color, stroke: '#ffffff', 'stroke-width': 2
+        }));
+      });
+      svg.appendChild(hoverLayer);
+      container.insertBefore(svg, tooltip);
+      if (hoverIdx >= 0) showHover(hoverIdx);
+    }
+
+    function showHover(idx) {
+      hoverIdx = Math.max(0, Math.min(n - 1, idx));
+      var x = geom.xAt(hoverIdx);
+      var layer = svg.querySelector('[data-hover]');
+      layer.setAttribute('visibility', 'visible');
+      var line = layer.querySelector('line');
+      line.setAttribute('x1', x);
+      line.setAttribute('x2', x);
+      var dots = layer.querySelectorAll('circle');
+      SERIES.forEach(function(s, si) {
+        dots[si].setAttribute('cx', x);
+        dots[si].setAttribute('cy', geom.yAt(data[s.key][hoverIdx]));
+      });
+
+      // Tooltip: values lead, series names follow, keyed by a line swatch.
+      tooltip.textContent = '';
+      var dateEl = document.createElement('div');
+      dateEl.className = 'tt-date';
+      dateEl.textContent = fmtDate(data.dates[hoverIdx], true);
+      tooltip.appendChild(dateEl);
+      SERIES.forEach(function(s) {
+        var row = document.createElement('div');
+        row.className = 'tt-row';
+        var key = document.createElement('span');
+        key.className = 'tt-key';
+        key.style.borderTopColor = s.color;
+        var value = document.createElement('span');
+        value.className = 'tt-value';
+        value.textContent = data[s.key][hoverIdx].toLocaleString();
+        var name = document.createElement('span');
+        name.className = 'tt-name';
+        name.textContent = s.name;
+        row.appendChild(key);
+        row.appendChild(value);
+        row.appendChild(name);
+        tooltip.appendChild(row);
+      });
+      tooltip.style.display = 'block';
+      var ttW = tooltip.offsetWidth;
+      var left = x + 12 + ttW > geom.w ? x - ttW - 12 : x + 12;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = PAD.top + 'px';
+    }
+
+    function hideHover() {
+      hoverIdx = -1;
+      tooltip.style.display = 'none';
+      var layer = svg && svg.querySelector('[data-hover]');
+      if (layer) layer.setAttribute('visibility', 'hidden');
+    }
+
+    function idxFromEvent(e) {
+      var rect = container.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      if (n === 1) return 0;
+      var plotW = geom.w - PAD.left - PAD.right;
+      return Math.round(((x - PAD.left) / plotW) * (n - 1));
+    }
+
+    container.addEventListener('pointermove', function(e) { showHover(idxFromEvent(e)); });
+    container.addEventListener('pointerleave', hideHover);
+    container.addEventListener('focus', function() { showHover(n - 1); });
+    container.addEventListener('blur', hideHover);
+    container.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowLeft') { showHover(hoverIdx < 0 ? n - 1 : hoverIdx - 1); e.preventDefault(); }
+      if (e.key === 'ArrowRight') { showHover(hoverIdx < 0 ? 0 : hoverIdx + 1); e.preventDefault(); }
+      if (e.key === 'Escape') hideHover();
+    });
+
+    var resizeQueued = false;
+    window.addEventListener('resize', function() {
+      if (resizeQueued) return;
+      resizeQueued = true;
+      requestAnimationFrame(function() { resizeQueued = false; render(); });
+    });
+
+    render();
+  })();
