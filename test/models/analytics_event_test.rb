@@ -106,6 +106,20 @@ class AnalyticsEventTest < ActiveSupport::TestCase
     assert_equal({ 'macOS' => 1, 'iOS' => 1 }, breakdown)
   end
 
+  test "top_campaigns ranks utm campaigns by unique visitors and skips untagged traffic" do
+    now = Time.current
+    build_event(visitor_token: 'a', utm_campaign: 'newsletter', occurred_at: now)
+    build_event(visitor_token: 'a', utm_campaign: 'newsletter', occurred_at: now)
+    build_event(visitor_token: 'b', utm_campaign: 'newsletter', occurred_at: now)
+    build_event(visitor_token: 'c', utm_campaign: 'launch', occurred_at: now)
+    build_event(visitor_token: 'd', utm_campaign: nil, occurred_at: now)
+    build_event(visitor_token: 'e', utm_campaign: '', occurred_at: now)
+    build_event(visitor_token: 'f', utm_campaign: 'old', occurred_at: now - 30.days)
+
+    campaigns = AnalyticsEvent.top_campaigns(1.day.ago..Time.current)
+    assert_equal [['newsletter', 2], ['launch', 1]], campaigns
+  end
+
   test "top_downloads ranks paper titles by download count within the range" do
     now = Time.current
     2.times do |i|

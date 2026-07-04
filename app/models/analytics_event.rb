@@ -77,6 +77,13 @@ class AnalyticsEvent < ActiveRecord::Base
         .sort_by { |_, count| -count }.first(limit)
     end
 
+    # [[utm_campaign, visitor_count], ...] for campaign-tagged traffic only.
+    def top_campaigns(range, limit: 10)
+      pageviews.between(range).where.not(utm_campaign: [nil, ''])
+        .group(:utm_campaign).distinct.count(:visitor_token)
+        .sort_by { |_, count| -count }.first(limit)
+    end
+
     def device_breakdown(range)
       pageviews.between(range).group(:device_type).distinct.count(:visitor_token)
     end

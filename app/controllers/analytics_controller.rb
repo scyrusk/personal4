@@ -43,6 +43,7 @@ class AnalyticsController < ApplicationController
     @top_pages     = AnalyticsEvent.top_pages(@range)
     @top_downloads = AnalyticsEvent.top_downloads(@range)
     @top_referrers = AnalyticsEvent.top_referrers(@range)
+    @top_campaigns = AnalyticsEvent.top_campaigns(@range)
     @devices       = AnalyticsEvent.device_breakdown(@range).sort_by { |_, c| -c }
                                    .map { |device, count| [device&.capitalize, count] }
     @browsers      = AnalyticsEvent.browser_breakdown(@range).sort_by { |_, c| -c }

@@ -9,11 +9,12 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
   end
 
   def record_pageview(occurred_at:, visitor: 'v1', path: '/', source: 'Direct', medium: nil,
-                      referrer_host: nil, device: 'desktop', browser: 'Chrome', os: 'macOS')
+                      referrer_host: nil, device: 'desktop', browser: 'Chrome', os: 'macOS',
+                      utm_campaign: nil)
     AnalyticsEvent.create!(
       event_name: 'pageview', visitor_token: visitor, path: path, source: source,
       medium: medium, referrer_host: referrer_host, device_type: device, browser: browser,
-      os: os, occurred_at: occurred_at
+      os: os, utm_campaign: utm_campaign, occurred_at: occurred_at
     )
   end
 
@@ -28,7 +29,7 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
     record_pageview(occurred_at: 1.day.ago, visitor: 'a', path: '/papers/1')
     record_pageview(occurred_at: 2.days.ago, visitor: 'b', source: 'Hacker News', medium: 'social',
                     referrer_host: 'news.ycombinator.com', device: 'mobile', browser: 'Safari',
-                    os: 'iOS')
+                    os: 'iOS', utm_campaign: 'launch-week')
     AnalyticsEvent.create!(event_name: 'download', visitor_token: 'a', path: '/papers/1/serve',
                            occurred_at: 1.day.ago,
                            props: { 'paper_id' => 1, 'title' => 'A Great Paper' })
@@ -54,6 +55,8 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
     assert_select '.card-title', 'Operating systems'
     assert_select '.bd-text', /iOS/
     assert_select '.bd-text', /macOS/
+    assert_select '.card-title', 'Campaigns'
+    assert_select '.bd-text', /launch-week/
     # Multi-day periods chart by day; data table is reachable without JS
     assert_select '.chart-card .card-title', 'Visitors & pageviews per day'
     assert_select '.chart-table table tbody tr', 7

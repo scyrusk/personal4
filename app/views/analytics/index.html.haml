@@ -73,6 +73,8 @@
     empty: "No paper downloads yet."
   = render "breakdown", title: "Top referrers", rows: @top_referrers, unit: "visitors",
     empty: "No referrers yet."
+  = render "breakdown", title: "Campaigns", rows: @top_campaigns, unit: "visitors",
+    empty: "No campaign-tagged (utm_campaign) traffic yet."
   = render "breakdown", title: "Devices", rows: @devices, unit: "visitors",
     empty: "No device data yet."
   = render "breakdown", title: "Browsers", rows: @browsers, unit: "visitors",
