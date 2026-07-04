@@ -15,13 +15,21 @@ class AnalyticsEvent < ActiveRecord::Base
 
   class << self
     # { Date => distinct visitor count }, with zero-filled days across the range.
+    # Bucketing happens in Ruby because days must follow Time.zone, and SQLite's
+    # DATE() can only truncate the stored UTC timestamps.
     def daily_visitors(range)
-      zero_fill(range, pageviews.between(range).group(date_expr).distinct.count(:visitor_token))
+      counts = pageviews.between(range).pluck(:occurred_at, :visitor_token)
+        .group_by { |occurred_at, _| occurred_at.in_time_zone.to_date }
+        .transform_values { |rows| rows.map(&:last).uniq.size }
+      zero_fill(range, counts)
     end
 
     # { Date => pageview count }, with zero-filled days across the range.
     def daily_pageviews(range)
-      zero_fill(range, pageviews.between(range).group(date_expr).count)
+      counts = pageviews.between(range).pluck(:occurred_at)
+        .group_by { |occurred_at| occurred_at.in_time_zone.to_date }
+        .transform_values(&:size)
+      zero_fill(range, counts)
     end
 
     def total_visitors(range)
@@ -79,13 +87,8 @@ class AnalyticsEvent < ActiveRecord::Base
 
     private
 
-    def date_expr
-      Arel.sql("DATE(occurred_at)")
-    end
-
     def zero_fill(range, counts)
-      by_date = counts.transform_keys { |d| d.is_a?(Date) ? d : Date.parse(d.to_s) }
-      (range.first.to_date..range.last.to_date).index_with { |day| by_date[day] || 0 }
+      (range.first.to_date..range.last.to_date).index_with { |day| counts[day] || 0 }
     end
   end
 end

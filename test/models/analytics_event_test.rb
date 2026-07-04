@@ -14,12 +14,12 @@ class AnalyticsEventTest < ActiveSupport::TestCase
 
   test "daily_visitors counts distinct visitors per day and zero-fills" do
     today = Date.current
-    build_event(visitor_token: 'a', occurred_at: today.to_time + 1.hour)
-    build_event(visitor_token: 'a', occurred_at: today.to_time + 2.hours)
-    build_event(visitor_token: 'b', occurred_at: today.to_time + 3.hours)
-    build_event(visitor_token: 'c', occurred_at: (today - 2.days).to_time + 1.hour)
+    build_event(visitor_token: 'a', occurred_at: today.in_time_zone + 1.hour)
+    build_event(visitor_token: 'a', occurred_at: today.in_time_zone + 2.hours)
+    build_event(visitor_token: 'b', occurred_at: today.in_time_zone + 3.hours)
+    build_event(visitor_token: 'c', occurred_at: (today - 2.days).in_time_zone + 1.hour)
 
-    range = (today - 3.days).to_time..today.end_of_day
+    range = (today - 3.days).in_time_zone..today.end_of_day
     counts = AnalyticsEvent.daily_visitors(range)
 
     assert_equal 4, counts.size
@@ -42,11 +42,23 @@ class AnalyticsEventTest < ActiveSupport::TestCase
 
   test "daily_pageviews counts events not visitors" do
     today = Date.current
-    build_event(visitor_token: 'a', occurred_at: today.to_time + 1.hour)
-    build_event(visitor_token: 'a', occurred_at: today.to_time + 2.hours)
+    build_event(visitor_token: 'a', occurred_at: today.in_time_zone + 1.hour)
+    build_event(visitor_token: 'a', occurred_at: today.in_time_zone + 2.hours)
 
-    counts = AnalyticsEvent.daily_pageviews(today.to_time..today.end_of_day)
+    counts = AnalyticsEvent.daily_pageviews(today.in_time_zone..today.end_of_day)
     assert_equal 2, counts[today]
+  end
+
+  test "daily buckets follow the app time zone, not UTC" do
+    # 11pm Eastern is already the next day in UTC; the visit must still count
+    # toward the local calendar day.
+    late_evening = Time.zone.local(2026, 7, 3, 23, 0)
+    assert_equal 4, late_evening.utc.day, "expected a date that crosses the UTC boundary"
+    build_event(visitor_token: 'a', occurred_at: late_evening)
+
+    day = late_evening.to_date
+    counts = AnalyticsEvent.daily_visitors(day.in_time_zone..day.end_of_day)
+    assert_equal({ day => 1 }, counts)
   end
 
   test "non-pageview events are excluded from visitor metrics but appear in event_counts" do
