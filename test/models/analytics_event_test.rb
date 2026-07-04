@@ -60,4 +60,21 @@ class AnalyticsEventTest < ActiveSupport::TestCase
     assert_equal({ 'pageview' => 1, 'download' => 1 }, AnalyticsEvent.event_counts(range))
     assert_equal({ 'paper_id' => 5 }, AnalyticsEvent.where(event_name: 'download').first.props)
   end
+
+  test "top_downloads ranks paper titles by download count within the range" do
+    now = Time.current
+    2.times do |i|
+      build_event(event_name: 'download', visitor_token: "v#{i}", occurred_at: now,
+                  props: { 'paper_id' => 1, 'title' => 'Paper One' })
+    end
+    build_event(event_name: 'download', visitor_token: 'v9', occurred_at: now,
+                props: { 'paper_id' => 2, 'title' => 'Paper Two' })
+    build_event(event_name: 'download', visitor_token: 'v8', occurred_at: now, props: nil)
+    build_event(event_name: 'download', visitor_token: 'v7', occurred_at: now - 30.days,
+                props: { 'paper_id' => 1, 'title' => 'Paper One' })
+    build_event(visitor_token: 'v6', occurred_at: now)
+
+    downloads = AnalyticsEvent.top_downloads(1.day.ago..Time.current)
+    assert_equal [['Paper One', 2], ['Paper Two', 1], ['Unknown paper', 1]], downloads
+  end
 end

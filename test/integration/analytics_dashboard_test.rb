@@ -29,7 +29,8 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
     record_pageview(occurred_at: 2.days.ago, visitor: 'b', source: 'Hacker News', medium: 'social',
                     referrer_host: 'news.ycombinator.com', device: 'mobile', browser: 'Safari')
     AnalyticsEvent.create!(event_name: 'download', visitor_token: 'a', path: '/papers/1/serve',
-                           occurred_at: 1.day.ago, props: { 'paper_id' => 1 })
+                           occurred_at: 1.day.ago,
+                           props: { 'paper_id' => 1, 'title' => 'A Great Paper' })
 
     get admin_analytics_url(period: '7d'), headers: @auth
     assert_response :success
@@ -41,6 +42,8 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
     assert_select '.stat-tile .stat-value', text: '3'
     # Breakdown panels
     assert_select '.card-title', 'Top sources'
+    assert_select '.card-title', 'Top downloads'
+    assert_select '.bd-text', /A Great Paper/
     assert_select '.bd-text', /Google/
     assert_select '.bd-text', /Hacker News/
     assert_select '.bd-text a[href=?]', '/papers/1'

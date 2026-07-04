@@ -63,6 +63,16 @@ class AnalyticsEvent < ActiveRecord::Base
       between(range).group(:event_name).count
     end
 
+    # [[paper title, download count], ...] from the 'download' custom event.
+    # props is a serialized JSON text column, so aggregation happens in Ruby.
+    def top_downloads(range, limit: 10)
+      where(event_name: 'download').between(range)
+        .pluck(:props)
+        .map { |props| (props || {})['title'].presence || 'Unknown paper' }
+        .tally
+        .sort_by { |_, count| -count }.first(limit)
+    end
+
     private
 
     def date_expr
