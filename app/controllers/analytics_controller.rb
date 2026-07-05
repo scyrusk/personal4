@@ -22,9 +22,6 @@ class AnalyticsController < ApplicationController
     @prev_downloads = AnalyticsEvent.event_counts(@prev_range)['download'] || 0
 
     @current_visitors = AnalyticsEvent.current_visitors(window: REALTIME_WINDOW)
-
-    # Visitor-flow sankey (nodes/links per journey step).
-    @journey = Analytics::JourneyFlow.new(@range).build
   end
 
   # Polled by the dashboard to keep the "active now" badge live.
@@ -56,7 +53,8 @@ class AnalyticsController < ApplicationController
         ['Devices', 'Visitors', @devices],
         ['Browsers', 'Visitors', @browsers],
         ['Operating systems', 'Visitors', @oses]
-      ]
+      ],
+      journey: @journey
     ).to_csv
 
     send_data csv, filename: "analytics-#{@period}-#{Date.current.iso8601}.csv",
@@ -97,5 +95,8 @@ class AnalyticsController < ApplicationController
                                    .map { |device, count| [device&.capitalize, count] }
     @browsers      = AnalyticsEvent.browser_breakdown(@range).sort_by { |_, c| -c }
     @oses          = AnalyticsEvent.os_breakdown(@range).sort_by { |_, c| -c }
+
+    # Visitor-flow sankey (nodes/links per journey step).
+    @journey = Analytics::JourneyFlow.new(@range).build
   end
 end

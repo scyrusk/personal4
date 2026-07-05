@@ -105,7 +105,8 @@ class AnalyticsJourneyFlowTest < ActiveSupport::TestCase
   end
 
   test "journeys deeper than MAX_STEPS flow into a More steps terminal" do
-    8.times { |step| build_event(step_index: step, path: "/step-#{step}") }
+    depth = Analytics::JourneyFlow::MAX_STEPS + 3
+    depth.times { |step| build_event(step_index: step, path: "/step-#{step}") }
 
     flow = Analytics::JourneyFlow.new(range).build
 
@@ -114,6 +115,21 @@ class AnalyticsJourneyFlowTest < ActiveSupport::TestCase
     assert_equal 'more', more[:kind]
     assert_equal Analytics::JourneyFlow::MAX_STEPS, flow[:nodes].map { |n| n[:col] }.max
     assert_nil flow[:nodes].find { |n| n[:kind] == 'exit' }
+  end
+
+  test "a typical section-view journey renders in full without folding into More steps" do
+    # An engaged single-page visit is 6-10 steps once section views count;
+    # those must all be visible, ending in Exited rather than More steps.
+    paths = ['/', '/#about', '/#recruiting', '/#students', '/#publications',
+             '/cv.pdf', '/outbound/github.com', '/email']
+    paths.each_with_index { |path, step| build_event(step_index: step, path: path) }
+
+    flow = Analytics::JourneyFlow.new(range).build
+
+    assert node(flow, '/#publications', 4), 'mid-journey section views must stay un-folded'
+    exit_node = node(flow, Analytics::JourneyFlow::EXIT_LABEL, paths.size)
+    assert exit_node, 'the journey must end in an Exited terminal, not More steps'
+    assert_nil flow[:nodes].find { |n| n[:kind] == 'more' }
   end
 
   test "ignores legacy rows without a session token" do

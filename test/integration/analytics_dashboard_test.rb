@@ -202,6 +202,20 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, 'Bing'
   end
 
+  test "csv export includes the visitor flow section" do
+    record_pageview(occurred_at: 1.day.ago, visitor: 'a', session: 's1', step: 0)
+    record_pageview(occurred_at: 1.day.ago, visitor: 'a', path: '/#about', session: 's1', step: 1)
+
+    get admin_analytics_export_url(period: '7d'), headers: @auth
+    assert_response :success
+
+    rows = CSV.parse(response.body)
+    assert_includes rows, ['Visitor flow (1 session)']
+    assert_includes rows, %w[Step From To Sessions]
+    assert_includes rows, ['1', '/', '/#about', '1']
+    assert_includes rows, ['2', '/#about', 'Exited', '1']
+  end
+
   test "csv export of the today period uses hourly buckets" do
     travel_to Time.zone.local(2026, 7, 3, 14, 30) do
       record_pageview(occurred_at: Time.zone.local(2026, 7, 3, 9, 15), visitor: 'a')

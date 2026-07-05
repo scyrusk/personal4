@@ -7,7 +7,10 @@ module Analytics
   # column, and explicit terminal nodes so every session visibly ends in
   # "Exited" (or "More steps" when it ran past the last rendered column).
   class JourneyFlow
-    MAX_STEPS = 5 # page columns rendered before journeys collapse into "More steps"
+    # Section views make 6-10-step journeys routine, so the cap is high enough
+    # that real journeys render in full; the sankey scrolls horizontally when
+    # the columns outgrow the card.
+    MAX_STEPS = 10 # page columns rendered before journeys collapse into "More steps"
     MAX_NODES = 7 # pages per column before the tail folds into "Other pages"
 
     OTHER_LABEL = 'Other pages'.freeze

@@ -73,6 +73,7 @@
     %p.flow-note
       How #{analytics_number(@journey[:total_sessions])} visits moved through the site, step by step.
       Ribbon width is the number of sessions taking that path.
+      %span#journeyScrollHint{hidden: true} Scroll sideways to follow longer journeys.
     .chart-legend
       %span.legend-continued
         %span.legend-swatch
@@ -342,6 +343,7 @@
     var SVG_NS = 'http://www.w3.org/2000/svg';
     var NODE_W = 10;
     var GAP = 8;
+    var MIN_COL = 150; // px per step column; deeper journeys scroll horizontally
     var PAD = { top: 10, right: 12, bottom: 10, left: 12 };
     var NODE_COLORS = { page: '#2a6b3c', other: '#7a7a72', more: '#7a7a72', exit: '#b9b8ae' };
     var LINK_COLORS = {
@@ -450,7 +452,9 @@
       var y = e.clientY - rect.top;
       var left = x + 14 + tooltip.offsetWidth > rect.width ? x - tooltip.offsetWidth - 14 : x + 14;
       var top = Math.min(y + 14, rect.height - tooltip.offsetHeight - 4);
-      tooltip.style.left = Math.max(0, left) + 'px';
+      // The tooltip lives in the scrolled content, so visible-box coordinates
+      // need the scroll offset added back.
+      tooltip.style.left = (Math.max(0, left) + container.scrollLeft) + 'px';
       tooltip.style.top = Math.max(0, top) + 'px';
     }
 
@@ -467,8 +471,15 @@
     }
 
     function render() {
-      var w = container.clientWidth;
+      var visibleW = container.clientWidth;
       var h = container.clientHeight;
+      var cols = 0;
+      data.nodes.forEach(function(n) { cols = Math.max(cols, n.col + 1); });
+      // Give every step column room to breathe; when deep journeys outgrow
+      // the card, the sankey scrolls sideways instead of squeezing.
+      var w = Math.max(visibleW, PAD.left + PAD.right + NODE_W + (cols - 1) * MIN_COL);
+      var hint = document.getElementById('journeyScrollHint');
+      if (hint) hint.hidden = w <= visibleW;
       if (svg) svg.remove();
       svg = el('svg', { width: w, height: h, viewBox: '0 0 ' + w + ' ' + h });
 
@@ -540,6 +551,10 @@
       resizeQueued = true;
       requestAnimationFrame(function() { resizeQueued = false; render(); });
     });
+
+    // Scrolling moves the content out from under a hovered shape without a
+    // pointerleave, so drop the tooltip rather than leave it stranded.
+    container.addEventListener('scroll', hideTooltip);
 
     render();
   })();

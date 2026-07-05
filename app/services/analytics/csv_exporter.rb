@@ -6,7 +6,7 @@ module Analytics
   # rows so it opens cleanly in a spreadsheet.
   class CsvExporter
     def initialize(period_label:, range:, granularity:, chart_visitors:, chart_pageviews:,
-                   totals:, breakdowns:)
+                   totals:, breakdowns:, journey:)
       @period_label = period_label
       @range = range
       @granularity = granularity
@@ -14,6 +14,7 @@ module Analytics
       @chart_pageviews = chart_pageviews
       @totals = totals
       @breakdowns = breakdowns
+      @journey = journey
     end
 
     def to_csv
@@ -36,10 +37,26 @@ module Analytics
           csv << [title, unit]
           rows.each { |label, count| csv << [label.presence || 'Unknown', count] }
         end
+
+        append_journey(csv)
       end
     end
 
     private
+
+    # Every ribbon of the dashboard's visitor-flow sankey, one row per
+    # step transition, mirroring the on-screen data table.
+    def append_journey(csv)
+      csv << []
+      sessions = @journey[:total_sessions]
+      csv << ["Visitor flow (#{sessions} #{'session'.pluralize(sessions)})"]
+      csv << %w[Step From To Sessions]
+      @journey[:links].each do |link|
+        from = @journey[:nodes][link[:source]]
+        to = @journey[:nodes][link[:target]]
+        csv << [from[:col] + 1, from[:label], to[:label], link[:count]]
+      end
+    end
 
     def bucket_label(bucket)
       bucket.is_a?(Date) ? bucket.iso8601 : bucket.strftime('%Y-%m-%d %H:00')

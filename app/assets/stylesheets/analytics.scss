@@ -193,7 +193,15 @@
 }
 
 /* ─── Visitor-flow sankey ─────────────────────────────── */
-.sankey-container { height: 300px; }
+.sankey-container {
+  height: 300px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+
+  /* Let the SVG keep its computed pixel width so deep journeys scroll. */
+  svg { width: auto; }
+}
 
 .flow-note {
   color: var(--text-muted);
