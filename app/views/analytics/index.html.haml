@@ -460,6 +460,18 @@
 
     function hideTooltip() { tooltip.style.display = 'none'; }
 
+    // Scrolling or re-rendering moves the content out from under a hovered
+    // ribbon without a pointerleave, so the highlight fill needs an explicit
+    // reset alongside the tooltip.
+    var activeRibbon = null;
+    function clearHover() {
+      hideTooltip();
+      if (activeRibbon) {
+        activeRibbon.path.setAttribute('fill', activeRibbon.rest);
+        activeRibbon = null;
+      }
+    }
+
     function pct(part, whole) {
       return whole > 0 ? Math.round((part * 100.0) / whole) + '%' : '—';
     }
@@ -480,6 +492,7 @@
       var w = Math.max(visibleW, PAD.left + PAD.right + NODE_W + (cols - 1) * MIN_COL);
       var hint = document.getElementById('journeyScrollHint');
       if (hint) hint.hidden = w <= visibleW;
+      clearHover();
       if (svg) svg.remove();
       svg = el('svg', { width: w, height: h, viewBox: '0 0 ' + w + ' ' + h });
 
@@ -496,13 +509,18 @@
         var colors = LINK_COLORS[l.target.kind === 'exit' ? 'exit' : 'go'];
         var path = el('path', { d: ribbonPath(l, geom.scale), fill: colors.rest });
         hoverable(path, function(e) {
+          clearHover();
+          activeRibbon = { path: path, rest: colors.rest };
           path.setAttribute('fill', colors.hover);
           showTooltip(e, l.source.label + ' → ' + l.target.label, [
             [l.count.toLocaleString(), 'sessions'],
             [pct(l.count, l.source.count), 'of “' + truncate(l.source.label, 26) + '”']
           ]);
         });
-        path.addEventListener('pointerleave', function() { path.setAttribute('fill', colors.rest); });
+        path.addEventListener('pointerleave', function() {
+          path.setAttribute('fill', colors.rest);
+          if (activeRibbon && activeRibbon.path === path) activeRibbon = null;
+        });
         svg.appendChild(path);
       });
 
@@ -552,9 +570,7 @@
       requestAnimationFrame(function() { resizeQueued = false; render(); });
     });
 
-    // Scrolling moves the content out from under a hovered shape without a
-    // pointerleave, so drop the tooltip rather than leave it stranded.
-    container.addEventListener('scroll', hideTooltip);
+    container.addEventListener('scroll', clearHover);
 
     render();
   })();
