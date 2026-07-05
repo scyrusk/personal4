@@ -32,8 +32,8 @@ class AnalyticsTrackingTest < ActionDispatch::IntegrationTest
 
     first, second = AnalyticsEvent.order(:id).last(2)
     assert_equal first.session_token, second.session_token
-    assert_equal [nil, 0], [first.prev_path, first.step_index]
-    assert_equal ['/', 1], [second.prev_path, second.step_index]
+    assert_equal 0, first.step_index
+    assert_equal 1, second.step_index
   end
 
   test "bot requests are not recorded" do

@@ -23,7 +23,7 @@ class AnalyticsClientEventsTest < ActionDispatch::IntegrationTest
     assert_equal 'section_view', section.event_name
     assert_equal '/#publications', section.path
     assert_equal pageview.session_token, section.session_token
-    assert_equal ['/', 1], [section.prev_path, section.step_index]
+    assert_equal 1, section.step_index
   end
 
   test "outbound clicks store the normalized host and the full url" do

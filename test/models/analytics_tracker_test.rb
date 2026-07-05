@@ -73,22 +73,21 @@ class AnalyticsTrackerTest < ActiveSupport::TestCase
     assert_not_equal a1, b
   end
 
-  test "first pageview starts a session at step zero with no previous path" do
+  test "first pageview starts a session at step zero" do
     event = Analytics::Tracker.track(build_request(path: '/'))
 
     assert event.session_token.present?
     assert_equal 0, event.step_index
-    assert_nil event.prev_path
   end
 
-  test "pageviews within the session timeout share a session and chain prev_path" do
+  test "pageviews within the session timeout share a session and chain step_index" do
     first = Analytics::Tracker.track(build_request(path: '/'))
     second = Analytics::Tracker.track(build_request(path: '/papers'))
     third = Analytics::Tracker.track(build_request(path: '/awards'))
 
     assert_equal first.session_token, second.session_token
-    assert_equal ['/', 1], [second.prev_path, second.step_index]
-    assert_equal ['/papers', 2], [third.prev_path, third.step_index]
+    assert_equal 1, second.step_index
+    assert_equal 2, third.step_index
 
     other_visitor = Analytics::Tracker.track(build_request(path: '/', ip: '198.51.100.7'))
     assert_not_equal first.session_token, other_visitor.session_token
@@ -103,7 +102,6 @@ class AnalyticsTrackerTest < ActiveSupport::TestCase
 
       assert_not_equal first.session_token, second.session_token
       assert_equal 0, second.step_index
-      assert_nil second.prev_path
     end
   end
 
@@ -116,7 +114,39 @@ class AnalyticsTrackerTest < ActiveSupport::TestCase
 
     assert event.session_token.present?
     assert_equal 0, event.step_index
-    assert_nil event.prev_path
+  end
+
+  test "racing writes for the same journey step retry instead of forking the session" do
+    first = Analytics::Tracker.track(build_request(path: '/'))
+    AnalyticsEvent.create!(event_name: 'section_view', visitor_token: first.visitor_token,
+                           session_token: first.session_token, step_index: 1,
+                           path: '/#about', occurred_at: Time.current)
+
+    tracker = Analytics::Tracker.new(build_request(path: '/papers'))
+    stale = first
+    lookups = 0
+    tracker.define_singleton_method(:previous_event) do
+      lookups += 1
+      lookups == 1 ? stale : super()
+    end
+
+    event = tracker.track
+
+    assert_equal 2, lookups, 'expected a conflict-driven re-read of the previous event'
+    assert_equal first.session_token, event.session_token
+    assert_equal 2, event.step_index
+    assert_equal [0, 1, 2],
+                 AnalyticsEvent.where(session_token: first.session_token).order(:step_index).pluck(:step_index)
+  end
+
+  test "duplicate journey steps are rejected by the database" do
+    first = Analytics::Tracker.track(build_request(path: '/'))
+
+    assert_raises(ActiveRecord::RecordNotUnique) do
+      AnalyticsEvent.create!(event_name: 'pageview', visitor_token: first.visitor_token,
+                             session_token: first.session_token, step_index: first.step_index,
+                             path: '/papers', occurred_at: Time.current)
+    end
   end
 
   test "an explicit path overrides the request path for client-reported events" do

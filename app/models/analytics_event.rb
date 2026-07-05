@@ -106,28 +106,6 @@ class AnalyticsEvent < ActiveRecord::Base
       between(window.ago..Time.current).distinct.count(:visitor_token)
     end
 
-    # [[prev_path, path, count], ...] page transitions for the visitor-flow
-    # sankey, busiest first. prev_path nil means the session began on `path`.
-    # Includes all event types so downloads show up as journey steps.
-    def journey_transitions(range, limit: nil)
-      rows = between(range).where.not(session_token: nil)
-        .group(:prev_path, :path).count
-        .map { |(prev, path), count| [prev, path, count] }
-        .sort_by { |_, _, count| -count }
-      limit ? rows.first(limit) : rows
-    end
-
-    # { path => count } of pages where sessions ended (each session's
-    # highest-step event within the range), aggregated in Ruby like the
-    # other per-group maxima.
-    def journey_exits(range)
-      between(range).where.not(session_token: nil)
-        .pluck(:session_token, :step_index, :path)
-        .group_by(&:first)
-        .map { |_, events| events.max_by { |(_, step, _)| step }.last }
-        .tally
-    end
-
     # [[paper title, download count], ...] from the 'download' custom event.
     # props is a serialized JSON text column, so aggregation happens in Ruby.
     def top_downloads(range, limit: 10)

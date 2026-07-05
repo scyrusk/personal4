@@ -30,11 +30,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_04_000000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "session_token"
-    t.string "prev_path"
     t.integer "step_index"
     t.index ["event_name", "occurred_at"], name: "index_analytics_events_on_event_name_and_occurred_at"
     t.index ["occurred_at"], name: "index_analytics_events_on_occurred_at"
-    t.index ["session_token"], name: "index_analytics_events_on_session_token"
+    t.index ["session_token", "step_index"], name: "index_analytics_events_on_session_token_and_step_index", unique: true
     t.index ["source"], name: "index_analytics_events_on_source"
     t.index ["visitor_token", "occurred_at"], name: "index_analytics_events_on_visitor_token_and_occurred_at"
   end

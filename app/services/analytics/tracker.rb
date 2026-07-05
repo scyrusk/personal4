@@ -12,6 +12,11 @@ module Analytics
     # visitor token rotates daily.
     SESSION_TIMEOUT = 30.minutes
 
+    # Bounds the retry loop when concurrent requests race for the same
+    # journey step; the pagehide flush sends a handful of beacons at once,
+    # so contention never runs deeper than the client's queue.
+    MAX_STEP_CONFLICT_RETRIES = 10
+
     BOT_PATTERN = /
       bot|crawl|spider|slurp|search|archive|preview|fetch|monitor|scrape|
       curl|wget|python|java|ruby|go-http|okhttp|httpclient|libwww|
@@ -66,12 +71,38 @@ module Analytics
       return nil if bot?
 
       source, medium = classify_source
+      retries = 0
+      begin
+        create_event(event_name, properties, path, source, medium)
+      rescue ActiveRecord::RecordNotUnique
+        raise if (retries += 1) > MAX_STEP_CONFLICT_RETRIES
+
+        retry
+      end
+    end
+
+    def bot?
+      user_agent.blank? || user_agent.match?(BOT_PATTERN)
+    end
+
+    def visitor_token
+      Digest::SHA256.hexdigest(
+        [Rails.application.secret_key_base, Date.current.iso8601,
+         @request.remote_ip, user_agent].join('|')
+      ).first(32)
+    end
+
+    private
+
+    # Concurrent requests can read the same previous event and race for the
+    # same step_index; the unique [session_token, step_index] index rejects
+    # the loser, which re-reads and takes the next step (see track's retry).
+    def create_event(event_name, properties, path, source, medium)
       previous = previous_event
       AnalyticsEvent.create!(
         event_name: event_name,
         visitor_token: visitor_token,
         session_token: previous ? previous.session_token : SecureRandom.hex(16),
-        prev_path: previous&.path,
         step_index: previous ? previous.step_index + 1 : 0,
         path: path || @request.path,
         referrer: truncate(external_referrer, 2048),
@@ -88,19 +119,6 @@ module Analytics
         occurred_at: Time.current
       )
     end
-
-    def bot?
-      user_agent.blank? || user_agent.match?(BOT_PATTERN)
-    end
-
-    def visitor_token
-      Digest::SHA256.hexdigest(
-        [Rails.application.secret_key_base, Date.current.iso8601,
-         @request.remote_ip, user_agent].join('|')
-      ).first(32)
-    end
-
-    private
 
     # The visitor's most recent event within the session window, used to
     # chain journey steps. Rows without a session_token (recorded before
