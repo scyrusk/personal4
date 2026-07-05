@@ -1,0 +1,15 @@
+!!!
+%html{lang: "en"}
+  %head
+    %meta{content: "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
+    %title Analytics · Sauvik Das
+    %meta{name: "robots", content: "noindex, nofollow"}/
+    %meta{content: "width=device-width, initial-scale=1.0", name: "viewport"}/
+    %link{rel: "preconnect", href: "https://fonts.googleapis.com"}/
+    %link{rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "anonymous"}/
+    %link{rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"}/
+    = stylesheet_link_tag 'analytics', media: 'all'
+    = csrf_meta_tags
+  %body.analytics-body
+    %main.analytics-wrap
+      = yield

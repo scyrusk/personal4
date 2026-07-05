@@ -1,0 +1,22 @@
+-# A ranked breakdown panel: label rows with a proportional meter fill + count.
+-# locals: title, rows ([[label, count], ...]), unit, empty, linkify (optional)
+.card
+  %h2.card-title= title
+  - if rows.blank?
+    %p.panel-empty= empty
+  - else
+    - max = rows.map(&:last).max
+    %ul.breakdown
+      - rows.each do |label, count|
+        %li
+          %span.bd-label
+            %span.bd-fill{style: "width: #{max.zero? ? 0 : (count * 100.0 / max).round(1)}%"}
+            %span.bd-text
+              - display = label.presence || "Unknown"
+              - if defined?(linkify) && linkify && label.present?
+                = link_to display, label, target: "_blank", rel: "noopener"
+              - else
+                = display
+          %span.bd-count
+            = number_with_delimiter(count)
+            = count == 1 ? unit.singularize : unit

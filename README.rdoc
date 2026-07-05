@@ -1,7 +1,15 @@
 == README
 Upgraded version of my personal webpage. This document is, for now, just a list of todos.
 
-Basic info: Rails 4.2 backend, HAML + React front-end.
+Basic info: Rails 7.0 backend, HAML + React front-end.
+
+# Analytics
+Self-hosted, cookieless analytics (Plausible-style), stored in the analytics_events table:
+* Pageviews are tracked server-side for every successful public HTML GET (AnalyticsTracking concern); paper downloads are tracked as a 'download' event.
+* Visitor identity is a daily-rotating hash of (secret, date, IP, user agent) — no cookies, nothing personally identifiable stored, so unique-visitor counts reset each day.
+* Bots, admin paths (/admin, /dktest), and authenticated (site-owner) sessions are never tracked.
+* Admin dashboard at /admin/analytics (HTTP basic auth via PERSONAL_UN / PERSONAL_PASS): visitors/pageviews chart (hourly for "Today", daily otherwise), traffic sources, top pages / downloads / referrers / campaigns, device / browser / OS breakdowns, a realtime "active now" badge (/admin/analytics/realtime), and CSV export (/admin/analytics/export).
+* Daily buckets follow the site's time zone (Eastern, set via config.time_zone).
 
 # Issues
 * Figure out why download counts are double incrementing

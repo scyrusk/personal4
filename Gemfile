@@ -63,3 +63,5 @@ gem 'logger'
 gem 'sprockets', '3.7.2'
 gem 'websocket-driver', '~> 0.7.6'
 gem 'base64', '0.1.1'
+# minitest 6 breaks Rails 7.0's test runner (line_filtering run arity)
+gem 'minitest', '~> 5.15'

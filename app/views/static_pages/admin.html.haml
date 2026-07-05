@@ -1,3 +1,4 @@
 .row
   .col-md-12
+    %p= link_to "📊 Analytics dashboard", admin_analytics_path
     = react_component('AdminContainer', papersURL: papers_url(format: :json), updatesURL: updates_url(format: :json), awardsURL: awards_url(format: :json), travelsURL: travels_url(format: :json))

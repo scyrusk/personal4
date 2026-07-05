@@ -29,7 +29,7 @@
 one:
   self_order: 1
   year: 1
-  type: 1
+  backing_type: 1
   venue: MyText
   downloads: 1
   likes: 1
@@ -37,7 +37,7 @@ one:
 two:
   self_order: 1
   year: 1
-  type: 1
+  backing_type: 1
   venue: MyText
   downloads: 1
   likes: 1

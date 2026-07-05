@@ -1,5 +1,16 @@
 class ApplicationController < ActionController::Base
+  include AnalyticsTracking
+
   # Prevent CSRF attacks by raising an exception.
   # For APIs, you may want to use :null_session instead.
   protect_from_forgery with: :exception
+
+  protected
+    def authenticate
+      authenticate_or_request_with_http_basic do |user, password|
+        retval = user == ENV['PERSONAL_UN'] && password == ENV['PERSONAL_PASS']
+        session[:authenticated] = true if retval
+        retval
+      end
+    end
 end

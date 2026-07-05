@@ -45,7 +45,7 @@ class StaticPagesController < ApplicationController
       courseName: "Usable Privacy & Security",
       semester: "Spring 2019",
       link: "http://cs8803.sauvik.me"
-    }, { 
+    }, {
       courseCode: "GT CS4873",
       courseName: "Computing, Society & Professionalism",
       semester: "Fall 2020",
@@ -56,7 +56,7 @@ class StaticPagesController < ApplicationController
       semester: "Spring 2022",
       link: "http://cs8803.sauvik.me"
     },
-    { 
+    {
       courseCode: "CMU 05-120 A1",
       courseName: "Intro to HCI",
       semester: "Fall 2022",
@@ -234,12 +234,4 @@ class StaticPagesController < ApplicationController
   def admin
   end
 
-  protected
-    def authenticate
-      authenticate_or_request_with_http_basic do |user, password|
-        retval = user == ENV['PERSONAL_UN'] && password == ENV['PERSONAL_PASS']
-        session[:authenticated] = true if retval
-        retval
-      end
-    end
 end
