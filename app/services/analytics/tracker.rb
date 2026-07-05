@@ -1,4 +1,5 @@
 require 'digest'
+require 'securerandom'
 
 module Analytics
   # Records an AnalyticsEvent from a Rack request. Visitor identity is a
@@ -6,6 +7,11 @@ module Analytics
   # style of Plausible: no cookies, nothing personally identifiable stored,
   # unique-visitor counts reset each day.
   class Tracker
+    # Events from the same visitor with gaps under this threshold belong to
+    # one session (visit). Sessions also break at midnight because the
+    # visitor token rotates daily.
+    SESSION_TIMEOUT = 30.minutes
+
     BOT_PATTERN = /
       bot|crawl|spider|slurp|search|archive|preview|fetch|monitor|scrape|
       curl|wget|python|java|ruby|go-http|okhttp|httpclient|libwww|
@@ -57,9 +63,13 @@ module Analytics
       return nil if bot?
 
       source, medium = classify_source
+      previous = previous_event
       AnalyticsEvent.create!(
         event_name: event_name,
         visitor_token: visitor_token,
+        session_token: previous ? previous.session_token : SecureRandom.hex(16),
+        prev_path: previous&.path,
+        step_index: previous ? previous.step_index + 1 : 0,
         path: @request.path,
         referrer: truncate(external_referrer, 2048),
         referrer_host: referrer_host,
@@ -88,6 +98,17 @@ module Analytics
     end
 
     private
+
+    # The visitor's most recent event within the session window, used to
+    # chain journey steps. Rows without a session_token (recorded before
+    # journey tracking existed) can't be chained, so they start a new session.
+    def previous_event
+      AnalyticsEvent
+        .where(visitor_token: visitor_token)
+        .where.not(session_token: nil)
+        .where(occurred_at: SESSION_TIMEOUT.ago..)
+        .order(:occurred_at, :id).last
+    end
 
     def params
       @request.query_parameters

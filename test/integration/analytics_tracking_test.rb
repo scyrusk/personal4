@@ -26,6 +26,16 @@ class AnalyticsTrackingTest < ActionDispatch::IntegrationTest
     assert_equal 'google.com', event.referrer_host
   end
 
+  test "successive pageviews chain a journey within one session" do
+    get root_url, headers: { 'HTTP_USER_AGENT' => CHROME_UA }
+    get root_url, headers: { 'HTTP_USER_AGENT' => CHROME_UA, 'HTTP_REFERER' => root_url }
+
+    first, second = AnalyticsEvent.order(:id).last(2)
+    assert_equal first.session_token, second.session_token
+    assert_equal [nil, 0], [first.prev_path, first.step_index]
+    assert_equal ['/', 1], [second.prev_path, second.step_index]
+  end
+
   test "bot requests are not recorded" do
     assert_no_difference('AnalyticsEvent.count') do
       get root_url, headers: { 'HTTP_USER_AGENT' => 'Googlebot/2.1 (+http://www.google.com/bot.html)' }

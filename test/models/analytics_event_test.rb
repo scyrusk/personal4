@@ -52,6 +52,38 @@ class AnalyticsEventTest < ActiveSupport::TestCase
     end
   end
 
+  test "journey_transitions aggregates session page transitions busiest first" do
+    now = Time.current
+    # Session s1: / -> /papers -> /awards
+    build_event(session_token: 's1', step_index: 0, path: '/', prev_path: nil, occurred_at: now)
+    build_event(session_token: 's1', step_index: 1, path: '/papers', prev_path: '/', occurred_at: now)
+    build_event(session_token: 's1', step_index: 2, path: '/awards', prev_path: '/papers', occurred_at: now)
+    # Session s2: / -> /papers
+    build_event(visitor_token: 'v2', session_token: 's2', step_index: 0, path: '/', prev_path: nil, occurred_at: now)
+    build_event(visitor_token: 'v2', session_token: 's2', step_index: 1, path: '/papers', prev_path: '/', occurred_at: now)
+    # Legacy row without a session is excluded.
+    build_event(session_token: nil, path: '/', occurred_at: now)
+
+    transitions = AnalyticsEvent.journey_transitions(1.hour.ago..Time.current)
+
+    assert_equal [[nil, '/', 2], ['/', '/papers', 2], ['/papers', '/awards', 1]],
+                 transitions.sort_by { |prev, path, _| [prev.to_s, path] }
+    assert_equal 2, AnalyticsEvent.journey_transitions(1.hour.ago..Time.current, limit: 2).size
+  end
+
+  test "journey_exits counts each session's final page" do
+    now = Time.current
+    build_event(session_token: 's1', step_index: 0, path: '/', occurred_at: now)
+    build_event(session_token: 's1', step_index: 1, path: '/papers', occurred_at: now)
+    build_event(visitor_token: 'v2', session_token: 's2', step_index: 0, path: '/papers', occurred_at: now)
+    build_event(visitor_token: 'v3', session_token: 's3', step_index: 0, path: '/', occurred_at: now)
+    build_event(visitor_token: 'v3', session_token: 's3', step_index: 1, path: '/awards', occurred_at: now)
+
+    exits = AnalyticsEvent.journey_exits(1.hour.ago..Time.current)
+
+    assert_equal({ '/papers' => 2, '/awards' => 1 }, exits)
+  end
+
   test "top_sources ranks by unique visitors and excludes internal navigation" do
     now = Time.current
     build_event(visitor_token: 'a', source: 'Google', medium: 'organic', occurred_at: now)

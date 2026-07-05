@@ -73,6 +73,52 @@ class AnalyticsTrackerTest < ActiveSupport::TestCase
     assert_not_equal a1, b
   end
 
+  test "first pageview starts a session at step zero with no previous path" do
+    event = Analytics::Tracker.track(build_request(path: '/'))
+
+    assert event.session_token.present?
+    assert_equal 0, event.step_index
+    assert_nil event.prev_path
+  end
+
+  test "pageviews within the session timeout share a session and chain prev_path" do
+    first = Analytics::Tracker.track(build_request(path: '/'))
+    second = Analytics::Tracker.track(build_request(path: '/papers'))
+    third = Analytics::Tracker.track(build_request(path: '/awards'))
+
+    assert_equal first.session_token, second.session_token
+    assert_equal ['/', 1], [second.prev_path, second.step_index]
+    assert_equal ['/papers', 2], [third.prev_path, third.step_index]
+
+    other_visitor = Analytics::Tracker.track(build_request(path: '/', ip: '198.51.100.7'))
+    assert_not_equal first.session_token, other_visitor.session_token
+    assert_equal 0, other_visitor.step_index
+  end
+
+  test "a gap longer than the session timeout starts a new session" do
+    first = Analytics::Tracker.track(build_request(path: '/'))
+
+    travel(Analytics::Tracker::SESSION_TIMEOUT + 1.minute) do
+      second = Analytics::Tracker.track(build_request(path: '/papers'))
+
+      assert_not_equal first.session_token, second.session_token
+      assert_equal 0, second.step_index
+      assert_nil second.prev_path
+    end
+  end
+
+  test "legacy events without a session token are not chained into a session" do
+    tracker = Analytics::Tracker.new(build_request(path: '/papers'))
+    AnalyticsEvent.create!(event_name: 'pageview', visitor_token: tracker.visitor_token,
+                           path: '/', occurred_at: 1.minute.ago)
+
+    event = tracker.track
+
+    assert event.session_token.present?
+    assert_equal 0, event.step_index
+    assert_nil event.prev_path
+  end
+
   test "mobile user agents are classified as mobile" do
     iphone_ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 ' \
                 '(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'

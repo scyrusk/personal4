@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_07_03_000000) do
+ActiveRecord::Schema[7.0].define(version: 2026_07_04_000000) do
   create_table "analytics_events", force: :cascade do |t|
     t.string "event_name", default: "pageview", null: false
     t.string "visitor_token", null: false
@@ -29,10 +29,14 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_03_000000) do
     t.datetime "occurred_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "session_token"
+    t.string "prev_path"
+    t.integer "step_index"
     t.index ["event_name", "occurred_at"], name: "index_analytics_events_on_event_name_and_occurred_at"
     t.index ["occurred_at"], name: "index_analytics_events_on_occurred_at"
+    t.index ["session_token"], name: "index_analytics_events_on_session_token"
     t.index ["source"], name: "index_analytics_events_on_source"
-    t.index ["visitor_token"], name: "index_analytics_events_on_visitor_token"
+    t.index ["visitor_token", "occurred_at"], name: "index_analytics_events_on_visitor_token_and_occurred_at"
   end
 
   create_table "authors", force: :cascade do |t|
