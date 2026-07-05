@@ -4,6 +4,10 @@
     %meta{content: "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
     %title Analytics · Sauvik Das
     %meta{name: "robots", content: "noindex, nofollow"}/
+    -# The public site runs Turbolinks; arriving here via a Turbolinks visit
+    -# would swap the body before this layout's stylesheet loads and the
+    -# inline charts would render 0px tall. Force a full page load instead.
+    %meta{name: "turbolinks-visit-control", content: "reload"}/
     %meta{content: "width=device-width, initial-scale=1.0", name: "viewport"}/
     %link{rel: "preconnect", href: "https://fonts.googleapis.com"}/
     %link{rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "anonymous"}/

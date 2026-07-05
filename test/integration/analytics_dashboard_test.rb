@@ -136,6 +136,14 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "dashboard forces a full page load for turbolinks visits" do
+    # The /admin page runs Turbolinks; without this meta tag a click-through
+    # swaps the body before analytics.css loads and the charts render 0px tall.
+    get admin_analytics_url, headers: @auth
+    assert_response :success
+    assert_select 'meta[name="turbolinks-visit-control"][content="reload"]'
+  end
+
   test "admin page still authenticates after auth moved to ApplicationController" do
     get admin_url, headers: @auth
     assert_response :success

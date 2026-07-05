@@ -323,13 +323,26 @@
       if (e.key === 'Escape') hideHover();
     });
 
+    // Re-render whenever the container's size actually changes — a window
+    // resize, but also the stylesheet arriving late (e.g. after a Turbolinks
+    // body swap), which grows the container from 0px after the first render.
     var resizeQueued = false;
-    window.addEventListener('resize', function() {
+    var lastSize = null;
+    function renderQueued() {
       if (resizeQueued) return;
       resizeQueued = true;
-      requestAnimationFrame(function() { resizeQueued = false; render(); });
-    });
+      requestAnimationFrame(function() {
+        resizeQueued = false;
+        var size = container.clientWidth + 'x' + container.clientHeight;
+        if (size === lastSize) return;
+        lastSize = size;
+        render();
+      });
+    }
+    window.addEventListener('resize', renderQueued);
+    if (window.ResizeObserver) new ResizeObserver(renderQueued).observe(container);
 
+    lastSize = container.clientWidth + 'x' + container.clientHeight;
     render();
   })();
 
@@ -563,14 +576,26 @@
       container.insertBefore(svg, tooltip);
     }
 
+    // Same late-stylesheet guard as the visitors chart: re-render on any
+    // real container size change, not just window resizes.
     var resizeQueued = false;
-    window.addEventListener('resize', function() {
+    var lastSize = null;
+    function renderQueued() {
       if (resizeQueued) return;
       resizeQueued = true;
-      requestAnimationFrame(function() { resizeQueued = false; render(); });
-    });
+      requestAnimationFrame(function() {
+        resizeQueued = false;
+        var size = container.clientWidth + 'x' + container.clientHeight;
+        if (size === lastSize) return;
+        lastSize = size;
+        render();
+      });
+    }
+    window.addEventListener('resize', renderQueued);
+    if (window.ResizeObserver) new ResizeObserver(renderQueued).observe(container);
 
     container.addEventListener('scroll', clearHover);
 
+    lastSize = container.clientWidth + 'x' + container.clientHeight;
     render();
   })();
