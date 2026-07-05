@@ -35,7 +35,7 @@
 
 .sidebar-section
   %span.sidebar-label Links
-  = link_to "CV (PDF)", asset_path("cv.pdf"), class: "sidebar-link", onclick: "gaSendEvent('JobMarket', 'docdownload', 'CV');"
+  = link_to "CV (PDF)", asset_path("cv.pdf"), class: "sidebar-link", data: { analytics_event: "cv_download" }
   = link_to "Academic Blog", "https://sauvik-das.medium.com/", class: "sidebar-link"
   = link_to "FuguUX", "https://www.fuguux.com", class: "sidebar-link", target: "_blank", rel: "noopener noreferrer"
   = link_to "SPUD Lab", "https://cs.cmu.edu/~spudlab", class: "sidebar-link"

@@ -194,7 +194,7 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
     assert_includes rows, [1.day.ago.to_date.iso8601, '1', '1']
     assert_includes rows, %w[Totals Value]
     assert_includes rows, %w[Visitors 2]
-    assert_includes rows, ['Paper downloads', '1']
+    assert_includes rows, %w[Downloads 1]
     assert_includes rows, %w[Google 1]
     assert_includes rows, ['A Great Paper', '1']
     assert_includes rows, ['launch-week', '1']

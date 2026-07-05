@@ -119,6 +119,14 @@ class AnalyticsTrackerTest < ActiveSupport::TestCase
     assert_nil event.prev_path
   end
 
+  test "an explicit path overrides the request path for client-reported events" do
+    event = Analytics::Tracker.track(build_request(path: '/analytics/event'),
+                                     event_name: 'section_view', path: '/#about')
+
+    assert_equal 'section_view', event.event_name
+    assert_equal '/#about', event.path
+  end
+
   test "mobile user agents are classified as mobile" do
     iphone_ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 ' \
                 '(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'

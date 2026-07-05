@@ -63,7 +63,7 @@ class TravelList extends React.Component {
   }
 };
 
-class Travel extends React.createClass {
+class Travel extends React.Component {
   render() {
     var topLevelClassName = this.props.datePassed ?
       "upcoming-travel upcoming-travel-done col-xs-2" :

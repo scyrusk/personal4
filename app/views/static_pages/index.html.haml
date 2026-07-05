@@ -4,7 +4,7 @@
     .hero-ctas
       = link_to "Publications", "#publications", class: "btn-sd btn-sd-primary", "data-turbolinks" => "false"
       = link_to "Recruiting", "#recruiting", class: "btn-sd btn-sd-secondary", "data-turbolinks" => "false"
-      = link_to "CV / Résumé", asset_path("cv.pdf"), class: "btn-sd btn-sd-secondary", target: "_blank"
+      = link_to "CV / Résumé", asset_path("cv.pdf"), class: "btn-sd btn-sd-secondary", target: "_blank", data: { analytics_event: "cv_download" }
   .hero-avatar
     = image_tag "sauvik_bio_sphere.png", alt: "Sauvik Das", fetchpriority: "high"
 
@@ -82,16 +82,18 @@
 %div#students
   = react_component('StudentsContainer', currentStudents: @currentStudents, alums: @alums)
 
+-# The publications content lives inside the #publications anchor so section
+-# tracking (journey_tracking.js) counts reading papers as time in the section.
 %div#publications
   %h2.sr-only Publications
-= react_component('TabContainer',
-    papersUrl: papers_url(format: :json),
-    paperAssets: @paperAssetMap,
-    paperPollInterval: 10000,
-    awardsUrl: awards_url(format: :json),
-    courses: @courses,
-    currentStudents: @currentStudents,
-    alums: @alums)
+  = react_component('TabContainer',
+      papersUrl: papers_url(format: :json),
+      paperAssets: @paperAssetMap,
+      paperPollInterval: 10000,
+      awardsUrl: awards_url(format: :json),
+      courses: @courses,
+      currentStudents: @currentStudents,
+      alums: @alums)
 %noscript
   .about-text
     JavaScript is disabled. You can still access papers directly via the

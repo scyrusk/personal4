@@ -45,7 +45,7 @@ class AnalyticsController < ApplicationController
       totals: {
         'Visitors' => @total_visitors,
         'Pageviews' => @total_pageviews,
-        'Paper downloads' => @downloads
+        'Downloads' => @downloads
       },
       breakdowns: [
         ['Top sources', 'Visitors', @top_sources],

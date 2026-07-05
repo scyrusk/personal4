@@ -69,6 +69,23 @@ class AnalyticsJourneyFlowTest < ActiveSupport::TestCase
     assert node(flow, '/papers/2/serve', 0), 'expected title-less downloads to fall back to the path'
   end
 
+  test "labels client-reported journey steps as actions" do
+    build_event(step_index: 0, path: '/')
+    build_event(step_index: 1, path: '/#publications', event_name: 'section_view')
+    build_event(step_index: 2, path: '/outbound/github.com', event_name: 'outbound_click',
+                props: { 'url' => 'https://github.com/sauvik' })
+    build_event(step_index: 3, path: '/email', event_name: 'email_click')
+    build_event(step_index: 4, path: '/cv.pdf', event_name: 'download',
+                props: { 'title' => 'CV / Résumé' })
+
+    flow = Analytics::JourneyFlow.new(range).build
+
+    assert node(flow, '/#publications', 1), 'section views keep their anchor path'
+    assert node(flow, '→ github.com', 2), 'outbound clicks read as the destination host'
+    assert node(flow, 'Email me', 3)
+    assert node(flow, 'Download: CV / Résumé', 4)
+  end
+
   test "folds the long tail of pages in a column into Other" do
     9.times do |i|
       count = i < 2 ? 2 : 1 # two clearly-busiest pages, seven in the tail

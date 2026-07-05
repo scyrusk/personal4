@@ -14,11 +14,14 @@
 //= require bootstrap-sprockets
 //= require jquery_ujs
 //= require turbolinks
+//= require journey_tracking
 //= require react
 //= require react_ujs
 //= require components
 //= require_tree .
 
+// Legacy Google Analytics hook still called from the React components. No GA
+// script is loaded anymore, so this must not throw when clicked.
 window.gaSendEvent = function(cat, action, label) {
-  ga('send', 'event', cat, action, label);
+  if (typeof ga === 'function') ga('send', 'event', cat, action, label);
 }

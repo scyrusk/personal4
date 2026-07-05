@@ -78,11 +78,21 @@ module Analytics
       end
     end
 
-    # Download steps read as the paper title — the raw path is an opaque
-    # /papers/:id/serve. props comes back as raw JSON text via pluck.
+    # Client-reported steps read as actions rather than raw virtual paths;
+    # section views keep their "/#about"-style paths, which are already the
+    # anchors visitors see.
     def step_label(path, event_name, props)
-      return path unless event_name == 'download'
+      case event_name
+      when 'download'       then download_label(path, props)
+      when 'outbound_click' then "→ #{path.delete_prefix('/outbound/')}"
+      when 'email_click'    then 'Email me'
+      else path
+      end
+    end
 
+    # Download steps read as the title — the raw path is an opaque
+    # /papers/:id/serve. props comes back as raw JSON text via pluck.
+    def download_label(path, props)
       props = JSON.parse(props) if props.is_a?(String)
       title = (props || {})['title'].presence
       title ? "Download: #{title}" : path

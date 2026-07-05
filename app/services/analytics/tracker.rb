@@ -51,15 +51,18 @@ module Analytics
       'medium.com'          => 'Medium'
     }.freeze
 
-    def self.track(request, event_name: 'pageview', properties: nil)
-      new(request).track(event_name: event_name, properties: properties)
+    def self.track(request, event_name: 'pageview', properties: nil, path: nil)
+      new(request).track(event_name: event_name, properties: properties, path: path)
     end
 
     def initialize(request)
       @request = request
     end
 
-    def track(event_name: 'pageview', properties: nil)
+    # `path` overrides the request path for client-reported journey steps
+    # (section views, outbound clicks), which all POST to the same ingest
+    # endpoint but represent different points on the page.
+    def track(event_name: 'pageview', properties: nil, path: nil)
       return nil if bot?
 
       source, medium = classify_source
@@ -70,7 +73,7 @@ module Analytics
         session_token: previous ? previous.session_token : SecureRandom.hex(16),
         prev_path: previous&.path,
         step_index: previous ? previous.step_index + 1 : 0,
-        path: @request.path,
+        path: path || @request.path,
         referrer: truncate(external_referrer, 2048),
         referrer_host: referrer_host,
         source: source,
