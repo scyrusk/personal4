@@ -192,6 +192,26 @@
   &:focus-visible { box-shadow: 0 0 0 2px #1f6fe5; border-radius: 4px; }
 }
 
+/* ─── Visitor-flow sankey ─────────────────────────────── */
+.sankey-container { height: 300px; }
+
+.flow-note {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  margin: -6px 0 12px;
+}
+
+.chart-legend .legend-swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  vertical-align: -1px;
+  margin-right: 6px;
+}
+.legend-continued .legend-swatch { background: rgba(42, 107, 60, 0.35); }
+.legend-exited    .legend-swatch { background: rgba(122, 122, 114, 0.32); }
+
 .chart-tooltip {
   position: absolute;
   pointer-events: none;

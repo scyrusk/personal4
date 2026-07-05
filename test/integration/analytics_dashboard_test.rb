@@ -10,11 +10,12 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
 
   def record_pageview(occurred_at:, visitor: 'v1', path: '/', source: 'Direct', medium: nil,
                       referrer_host: nil, device: 'desktop', browser: 'Chrome', os: 'macOS',
-                      utm_campaign: nil)
+                      utm_campaign: nil, session: nil, step: nil)
     AnalyticsEvent.create!(
       event_name: 'pageview', visitor_token: visitor, path: path, source: source,
       medium: medium, referrer_host: referrer_host, device_type: device, browser: browser,
-      os: os, utm_campaign: utm_campaign, occurred_at: occurred_at
+      os: os, utm_campaign: utm_campaign, occurred_at: occurred_at,
+      session_token: session, step_index: step
     )
   end
 
@@ -75,6 +76,38 @@ class AnalyticsDashboardTest < ActionDispatch::IntegrationTest
       assert_select '.chart-table table tbody tr', 15
       assert_select '.chart-table td', 'Jul 3, 9 AM'
     end
+  end
+
+  test "renders the visitor flow sankey from sessionized journeys" do
+    record_pageview(occurred_at: 2.hours.ago, visitor: 'a', session: 's1', step: 0)
+    AnalyticsEvent.create!(event_name: 'download', visitor_token: 'a', path: '/papers/1/serve',
+                           session_token: 's1', step_index: 1, occurred_at: 2.hours.ago,
+                           props: { 'paper_id' => 1, 'title' => 'A Great Paper' })
+    record_pageview(occurred_at: 1.hour.ago, visitor: 'b', session: 's2', step: 0)
+
+    get admin_analytics_url(period: '7d'), headers: @auth
+    assert_response :success
+
+    assert_select '.chart-card .card-title', 'Visitor flow'
+    assert_select '.flow-note', /How 2 visits moved through the site/
+
+    # The data table mirrors every sankey ribbon: / -> download, / -> exit, download -> exit.
+    assert_select '.flow-table td', 'Download: A Great Paper'
+    assert_select '.flow-table td', 'Exited'
+    assert_select '.flow-table tbody tr', 3
+
+    journey = JSON.parse(css_select('script#journeyData').first.text)
+    assert_equal 2, journey['total_sessions']
+    assert_includes journey['nodes'].map { |n| n['label'] }, 'Download: A Great Paper'
+    assert_equal journey['links'].size, journey['links'].map { |l| l.values_at('source', 'target') }.uniq.size
+  end
+
+  test "shows an empty visitor flow state for legacy events without sessions" do
+    record_pageview(occurred_at: 1.day.ago, visitor: 'a')
+
+    get admin_analytics_url(period: '7d'), headers: @auth
+    assert_response :success
+    assert_select '.chart-empty', /No visitor journeys recorded/
   end
 
   test "falls back to the default period for unknown period params" do

@@ -65,6 +65,43 @@
               %td= visitors
               %td= @chart_pageviews[bucket]
 
+.card.chart-card
+  %h2.card-title Visitor flow
+  - if @journey[:total_sessions].zero?
+    .chart-empty No visitor journeys recorded in this period yet.
+  - else
+    %p.flow-note
+      How #{analytics_number(@journey[:total_sessions])} visits moved through the site, step by step.
+      Ribbon width is the number of sessions taking that path.
+    .chart-legend
+      %span.legend-continued
+        %span.legend-swatch
+        Continued
+      %span.legend-exited
+        %span.legend-swatch
+        Exited
+    #journeyChart.chart-container.sankey-container{tabindex: "0", role: "img",
+      "aria-label" => "Sankey diagram of aggregated visitor journeys through the site. Data available in the table below."}
+      #journeyTooltip.chart-tooltip
+    %details.chart-table.flow-table
+      %summary View data table
+      %table
+        %thead
+          %tr
+            %th Step
+            %th From
+            %th To
+            %th Sessions
+        %tbody
+          - @journey[:links].each do |link|
+            - from = @journey[:nodes][link[:source]]
+            - to = @journey[:nodes][link[:target]]
+            %tr
+              %td= from[:col] + 1
+              %td= from[:label]
+              %td= to[:label]
+              %td= link[:count]
+
 .panel-grid
   = render "breakdown", title: "Top sources", rows: @top_sources, unit: "visitors",
     empty: "No external traffic yet."
@@ -88,6 +125,9 @@
           labelsLong: @chart_visitors.keys.map { |k| analytics_chart_label(k, long: true) },
           visitors: @chart_visitors.values,
           pageviews: @chart_visitors.keys.map { |k| @chart_pageviews[k] || 0 } }.to_json)
+
+%script#journeyData{type: "application/json"}
+  = raw @journey.to_json
 
 :javascript
   // Keep the "active now" badge live (GA-style realtime, 60s poll).
@@ -281,6 +321,218 @@
       if (e.key === 'ArrowRight') { showHover(hoverIdx < 0 ? 0 : hoverIdx + 1); e.preventDefault(); }
       if (e.key === 'Escape') hideHover();
     });
+
+    var resizeQueued = false;
+    window.addEventListener('resize', function() {
+      if (resizeQueued) return;
+      resizeQueued = true;
+      requestAnimationFrame(function() { resizeQueued = false; render(); });
+    });
+
+    render();
+  })();
+
+  // Visitor-flow sankey: columns are journey steps, ribbons are session counts.
+  (function() {
+    var container = document.getElementById('journeyChart');
+    if (!container) return;
+
+    var data = JSON.parse(document.getElementById('journeyData').textContent);
+    var tooltip = document.getElementById('journeyTooltip');
+    var SVG_NS = 'http://www.w3.org/2000/svg';
+    var NODE_W = 10;
+    var GAP = 8;
+    var PAD = { top: 10, right: 12, bottom: 10, left: 12 };
+    var NODE_COLORS = { page: '#2a6b3c', other: '#7a7a72', more: '#7a7a72', exit: '#b9b8ae' };
+    var LINK_COLORS = {
+      go:   { rest: 'rgba(42, 107, 60, 0.22)',  hover: 'rgba(42, 107, 60, 0.42)' },
+      exit: { rest: 'rgba(122, 122, 114, 0.18)', hover: 'rgba(122, 122, 114, 0.38)' }
+    };
+    var svg = null;
+
+    function el(name, attrs) {
+      var node = document.createElementNS(SVG_NS, name);
+      for (var k in attrs) node.setAttribute(k, attrs[k]);
+      return node;
+    }
+
+    function truncate(text, maxChars) {
+      return text.length > maxChars ? text.slice(0, Math.max(1, maxChars - 1)) + '…' : text;
+    }
+
+    // Node heights and ribbon offsets for the current container size.
+    function layout(w, h) {
+      var cols = 0;
+      data.nodes.forEach(function(n) { cols = Math.max(cols, n.col + 1); });
+      var plotW = w - PAD.left - PAD.right - NODE_W;
+      var plotH = h - PAD.top - PAD.bottom;
+
+      var byCol = [];
+      for (var c = 0; c < cols; c++) byCol.push([]);
+      data.nodes.forEach(function(n) { byCol[n.col].push(n); });
+      // Busiest pages first; the fold/continuation/exit buckets sink to the bottom.
+      var rank = { page: 0, other: 1, more: 2, exit: 3 };
+      byCol.forEach(function(col) {
+        col.sort(function(a, b) { return rank[a.kind] - rank[b.kind] || b.count - a.count; });
+      });
+
+      // One px-per-session scale everywhere: the busiest column must fit.
+      var scale = Infinity;
+      byCol.forEach(function(col) {
+        var total = col.reduce(function(sum, n) { return sum + n.count; }, 0);
+        scale = Math.min(scale, (plotH - (col.length - 1) * GAP) / total);
+      });
+
+      byCol.forEach(function(col, c) {
+        var height = (col.length - 1) * GAP +
+          col.reduce(function(sum, n) { return sum + n.count * scale; }, 0);
+        var y = PAD.top + (plotH - height) / 2;
+        col.forEach(function(n) {
+          n.x = PAD.left + (cols === 1 ? 0 : c * plotW / (cols - 1));
+          n.y = y;
+          n.h = Math.max(2, n.count * scale);
+          n.outY = y;
+          n.inY = y;
+          y += n.count * scale + GAP;
+        });
+      });
+
+      var links = data.links.map(function(l) {
+        return { source: data.nodes[l.source], target: data.nodes[l.target], count: l.count };
+      });
+      // Stack each node's ribbons by the far end's height so they don't cross.
+      links.slice().sort(function(a, b) { return a.target.y - b.target.y; })
+        .forEach(function(l) { l.sy = l.source.outY; l.source.outY += l.count * scale; });
+      links.slice().sort(function(a, b) { return a.source.y - b.source.y; })
+        .forEach(function(l) { l.ty = l.target.inY; l.target.inY += l.count * scale; });
+
+      return { cols: cols, plotW: plotW, scale: scale, links: links };
+    }
+
+    function ribbonPath(l, scale) {
+      var x0 = l.source.x + NODE_W;
+      var x1 = l.target.x;
+      var t = Math.max(1.5, l.count * scale);
+      var mx = (x0 + x1) / 2;
+      return 'M' + x0 + ',' + l.sy +
+             'C' + mx + ',' + l.sy + ' ' + mx + ',' + l.ty + ' ' + x1 + ',' + l.ty +
+             'L' + x1 + ',' + (l.ty + t) +
+             'C' + mx + ',' + (l.ty + t) + ' ' + mx + ',' + (l.sy + t) + ' ' +
+                   x0 + ',' + (l.sy + t) + 'Z';
+    }
+
+    function showTooltip(e, title, rows) {
+      tooltip.textContent = '';
+      var titleEl = document.createElement('div');
+      titleEl.className = 'tt-date';
+      titleEl.textContent = title;
+      tooltip.appendChild(titleEl);
+      rows.forEach(function(r) {
+        var row = document.createElement('div');
+        row.className = 'tt-row';
+        var value = document.createElement('span');
+        value.className = 'tt-value';
+        value.textContent = r[0];
+        var name = document.createElement('span');
+        name.className = 'tt-name';
+        name.textContent = r[1];
+        row.appendChild(value);
+        row.appendChild(name);
+        tooltip.appendChild(row);
+      });
+      tooltip.style.display = 'block';
+      moveTooltip(e);
+    }
+
+    function moveTooltip(e) {
+      var rect = container.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var y = e.clientY - rect.top;
+      var left = x + 14 + tooltip.offsetWidth > rect.width ? x - tooltip.offsetWidth - 14 : x + 14;
+      var top = Math.min(y + 14, rect.height - tooltip.offsetHeight - 4);
+      tooltip.style.left = Math.max(0, left) + 'px';
+      tooltip.style.top = Math.max(0, top) + 'px';
+    }
+
+    function hideTooltip() { tooltip.style.display = 'none'; }
+
+    function pct(part, whole) {
+      return whole > 0 ? Math.round((part * 100.0) / whole) + '%' : '—';
+    }
+
+    function hoverable(shape, enter) {
+      shape.addEventListener('pointerenter', enter);
+      shape.addEventListener('pointermove', moveTooltip);
+      shape.addEventListener('pointerleave', hideTooltip);
+    }
+
+    function render() {
+      var w = container.clientWidth;
+      var h = container.clientHeight;
+      if (svg) svg.remove();
+      svg = el('svg', { width: w, height: h, viewBox: '0 0 ' + w + ' ' + h });
+
+      var geom = layout(w, h);
+      var colSpace = geom.cols === 1 ? geom.plotW : geom.plotW / (geom.cols - 1);
+      // The last column's labels sit left of their nodes, in the same corridor
+      // as the previous column's labels — reserve room so they never collide.
+      var maxChars = function(col) {
+        var space = colSpace - NODE_W - 14 - (col === geom.cols - 2 ? 76 : 0);
+        return Math.max(5, Math.floor(space / 6.2));
+      };
+
+      geom.links.forEach(function(l) {
+        var colors = LINK_COLORS[l.target.kind === 'exit' ? 'exit' : 'go'];
+        var path = el('path', { d: ribbonPath(l, geom.scale), fill: colors.rest });
+        hoverable(path, function(e) {
+          path.setAttribute('fill', colors.hover);
+          showTooltip(e, l.source.label + ' → ' + l.target.label, [
+            [l.count.toLocaleString(), 'sessions'],
+            [pct(l.count, l.source.count), 'of “' + truncate(l.source.label, 26) + '”']
+          ]);
+        });
+        path.addEventListener('pointerleave', function() { path.setAttribute('fill', colors.rest); });
+        svg.appendChild(path);
+      });
+
+      data.nodes.forEach(function(n) {
+        svg.appendChild(el('rect', {
+          x: n.x, y: n.y, width: NODE_W, height: n.h, rx: 2, fill: NODE_COLORS[n.kind]
+        }));
+
+        // Side labels in text tokens; tight columns fall back to the tooltip/table.
+        var lastCol = n.col === geom.cols - 1;
+        if (n.h + GAP >= 14) {
+          var label = el('text', {
+            x: lastCol ? n.x - 6 : n.x + NODE_W + 6,
+            y: n.y + n.h / 2 + 4,
+            'text-anchor': lastCol ? 'end' : 'start',
+            fill: '#4a4a45', 'font-size': 11.5
+          });
+          label.textContent = truncate(n.label, maxChars(n.col));
+          var countSpan = document.createElementNS(SVG_NS, 'tspan');
+          countSpan.setAttribute('fill', '#7a7a72');
+          countSpan.textContent = ' ' + n.count.toLocaleString();
+          label.appendChild(countSpan);
+          svg.appendChild(label);
+        }
+
+        // Oversized invisible hit target: a 10px node is too thin to hover.
+        var hit = el('rect', {
+          x: n.x - 7, y: n.y - 4, width: NODE_W + 14, height: n.h + 8,
+          fill: 'transparent'
+        });
+        hoverable(hit, function(e) {
+          showTooltip(e, n.label + (n.col > 0 ? ' — step ' + (n.col + 1) : ''), [
+            [n.count.toLocaleString(), 'sessions'],
+            [pct(n.count, data.total_sessions), 'of all visits']
+          ]);
+        });
+        svg.appendChild(hit);
+      });
+
+      container.insertBefore(svg, tooltip);
+    }
 
     var resizeQueued = false;
     window.addEventListener('resize', function() {

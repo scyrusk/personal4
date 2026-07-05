@@ -22,6 +22,9 @@ class AnalyticsController < ApplicationController
     @prev_downloads = AnalyticsEvent.event_counts(@prev_range)['download'] || 0
 
     @current_visitors = AnalyticsEvent.current_visitors(window: REALTIME_WINDOW)
+
+    # Visitor-flow sankey (nodes/links per journey step).
+    @journey = Analytics::JourneyFlow.new(@range).build
   end
 
   # Polled by the dashboard to keep the "active now" badge live.
