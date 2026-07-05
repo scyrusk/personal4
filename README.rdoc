@@ -5,10 +5,12 @@ Basic info: Rails 7.0 backend, HAML + React front-end.
 
 # Analytics
 Self-hosted, cookieless analytics (Plausible-style), stored in the analytics_events table:
-* Pageviews are tracked server-side for every successful public HTML GET (AnalyticsTracking concern); paper downloads are tracked as a 'download' event.
+* Pageviews are tracked server-side for every successful public HTML GET (AnalyticsTracking concern); paper and CV downloads are tracked as 'download' events.
+* Client-side journey events — section views (IntersectionObserver, 1s dwell, only after the visitor engages), outbound/email clicks, and CV downloads — are beaconed by journey_tracking.js to POST /analytics/event, which accepts only a fixed event vocabulary and stores them as virtual paths (/#about, /outbound/github.com, /email, /cv.pdf).
+* Events are sessionized into journeys (session_token + step_index, unique per step): a new session starts after a 30-minute gap, or at midnight when the visitor token rotates.
 * Visitor identity is a daily-rotating hash of (secret, date, IP, user agent) — no cookies, nothing personally identifiable stored, so unique-visitor counts reset each day.
 * Bots, admin paths (/admin, /dktest), and authenticated (site-owner) sessions are never tracked.
-* Admin dashboard at /admin/analytics (HTTP basic auth via PERSONAL_UN / PERSONAL_PASS): visitors/pageviews chart (hourly for "Today", daily otherwise), traffic sources, top pages / downloads / referrers / campaigns, device / browser / OS breakdowns, a realtime "active now" badge (/admin/analytics/realtime), and CSV export (/admin/analytics/export).
+* Admin dashboard at /admin/analytics (HTTP basic auth via PERSONAL_UN / PERSONAL_PASS): visitors/pageviews chart (hourly for "Today", daily otherwise), traffic sources, top pages / downloads / referrers / campaigns, device / browser / OS breakdowns, a "Visitor flow" sankey of aggregated journeys (up to 10 step columns, horizontally scrollable, with a data-table fallback), a realtime "active now" badge (/admin/analytics/realtime), and CSV export (/admin/analytics/export) including the visitor flow.
 * Daily buckets follow the site's time zone (Eastern, set via config.time_zone).
 
 # Issues
