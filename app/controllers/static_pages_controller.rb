@@ -7,6 +7,7 @@ class StaticPagesController < ApplicationController
     @recruiting_status_updated_at = "April 2026"
     @recruiting_status = "Not recruiting"
     @recruiting_cycle  = "2026–27 cycle"
+    @recruiting_cycle_short = @recruiting_cycle.sub(/\s*cycle\z/, "")
 
     # SF-02: four crawlable entry points into the one continuous page
     @section = params[:section].presence_in(SECTIONS) || "about"

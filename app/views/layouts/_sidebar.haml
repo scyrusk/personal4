@@ -13,7 +13,8 @@
       %path{d: "M3 7l9 6 9-6"}
     Email me
   - if defined?(@recruiting_status) && @recruiting_status.present?
-    %a.sidebar-recruit-badge{href: "/recruiting", "data-turbolinks" => "false", "data-section-link" => true}= "#{@recruiting_status} · #{@recruiting_cycle}"
+    -# Short cycle label (no "cycle") so the badge stays on one line in the rail
+    %a.sidebar-recruit-badge{href: "/recruiting", "data-turbolinks" => "false", "data-section-link" => true}= "#{@recruiting_status} · #{@recruiting_cycle_short}"
     -# SF-01: "not recruiting" is never a dead end — immediate alternative next step
     %a.sidebar-apply-link{href: "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank", rel: "noopener noreferrer"}
       Apply to the HCII Ph.D. program →

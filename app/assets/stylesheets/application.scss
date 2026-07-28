@@ -503,18 +503,6 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   strong { font-weight: 600; }
 }
 
-/* The lab's central question, pulled out as a serif quote (mockup) */
-.about-question {
-  font-family: var(--serif);
-  font-size: var(--fs-lg);
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--text);
-  border-left: 3px solid var(--green);
-  padding: 4px 0 4px 18px;
-  margin: 18px 0 0;
-}
-
 .recognition-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -2685,7 +2673,19 @@ a:focus-visible, button:focus-visible, input:focus-visible {
     }
   }
 
-  .pubs-sticky-header { top: 59px; }
+  /* Slim mobile sticky: only the search bar pins (tabs/chips/results scroll away),
+     and the tab row gets breathing room under the app header. display:contents
+     dissolves the toolbar wrappers so the search row's sticky bounds become the
+     full-height .pubs-section instead of the short toolbar block. */
+  .pubs-sticky-header,
+  .pubs-sticky-header > div { display: contents; }
+  .pubs-tabs-row { margin-top: 16px; }
+  .pubs-search-row {
+    position: sticky;
+    top: 71px; /* just under the sticky mobile header */
+    z-index: 9;
+    background: var(--bg);
+  }
   .pub-actions {
     align-items: stretch;
   }

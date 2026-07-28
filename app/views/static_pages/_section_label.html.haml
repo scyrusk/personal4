@@ -1,8 +1,11 @@
--# SF-02: every section opens with its crawlable URL — label + linked address
+-# SF-02: every section opens with its crawlable URL — label + linked address.
+-# Pass show_name: false when a visible section title follows (avoids saying it twice).
 - section = local_assigns.fetch(:section)
+- show_name = local_assigns.fetch(:show_name, true)
 .section-label
-  %a.section-label-name{href: "/#{section}", "data-turbolinks" => "false", "data-section-link" => true}= section.upcase
-  %span.section-label-rule
+  - if show_name
+    %a.section-label-name{href: "/#{section}", "data-turbolinks" => "false", "data-section-link" => true}= section.upcase
+    %span.section-label-rule
   %a.section-label-url{href: "/#{section}", "data-turbolinks" => "false", "data-section-link" => true}
     %svg{width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
       %path{d: "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"}

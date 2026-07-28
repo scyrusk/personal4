@@ -47,9 +47,7 @@
       .about-text
         At CMU, I direct the
         =link_to "SPUD (Security, Privacy, Usability and Design) Lab.", "https://cs.cmu.edu/~spudlab"
-        Our work, at the intersection of HCI, AI and cybersecurity, is oriented around answering:
-      %blockquote.about-question
-        How can we design systems that empower people with improved agency over their personal data and experiences online?
+        We work at the intersection of HCI, AI and cybersecurity/privacy.
     %aside.recognition-card{"aria-label" => "Recognition"}
       %span.recognition-label Recognition
       - @recognition[:awards].each do |row|
@@ -115,7 +113,7 @@
   %p.recruiting-updated= "Last updated #{@recruiting_status_updated_at}"
 
 %section#students
-  = render "static_pages/section_label", section: "students"
+  = render "static_pages/section_label", section: "students", show_name: false
   %h2.section-title Students
   %p.section-subtitle The people who do the work in the SPUD Lab — current and former.
   = react_component('StudentsContainer', currentStudents: @currentStudents, alums: @alums)
@@ -123,7 +121,7 @@
 -# The publications content lives inside the #publications anchor so section
 -# tracking (journey_tracking.js) counts reading papers as time in the section.
 %section#publications
-  = render "static_pages/section_label", section: "publications"
+  = render "static_pages/section_label", section: "publications", show_name: false
   %h2.section-title Publications
   %p.section-subtitle= "#{@papers_count} papers, #{@papers_year_range}."
   = react_component('TabContainer',
