@@ -2628,10 +2628,11 @@ a:focus-visible, button:focus-visible, input:focus-visible {
     border-radius: 24px;
   }
 
-  /* SF-07: shorter helper copy, left-aligned under the tabs */
+  /* SF-07: shorter helper copy, left-aligned with air between tabs and hint */
   .pubs-tabs-hint {
     text-align: left;
     max-width: none;
+    margin: 10px 0 2px;
 
     .pubs-tabs-hint-desktop { display: none; }
     .pubs-tabs-hint-mobile { display: inline; }
