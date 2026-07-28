@@ -7,22 +7,33 @@
 
 /* ─── DESIGN TOKENS ─────────────────────────────────────── */
 :root {
-  --green:       #2a6b3c;
+  --green:       #2a6b3c;  /* 6.15:1 on --bg; AA for text and UI */
+  --green-dark:  #1e5430;  /* hover state for green fills/links */
   --green-light: #e8f3ec;
   --green-mid:   #c2dfc9;
   --text:        #1a1a18;
-  --text-mid:    #4a4a45;
-  --text-muted:  #7a7a72;
+  --text-mid:    #4a4a45;  /* 8.5:1 on --bg — metadata/secondary text (SF-5) */
+  --text-muted:  #6b6b62;  /* 5.1:1 on --bg — smallest legible tier (SF-5; was #7a7a72, 4.1:1) */
   --bg:          #fafaf8;
   --bg-card:     #ffffff;
   --border:      #e2e2dc;
-  --amber:       #b7791f;
+  --chip-border: #8f8f85;  /* ≥3:1 non-text UI boundary so chips read as controls (SF-5) */
+  --amber:       #b7791f;  /* dots/borders only — fails AA as text on --amber-light */
+  --amber-text:  #8a5a12;  /* 5.4:1 on --amber-light — all amber text (SF-5) */
   --amber-light: #fdf6e3;
   --amber-mid:   #ecd9a8;
   --focus-ring:  #1f6fe5;
   --serif:       'IBM Plex Serif', Georgia, serif;
   --sans:        'IBM Plex Sans', system-ui, sans-serif;
   --mono:        'IBM Plex Mono', monospace;
+  /* 7-step type scale — every font-size on the site uses one of these (SF-5) */
+  --fs-xs:   12px;
+  --fs-sm:   14px;
+  --fs-base: 16px;
+  --fs-md:   18px;
+  --fs-lg:   22px;
+  --fs-xl:   28px;
+  --fs-2xl:  40px;
   --sidebar-w:   220px;
   --radius:      6px;
 }
@@ -49,7 +60,7 @@ body {
   font-family: var(--sans);
   background: var(--bg);
   color: var(--text);
-  font-size: 15px;
+  font-size: var(--fs-base);
   line-height: 1.6;
   padding: 0;
   margin: 0;
@@ -113,7 +124,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
 .sidebar-name {
   font-family: var(--serif);
-  font-size: 18px;
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--text);
   line-height: 1.2;
@@ -121,7 +132,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .sidebar-role {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -130,7 +141,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .sidebar-tagline {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-mid);
   line-height: 1.4;
   margin-bottom: 20px;
@@ -182,7 +193,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   background: white;
   color: var(--green);
   border: 1px solid var(--green-mid);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   border-radius: var(--radius);
   padding: 9px 12px;
@@ -197,9 +208,9 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
-  color: var(--amber);
+  color: var(--amber-text);
   background: var(--amber-light);
   border: 1px solid var(--amber-mid);
   border-radius: var(--radius);
@@ -215,7 +226,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
     flex-shrink: 0;
   }
 
-  &:hover { text-decoration: none; color: var(--amber); border-color: var(--amber); }
+  &:hover { text-decoration: none; color: var(--amber-text); border-color: var(--amber-text); }
 }
 
 .sidebar-section {
@@ -223,7 +234,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .sidebar-label {
-  font-size: 10px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -234,7 +245,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
 .sidebar-link {
   display: block;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--green);
   text-decoration: none;
   padding: 3px 0;
@@ -270,7 +281,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 /* ─── SECTION HEADERS ───────────────────────────────────── */
 .section-head {
   font-family: var(--sans);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -294,7 +305,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 .hero-main { flex: 1; min-width: 0; }
 
 .hero-eyebrow {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -304,7 +315,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
 .hero-name {
   font-family: var(--serif);
-  font-size: 40px;
+  font-size: var(--fs-2xl);
   font-weight: 600;
   line-height: 1.1;
   color: var(--text);
@@ -312,7 +323,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .hero-pitch {
-  font-size: 17px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-mid);
   max-width: 620px;
@@ -346,7 +357,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 .about-text { max-width: 680px; }
 
 .about-text {
-  font-size: 15px;
+  font-size: var(--fs-base);
   line-height: 1.75;
   color: var(--text);
   margin-bottom: 14px;
@@ -374,7 +385,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .research-dir {
-  font-size: 14px;
+  font-size: var(--fs-sm);
   color: var(--text-mid);
   padding: 4px 0 4px 14px;
   border-left: 2px solid var(--green-mid);
@@ -383,7 +394,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   b { font-weight: 600; color: var(--text); }
 
   a.project-highlight {
-    font-size: 12px;
+    font-size: var(--fs-xs);
     color: var(--green);
     padding: 0 4px;
     border-bottom: none;
@@ -405,7 +416,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .recruiting-meta {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin-bottom: 10px;
 }
@@ -417,24 +428,24 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   margin-bottom: 10px;
 
   a {
-    font-size: 12px;
+    font-size: var(--fs-xs);
     color: var(--green);
     text-decoration: underline;
   }
 }
 
 .recruiting-faq-body p {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-mid);
   margin: 0 0 4px;
 }
 
 .recruiting-status {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--amber);
+  color: var(--amber-text);
   background: #fff;
   border: 1px solid var(--amber-mid);
   border-radius: 999px;
@@ -457,14 +468,14 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
 .recruiting-title {
   font-family: var(--serif);
-  font-size: 17px;
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--text);
   margin: 0 0 8px;
 }
 
 .recruiting-body {
-  font-size: 14px;
+  font-size: var(--fs-sm);
   color: var(--text-mid);
   line-height: 1.65;
   margin-bottom: 16px;
@@ -485,7 +496,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .recruiting-updated {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin: 12px 0 0;
 }
@@ -503,7 +514,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   gap: 6px;
   padding: 8px 14px;
   border-radius: var(--radius);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   cursor: pointer;
   text-decoration: none;
@@ -520,7 +531,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   color: #fff;
   border: 1px solid var(--green);
 
-  &:hover { background: #1e5430; border-color: #1e5430; color: #fff; }
+  &:hover { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
 }
 
 .btn-sd-secondary {
@@ -546,7 +557,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .students-section-head {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -586,7 +597,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 15px;
+  font-size: var(--fs-base);
   color: var(--green);
   border: 1px solid var(--green-mid);
 
@@ -598,7 +609,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .student-card-name {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text);
   margin-bottom: 2px;
@@ -611,14 +622,14 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .student-card-topic {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-mid);
   margin-bottom: 3px;
   line-height: 1.3;
 }
 
 .student-card-meta {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   line-height: 1.3;
 }
@@ -646,7 +657,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .pubs-tab {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   padding: 12px 18px;
   cursor: pointer;
@@ -690,7 +701,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   padding: 9px 36px 9px 36px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius);
-  font-size: 14px;
+  font-size: var(--fs-sm);
   font-family: var(--sans);
   color: var(--text);
   background: white;
@@ -710,7 +721,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   border: none;
   cursor: pointer;
   color: var(--text-muted);
-  font-size: 16px;
+  font-size: var(--fs-base);
   line-height: 1;
   padding: 2px 4px;
   font-family: var(--sans);
@@ -719,7 +730,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .pubs-result-count {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -739,7 +750,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   top: 50%;
   transform: translateY(-50%);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   background: var(--bg);
   border: 1px solid var(--border);
@@ -759,7 +770,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .pubs-clear-all {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   border: none;
   background: transparent;
   color: var(--text-mid);
@@ -781,14 +792,17 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .pubs-filter-chip {
-  font-size: 12px;
-  padding: 4px 10px;
+  /* SF-5: chips read as controls — AA text, ≥3:1 border */
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  padding: 6px 14px;
+  min-height: 32px;
   border-radius: 20px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--chip-border);
   background: white;
   cursor: pointer;
   white-space: nowrap;
-  color: var(--text-mid);
+  color: var(--text);
   transition: all 0.12s;
   font-family: var(--sans);
 
@@ -805,7 +819,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .active-filter-pill {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   border: 1px solid var(--green-mid);
   color: var(--green);
   background: var(--green-light);
@@ -818,7 +832,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   background: transparent;
   color: var(--text-mid);
   text-decoration: underline;
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 
 /* ─── PUB CARDS ─────────────────────────────────────────── */
@@ -835,7 +849,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .pubs-jump-select {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-family: var(--sans);
   color: var(--text-mid);
   background: #fff;
@@ -884,7 +898,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   justify-content: space-between;
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text);
 }
@@ -892,7 +906,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 .tag-sheet-close {
   background: none;
   border: none;
-  font-size: 22px;
+  font-size: var(--fs-lg);
   line-height: 1;
   color: var(--text-muted);
   cursor: pointer;
@@ -905,7 +919,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   padding: 9px 12px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius);
-  font-size: 14px;
+  font-size: var(--fs-sm);
   font-family: var(--sans);
   color: var(--text);
   outline: none;
@@ -922,7 +936,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .tag-sheet-item {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -937,7 +951,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
 .year-label {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--text-muted);
   margin-bottom: 14px;
@@ -976,7 +990,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .featured-papers-head {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   text-transform: uppercase;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -997,7 +1011,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   background: #fff7e0;
   color: #8a5e00;
   border: 1px solid #f0d87a;
-  font-size: 10px;
+  font-size: var(--fs-xs);
   padding: 2px 8px;
   border-radius: 999px;
   font-weight: 700;
@@ -1051,7 +1065,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   right: 12px;
   z-index: 3;
   font-family: var(--sans);
-  font-size: 10px;
+  font-size: var(--fs-xs);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -1087,7 +1101,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   align-items: center;
   gap: 3px;
   font-family: var(--sans);
-  font-size: 10px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   opacity: 0.5;
   pointer-events: none;
@@ -1122,7 +1136,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
 .pub-takeaway-text {
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: var(--fs-base);
   line-height: 1.65;
   color: var(--text);
   font-style: normal;
@@ -1130,7 +1144,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .pub-takeaway-title {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   max-width: 90%;
 }
@@ -1142,7 +1156,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   border: 1px solid var(--green-mid);
   border-radius: 5px;
   padding: 3px 9px;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   cursor: pointer;
   font-family: var(--sans);
@@ -1192,10 +1206,10 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   background: #fff7e0;
-  color: #9a6b00;
+  color: #8a5e00;
   border: 1px solid #f0d87a;
   border-radius: 4px;
   padding: 2px 8px;
@@ -1204,7 +1218,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
 .pub-title {
   font-family: var(--serif);
-  font-size: 16px;
+  font-size: var(--fs-base);
   font-weight: 600;
   color: var(--text);
   line-height: 1.4;
@@ -1217,7 +1231,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .pub-authors {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   line-height: 1.5;
   margin-bottom: 4px;
@@ -1226,7 +1240,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .pub-venue {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-mid);
   font-style: italic;
   margin-bottom: 10px;
@@ -1265,12 +1279,12 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .pub-tag {
-  font-size: 11px;
-  padding: 2px 9px;
+  font-size: var(--fs-xs);
+  padding: 3px 10px;
   border-radius: 12px;
   background: #fff;
   color: var(--text-mid);
-  border: 1px solid var(--border);
+  border: 1px solid var(--chip-border); /* SF-5 */
   font-weight: 500;
   cursor: pointer;
   font-family: var(--sans);
@@ -1280,7 +1294,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .pub-tag-more {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   cursor: pointer;
   padding: 2px 4px;
@@ -1306,7 +1320,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   background: var(--green);
   color: white;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -1315,7 +1329,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   transition: background 0.15s;
   min-height: 44px;
 
-  &:hover { background: #1e5430; color: white; text-decoration: none; }
+  &:hover { background: var(--green-dark); color: white; text-decoration: none; }
 
   svg { display: inline-block; vertical-align: middle; }
 }
@@ -1329,7 +1343,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   color: var(--text-mid);
   border: 1px solid var(--border);
   border-radius: 5px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 500;
   text-decoration: none;
   cursor: pointer;
@@ -1351,7 +1365,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   color: var(--green);
   border: 1px solid var(--green-mid);
   border-radius: 5px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -1368,7 +1382,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 .pub-ext-cue {
   display: inline-block;
   margin-left: 1px;
-  font-size: 0.85em;
+  font-size: var(--fs-xs);
   line-height: 1;
 }
 
@@ -1409,7 +1423,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-mid);
   text-decoration: none;
   padding: 7px 8px;
@@ -1450,7 +1464,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .papers-progress-text {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-family: var(--mono);
   color: var(--text-muted);
   margin-bottom: 8px;
@@ -1482,7 +1496,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   border: none;
   background: var(--green);
   color: #fff;
-  font-size: 14px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   border-radius: var(--radius);
   padding: 12px 20px;
@@ -1490,7 +1504,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   font-family: var(--sans);
   transition: background 0.15s;
 
-  &:hover { background: #1e5430; }
+  &:hover { background: var(--green-dark); }
 }
 
 .papers-sentinel {
@@ -1509,7 +1523,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .pubs-view-btn {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 500;
   padding: 6px 14px;
   min-height: 36px;
@@ -1535,7 +1549,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .selected-work-head {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1559,7 +1573,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
 .sw-title {
   font-family: var(--serif);
-  font-size: 16px;
+  font-size: var(--fs-base);
   font-weight: 600;
   color: var(--text);
   text-decoration: none;
@@ -1568,7 +1582,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .sw-badge {
-  font-size: 10px;
+  font-size: var(--fs-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1581,13 +1595,13 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
 .sw-venue {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   margin: 3px 0 4px;
 }
 
 .sw-why {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-mid);
   line-height: 1.5;
   font-style: italic;
@@ -1603,12 +1617,12 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   display: inline-flex;
   align-items: center;
   margin-top: 8px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--green);
   text-decoration: none;
 
-  &:hover { color: #1e5430; background: transparent; text-decoration: underline; }
+  &:hover { color: var(--green-dark); background: transparent; text-decoration: underline; }
 }
 
 .cite-row {
@@ -1627,7 +1641,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .cite-format-badge {
-  font-size: 10px;
+  font-size: var(--fs-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1636,7 +1650,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .cite-copy-btn {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   padding: 3px 10px;
   border-radius: 4px;
   border: 1px solid var(--border);
@@ -1652,7 +1666,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .cite-text {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-mid);
   line-height: 1.55;
   margin: 0;
@@ -1661,7 +1675,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
 .cite-text-pre {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   white-space: pre-wrap;
   background: #f5f5f2;
   border-radius: 4px;
@@ -1717,7 +1731,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .honor-year {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   min-width: 44px;
   font-family: var(--mono);
@@ -1726,14 +1740,14 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 .honor-content { flex: 1; }
 
 .honor-title {
-  font-size: 14px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text);
   margin-bottom: 2px;
 }
 
 .honor-venue {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 
@@ -1753,7 +1767,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .teaching-code {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--text-muted);
   font-family: var(--mono);
@@ -1761,7 +1775,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .teaching-name {
-  font-size: 15px;
+  font-size: var(--fs-base);
   font-weight: 600;
   color: var(--text);
   margin-bottom: 4px;
@@ -1775,7 +1789,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 }
 
 .teaching-meta {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
 }
 
@@ -1827,9 +1841,9 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
-  color: var(--amber);
+  color: var(--amber-text);
 
   &::before {
     content: '';
@@ -1846,7 +1860,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   align-items: center;
   gap: 5px;
   margin-left: auto;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 500;
   color: var(--green);
   text-decoration: none;
@@ -1857,7 +1871,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 .mobile-action-pub {
   display: inline-flex;
   align-items: center;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: #fff;
   background: var(--green);
@@ -1865,7 +1879,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   padding: 6px 12px;
   text-decoration: none;
 
-  &:hover { background: #1e5430; color: #fff; text-decoration: none; }
+  &:hover { background: var(--green-dark); color: #fff; text-decoration: none; }
 }
 
 .mobile-name-block {
@@ -1877,11 +1891,11 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 .mobile-name {
   font-family: var(--serif);
   font-weight: 600;
-  font-size: 16px;
+  font-size: var(--fs-base);
 }
 
 .mobile-role {
-  font-size: 10px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1932,8 +1946,8 @@ a:focus-visible, button:focus-visible, input:focus-visible {
     padding-right: 28px;
   }
 
-  .sidebar-name { font-size: 22px; }
-  .sidebar-tagline { font-size: 15px; }
+  .sidebar-name { font-size: var(--fs-lg); }
+  .sidebar-tagline { font-size: var(--fs-base); }
 
   .sidebar-section { margin-top: 24px; }
 
@@ -1942,7 +1956,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   .sidebar-link {
     display: block;
     padding: 13px 28px;
-    font-size: 16px;
+    font-size: var(--fs-base);
     box-sizing: border-box;
   }
 }
@@ -1953,7 +1967,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   right: 20px;
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: var(--fs-lg);
   cursor: pointer;
   color: var(--text-muted);
   line-height: 1;
@@ -1965,7 +1979,7 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 #footer {
   text-align: center;
   padding: 16px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   border-top: 1px solid var(--border);
   background: var(--bg);
@@ -1994,15 +2008,15 @@ a:focus-visible, button:focus-visible, input:focus-visible {
     align-items: center;
     gap: 16px;
   }
-  .hero-name { font-size: 28px; }
-  .hero-pitch { font-size: 15px; margin-bottom: 14px; }
+  .hero-name { font-size: var(--fs-xl); }
+  .hero-pitch { font-size: var(--fs-base); margin-bottom: 14px; }
   .hero-avatar { display: block; width: 64px; height: 64px; }
   .hero-ctas .btn-sd { flex: 1; justify-content: center; }
 
   /* Photo already shown in the mobile hero — drop it from the drawer */
   .mobile-drawer-panel .sidebar-photo { display: none; }
 
-  .pubs-tab { padding: 10px 12px; font-size: 12px; }
+  .pubs-tab { padding: 10px 12px; font-size: var(--fs-xs); }
 
   /* Hide filter chips on mobile — too many rows of pills eat the screen in the pubs section */
   .pubs-filters { display: none; }
