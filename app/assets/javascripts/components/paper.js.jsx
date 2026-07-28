@@ -139,12 +139,8 @@ function randomString(n) {
 }
 
 // ── FILTER HELPERS ──────────────────────────────────────
-var FILTER_MAP = {
-  "Award-winning": function(p) { return p.awards && p.awards.length > 0; },
-  "Featured": function(p) { return !!p.featured; }
-};
-var MOST_DOWNLOADED_FILTER = "Most downloaded";
-var FEATURED_FILTER = "Featured";
+// SF-13: query (q), tag, sort, and year are independent, composable filters.
+var AWARD_TAG = "Award-winning";
 
 function getTopTags(papers, n) {
   var counts = {};
@@ -158,12 +154,22 @@ function getTopTags(papers, n) {
   return Object.keys(counts).sort(function(a, b) { return counts[b] - counts[a]; }).slice(0, n);
 }
 
-function paperMatchesFilter(paper, activeFilter) {
-  if (!activeFilter) return true;
-  if (activeFilter === MOST_DOWNLOADED_FILTER) return true;
-  if (FILTER_MAP[activeFilter]) return FILTER_MAP[activeFilter](paper);
-  // Tag-based filter (case-insensitive)
-  var needle = activeFilter.toLowerCase();
+function getTagCounts(papers) {
+  var counts = {};
+  papers.forEach(function(p) {
+    if (!p.tags) return;
+    p.tags.split(";").forEach(function(t) {
+      var tag = t.trim();
+      if (tag) counts[tag] = (counts[tag] || 0) + 1;
+    });
+  });
+  return counts;
+}
+
+function paperMatchesTag(paper, tag) {
+  if (!tag) return true;
+  if (tag === AWARD_TAG) return paper.awards && paper.awards.length > 0;
+  var needle = tag.toLowerCase();
   var tags = (paper.tags || "").split(";").map(function(t) { return t.trim().toLowerCase(); });
   return tags.indexOf(needle) >= 0;
 }
@@ -190,14 +196,15 @@ function sortByDownloadsThenRecency(a, b) {
   return b.id - a.id;
 }
 
-function getVisiblePapers(papers, query, activeFilter) {
+function getVisiblePapers(papers, query, tag, sort, year) {
   var base = papers.filter(function(paper) {
-    var matchQ = paperMatchesQuery(paper, query);
-    var matchF = paperMatchesFilter(paper, activeFilter);
-    return matchQ && matchF;
+    return paperMatchesQuery(paper, query) &&
+           paperMatchesTag(paper, tag) &&
+           (!year || paper.year === year);
   });
 
-  if (activeFilter === MOST_DOWNLOADED_FILTER) {
+  // "Most downloaded" keeps its focused top-10 view (composed with any filters)
+  if (sort === 'downloads') {
     return base.slice().sort(sortByDownloadsThenRecency).slice(0, 10);
   }
 
@@ -228,9 +235,11 @@ function paperMatchesQuery(paper, ft) {
 class PaperContainer extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { data: [], visibleCount: 50 };
+    // SF-04: loading renders text-first skeleton cards, never a false empty state
+    this.state = { data: [], visibleCount: 50, loading: true, loadError: false };
     this.loadPapersFromServer = this.loadPapersFromServer.bind(this);
     this.handleShowMore = this.handleShowMore.bind(this);
+    this.handleRetry = this.handleRetry.bind(this);
   }
 
   loadPapersFromServer() {
@@ -240,11 +249,12 @@ class PaperContainer extends React.Component {
       cache: false,
       success: function(data) {
         var reversed = data.reverse();
-        this.setState({ data: reversed });
+        this.setState({ data: reversed, loading: false, loadError: false });
         if (this.props.onTopTags) this.props.onTopTags(getTopTags(reversed, 5));
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
+        this.setState({ loading: false, loadError: true });
       }.bind(this)
     });
   }
@@ -253,20 +263,24 @@ class PaperContainer extends React.Component {
     this.loadPapersFromServer();
   }
 
+  handleRetry() {
+    this.setState({ loading: true, loadError: false }, this.loadPapersFromServer);
+  }
+
   componentDidUpdate(prevProps, prevState) {
-    var filtersKey = (this.props.filters || []).join('|');
-    var prevFiltersKey = (prevProps.filters || []).join('|');
-    var changed = prevProps.query !== this.props.query ||
-                  prevProps.activeFilter !== this.props.activeFilter ||
+    var filtersChanged = prevProps.query !== this.props.query ||
+                         prevProps.activeTag !== this.props.activeTag ||
+                         prevProps.sort !== this.props.sort ||
+                         prevProps.year !== this.props.year;
+    var changed = filtersChanged ||
                   prevState.data !== this.state.data ||
-                  prevState.visibleCount !== this.state.visibleCount ||
-                  filtersKey !== prevFiltersKey;
+                  prevState.visibleCount !== this.state.visibleCount;
     if (changed) this.reportCounts();
     if (prevState.data !== this.state.data) {
       if (this.props.onTopTags) this.props.onTopTags(getTopTags(this.state.data, 5));
       if (this.props.onAllTags) this.props.onAllTags(getTopTags(this.state.data, 1000));
     }
-    if (prevProps.query !== this.props.query || prevProps.activeFilter !== this.props.activeFilter) {
+    if (filtersChanged) {
       this.setState({ visibleCount: 50 });
     }
   }
@@ -274,28 +288,18 @@ class PaperContainer extends React.Component {
   reportCounts() {
     var data = this.state.data;
     var query = (this.props.query || "").toLowerCase().trim();
-    var activeFilter = this.props.activeFilter;
 
-    // Result range reflects the current query/filter.
-    var filteredTotal = getVisiblePapers(data, query, activeFilter).length;
+    // Result range reflects the current query/filters.
+    var filteredTotal = getVisiblePapers(data, query, this.props.activeTag, this.props.sort, this.props.year).length;
     var rendered = Math.min(filteredTotal, this.state.visibleCount);
     if (this.props.onResultCount) this.props.onResultCount({ rendered: rendered, total: filteredTotal });
 
     // Chip counts are category totals (query-independent) so they stay stable while typing.
-    // "Featured" is always computed so the chip/toggle can be shown only when featured papers exist.
     if (this.props.onChipCounts) {
-      var counts = {};
+      var counts = getTagCounts(data);
       counts['All'] = data.length;
-      counts[FEATURED_FILTER] = getVisiblePapers(data, '', FEATURED_FILTER).length;
-      counts['Award-winning'] = getVisiblePapers(data, '', 'Award-winning').length;
-      counts[MOST_DOWNLOADED_FILTER] = getVisiblePapers(data, '', MOST_DOWNLOADED_FILTER).length;
-      var filters = this.props.filters || [];
-      for (var i = 0; i < filters.length; i++) {
-        var f = filters[i];
-        if (!Object.prototype.hasOwnProperty.call(counts, f)) {
-          counts[f] = getVisiblePapers(data, '', f).length;
-        }
-      }
+      counts[AWARD_TAG] = getVisiblePapers(data, '', AWARD_TAG, 'newest', null).length;
+      counts['Most downloaded'] = getVisiblePapers(data, '', null, 'downloads', null).length;
       this.props.onChipCounts(counts);
     }
   }
@@ -312,9 +316,15 @@ class PaperContainer extends React.Component {
         data={this.state.data}
         assets={this.props.assets}
         query={this.props.query || ""}
-        activeFilter={this.props.activeFilter || null}
-        view={this.props.view || 'featured'}
-        onViewChange={this.props.onViewChange}
+        activeTag={this.props.activeTag || null}
+        sort={this.props.sort || 'newest'}
+        year={this.props.year || null}
+        loading={this.state.loading}
+        loadError={this.state.loadError}
+        onRetry={this.handleRetry}
+        onResetFilters={this.props.onResetFilters}
+        onTagToggle={this.props.onTagToggle}
+        onYearChange={this.props.onYearChange}
         visibleCount={this.state.visibleCount}
         onShowMore={this.handleShowMore}
       />
@@ -401,35 +411,30 @@ class PaperList extends React.Component {
     this._observed = node;
   }
 
-  renderToggle(show) {
-    if (!show) return null;
-    var self = this;
-    var view = this.props.view || 'featured';
-    return (
-      <div className="pubs-view-toggle" role="group" aria-label="Publication view">
-        <button
-          type="button"
-          className={'pubs-view-btn' + (view === 'featured' ? ' active' : '')}
-          aria-pressed={view === 'featured'}
-          onClick={function() { if (self.props.onViewChange) self.props.onViewChange('featured'); }}
-        >Featured</button>
-        <button
-          type="button"
-          className={'pubs-view-btn' + (view === 'all' ? ' active' : '')}
-          aria-pressed={view === 'all'}
-          onClick={function() { if (self.props.onViewChange) self.props.onViewChange('all'); }}
-        >All papers</button>
-      </div>
-    );
-  }
-
-  renderSelectedRow(paper) {
+  // SF-12: compact "Selected publications" entry-point card
+  renderSelectedCard(paper) {
     var pdfLink = paper.html_paper_url || ("/papers/" + paper.id + "/serve");
     var hasPDF = paper.pdf || paper.html_paper_url;
-    var best = isBestPaper(paper);
+    var abbrevMatch = (paper.venue || '').match(/\(([^)]+)\)/);
+    var pill = paper.awards && paper.awards.length > 0
+      ? paper.awards[0].body
+      : ((abbrevMatch ? abbrevMatch[1] : paper.venue) + ' ' + paper.year);
+    var count = formatDownloadCount(paper.downloads);
+    var authorNames = (paper.authors || []).map(function(a) { return a.name; }).join(', ');
     return (
-      <div key={'sel-' + paper.id} className="sw-row">
-        <div className="sw-titleline">
+      <div key={'sel-' + paper.id} className="sw-card">
+        {paper.thumbnail && (
+          <div className="sw-thumb">
+            <img src={paper.thumbnail} alt="" loading="lazy" decoding="async" width="64" height="64" />
+          </div>
+        )}
+        <div className="sw-card-body">
+          <div className="sw-card-meta">
+            <span className={'sw-badge' + (paper.awards && paper.awards.length > 0 ? '' : ' sw-badge-venue')}>{pill}</span>
+            {count && (
+              <span className="sw-count" aria-label={parseDownloads(paper.downloads) + ' downloads'}>↓ {count}</span>
+            )}
+          </div>
           <a
             className="sw-title"
             href={hasPDF ? pdfLink : "#"}
@@ -437,24 +442,134 @@ class PaperList extends React.Component {
             rel="noopener noreferrer"
             onClick={hasPDF ? function() { gaSendEvent('Publications', 'PDFDownload', paper.id); } : function(e) { e.preventDefault(); }}
           >{paper.title}</a>
-          {best && <span className="sw-badge">Best Paper</span>}
+          {authorNames && <div className="sw-authors">{authorNames}</div>}
         </div>
-        <div className="sw-venue">{paper.venue} · {paper.year}</div>
-        {paper.summary && (
-          <div className="sw-why"><span className="sw-why-label">Why it matters</span> — {paper.summary}</div>
-        )}
-        {hasPDF && (
-          <a
-            className="sw-pdf"
-            href={pdfLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={"View PDF: " + paper.title + " (opens in new tab)"}
-            onClick={function() { gaSendEvent('Publications', 'PDFDownload', paper.id); }}
-          >
-            View PDF<span className="pub-ext-cue" aria-hidden="true">↗</span>
-            <span className="sr-only">(opens in new tab)</span>
-          </a>
+      </div>
+    );
+  }
+
+  renderSelectedModule(totalCount) {
+    var sel = getFeaturedPapers(this.props.data, 2);
+    if (sel.length === 0) return null;
+    var self = this;
+    return (
+      <div className="selected-work" aria-label="Selected publications">
+        <div className="selected-work-top">
+          <div>
+            <div className="selected-work-head">Selected publications</div>
+            <div className="selected-work-sub">Start here instead of scanning all {totalCount} — award winners and recent highlights.</div>
+          </div>
+          <button
+            type="button"
+            className="selected-work-browse"
+            onClick={function() {
+              var el = document.querySelector('.year-group');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+          >Browse all {totalCount} →</button>
+        </div>
+        <div className="sw-cards">
+          {sel.map(function(paper) { return self.renderSelectedCard(paper); })}
+        </div>
+      </div>
+    );
+  }
+
+  // SF-04: skeleton cards while papers/thumbnails load — text-first, no false empty state
+  renderSkeleton(caption) {
+    return (
+      <div className="pub-skeleton" role="status" aria-live="polite">
+        <div className="pub-skeleton-card" aria-hidden="true">
+          <div className="pub-skeleton-thumb"></div>
+          <div className="pub-skeleton-lines">
+            <div className="pub-skeleton-line w80"></div>
+            <div className="pub-skeleton-line w60"></div>
+            <div className="pub-skeleton-line w40"></div>
+          </div>
+        </div>
+        <div className="pub-skeleton-caption">
+          <span className="pub-skeleton-spinner" aria-hidden="true">⟳</span> {caption}
+        </div>
+      </div>
+    );
+  }
+
+  // SF-08: first-class 0-results state — explain, show constraints, offer recovery
+  renderEmptyState() {
+    var self = this;
+    var query = this.props.query || '';
+    var tag = this.props.activeTag;
+    var year = this.props.year;
+    var constraints = [];
+    if (tag) constraints.push({ label: tag, remove: function() { if (self.props.onTagToggle) self.props.onTagToggle(tag); } });
+    if (year) constraints.push({ label: String(year), remove: function() { if (self.props.onYearChange) self.props.onYearChange(null); } });
+    if (query) constraints.push({ label: '“' + query + '”', remove: function() {
+      window.dispatchEvent(new CustomEvent('setSearchFilter', { detail: { value: '' } }));
+    } });
+
+    var title = constraints.length >= 2 ? 'No papers match both filters' : 'No papers match your search';
+    var names = constraints.map(function(c) { return c.label; });
+    var explanation;
+    if (constraints.length >= 2) {
+      explanation = names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] +
+        ' are both on. Turn one off, or start again from all ' + this.props.data.length + ' papers.';
+    } else if (constraints.length === 1) {
+      explanation = names[0] + ' matches nothing. Start again from all ' + this.props.data.length + ' papers.';
+    } else {
+      explanation = 'Start again from all ' + this.props.data.length + ' papers.';
+    }
+
+    // Fallback: drop the narrowest constraint and surface the closest matches
+    var fallback = [];
+    var fallbackLabel = null;
+    if (constraints.length >= 1) {
+      if (year) {
+        fallback = getVisiblePapers(this.props.data, query.toLowerCase().trim(), tag, 'newest', null);
+        fallbackLabel = tag ? tag.toLowerCase() : null;
+      } else if (query && tag) {
+        fallback = getVisiblePapers(this.props.data, '', tag, 'newest', null);
+        fallbackLabel = tag.toLowerCase();
+      } else if (tag) {
+        fallback = [];
+      } else if (query) {
+        fallback = [];
+      }
+    }
+    var assets = this.props.assets;
+
+    return (
+      <div className="paper-list">
+        <div className="pubs-empty">
+          <svg className="pubs-empty-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+          </svg>
+          <div className="pubs-empty-title">{title}</div>
+          <p className="pubs-empty-body">{explanation}</p>
+          <div className="pubs-empty-actions">
+            <button type="button" className="pubs-empty-clear" onClick={this.props.onResetFilters}>
+              <span aria-hidden="true">↺</span> Clear filters
+            </button>
+            {constraints.map(function(c) {
+              return (
+                <button type="button" key={c.label} className="pubs-empty-remove" onClick={c.remove}>
+                  <span aria-hidden="true">×</span> Remove {c.label} only
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        {fallback.length > 0 && (
+          <div className="pubs-empty-fallback">
+            <div className="pubs-empty-fallback-head">
+              <span>Closest {fallbackLabel ? fallbackLabel + ' ' : ''}papers</span>
+              <span className="pubs-empty-fallback-count">{fallback.length}</span>
+            </div>
+            {fallback.slice(0, 3).map(function(paper) {
+              return <PaperCard key={paper.id} paper={paper} thumbnail={paper.thumbnail || null} assets={assets} />;
+            })}
+          </div>
         )}
       </div>
     );
@@ -465,6 +580,7 @@ class PaperList extends React.Component {
     var pct = total > 0 ? Math.round((renderedCount / total) * 100) : 0;
     return (
       <div className="papers-load-more-wrap">
+        {this.renderSkeleton('Loading thumbnails as you scroll')}
         <div className="papers-progress">
           <div className="papers-progress-text">Showing {renderedCount} of {total} papers</div>
           <div className="papers-progress-bar"><div className="papers-progress-fill" style={{width: pct + '%'}}></div></div>
@@ -479,45 +595,59 @@ class PaperList extends React.Component {
 
   render() {
     var query = (this.props.query || "").toLowerCase().trim();
-    var activeFilter = this.props.activeFilter;
+    var tag = this.props.activeTag;
+    var sort = this.props.sort || 'newest';
+    var yearFilter = this.props.year;
     var assets = this.props.assets;
-    var noThumb = assets && assets["noThumb"];
     var visibleCount = this.props.visibleCount || 50;
-    var view = this.props.view || 'featured';
     var self = this;
 
-    var filtered = getVisiblePapers(this.props.data, query, activeFilter);
-    var total = filtered.length;
-    var renderedCount = Math.min(total, visibleCount);
-    var paged = filtered.slice(0, renderedCount);
-    var hasMore = total > renderedCount;
-
-    var hasFeatured = this.props.data.some(function(p) { return !!p.featured; });
-    var showToggle = hasFeatured && !query && !activeFilter && this.props.data.length > 0;
-    var showFeatured = hasFeatured && view === 'featured' && !query && !activeFilter;
-
-    // Selected work / "Start here" view (progressive summarization)
-    if (showFeatured) {
-      var sel = getFeaturedPapers(this.props.data);
+    // SF-04: initial fetch renders skeletons, and a failed fetch renders a retry
+    // card — never the misleading "No papers match" state.
+    if (this.props.loading) {
       return (
         <div className="paper-list">
-          {this.renderToggle(showToggle)}
-          <div className="selected-work">
-            <div className="selected-work-head">Start here · Selected work</div>
-            {sel.map(function(paper) { return self.renderSelectedRow(paper); })}
+          {this.renderSkeleton('Loading papers…')}
+        </div>
+      );
+    }
+    if (this.props.loadError) {
+      return (
+        <div className="paper-list">
+          <div className="pubs-empty">
+            <div className="pubs-empty-title">Couldn’t load publications</div>
+            <p className="pubs-empty-body">Something went wrong fetching the paper database.</p>
+            <div className="pubs-empty-actions">
+              <button type="button" className="pubs-empty-clear" onClick={this.props.onRetry}>
+                <span aria-hidden="true">↺</span> Retry
+              </button>
+            </div>
           </div>
         </div>
       );
     }
 
+    var filtered = getVisiblePapers(this.props.data, query, tag, sort, yearFilter);
+    var total = filtered.length;
+    var renderedCount = Math.min(total, visibleCount);
+    var paged = filtered.slice(0, renderedCount);
+    var hasMore = total > renderedCount;
+
+    if (total === 0 && this.props.data.length > 0) {
+      return this.renderEmptyState();
+    }
+
+    // SF-12: pristine view opens with the Selected publications module; the full
+    // year-grouped catalog always renders below it.
+    var pristine = !query && !tag && !yearFilter && sort === 'newest';
+
     // "Most downloaded" — flat top-10 list, no year groups
-    if (activeFilter === MOST_DOWNLOADED_FILTER) {
+    if (sort === 'downloads') {
       return (
         <div className="paper-list">
           {paged.map(function(paper) {
-            var thumb = paper.thumbnail || noThumb;
             return (
-              <PaperCard key={paper.id} paper={paper} thumbnail={thumb} assets={assets} />
+              <PaperCard key={paper.id} paper={paper} thumbnail={paper.thumbnail || null} assets={assets} />
             );
           })}
           {this.renderLoadMore(renderedCount, total, hasMore)}
@@ -533,25 +663,14 @@ class PaperList extends React.Component {
     });
     var years = Object.keys(byYear).sort(function(a, b) { return b - a; });
 
-    if (years.length === 0) {
-      return (
-        <div className="paper-list">
-          {this.renderToggle(showToggle)}
-          <div style={{padding: '40px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px'}}>
-            No papers match your search.
-          </div>
-        </div>
-      );
-    }
-
     var allYearsSet = {};
     filtered.forEach(function(p) { allYearsSet[p.year] = true; });
     var allYears = Object.keys(allYearsSet).sort(function(a, b) { return b - a; });
 
     return (
       <div className="paper-list">
+        {pristine && this.renderSelectedModule(this.props.data.length)}
         <div className="pubs-list-controls">
-          {this.renderToggle(showToggle)}
           {this.renderJumpToYear(allYears)}
         </div>
         {years.map(function(year) {
@@ -559,9 +678,8 @@ class PaperList extends React.Component {
             <div key={year} id={'year-' + year} className="year-group">
               <div className="year-label">{year}</div>
               {byYear[year].map(function(paper) {
-                var thumb = paper.thumbnail || noThumb;
                 return (
-                  <PaperCard key={paper.id} paper={paper} thumbnail={thumb} assets={assets} />
+                  <PaperCard key={paper.id} paper={paper} thumbnail={paper.thumbnail || null} assets={assets} />
                 );
               })}
             </div>
@@ -789,20 +907,13 @@ class PaperCard extends React.Component {
           </div>
         )}
         <div className="pub-card-inner">
-          <div className="pub-thumb">
-            {this.props.thumbnail ? (
-              <img src={this.props.thumbnail} alt="" loading="lazy" decoding="async" />
-            ) : (
-              <div className="pub-thumb-placeholder">
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                  <rect x="5" y="4" width="18" height="20" rx="2" stroke="#2a6b3c" strokeWidth="1.5"/>
-                  <line x1="9" y1="10" x2="19" y2="10" stroke="#2a6b3c" strokeWidth="1.2"/>
-                  <line x1="9" y1="14" x2="19" y2="14" stroke="#2a6b3c" strokeWidth="1.2"/>
-                  <line x1="9" y1="18" x2="15" y2="18" stroke="#2a6b3c" strokeWidth="1.2"/>
-                </svg>
-              </div>
-            )}
-          </div>
+          {/* SF-10: no thumbnail block at all when there is no real image;
+              SF-04: lazy + explicit dimensions to avoid layout shift */}
+          {this.props.thumbnail && (
+            <div className="pub-thumb">
+              <img src={this.props.thumbnail} alt="" loading="lazy" decoding="async" width="96" height="96" />
+            </div>
+          )}
 
           <div className="pub-content">
             {allAwards.map(function(award) {
