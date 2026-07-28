@@ -126,11 +126,19 @@
           return path === '/' ? 'about' : path.slice(1);
         }
 
+        function scrollOffset() {
+          var header = document.getElementById('mobileHeader');
+          return 16 + (header ? header.offsetHeight : 0);
+        }
+
         function currentSection() {
+          // Threshold matches scrollToSection's landing offset (plus slack), so a
+          // section navigated to always registers as the active section.
+          var threshold = scrollOffset() + 40;
           var current = sections[0];
           sections.forEach(function(id) {
             var el = document.getElementById(id);
-            if (el && el.getBoundingClientRect().top <= 80) current = id;
+            if (el && el.getBoundingClientRect().top <= threshold) current = id;
           });
           return current;
         }
@@ -151,9 +159,7 @@
         function scrollToSection(id, instant) {
           var el = document.getElementById(id);
           if (!el) return;
-          var header = document.getElementById('mobileHeader');
-          var offset = 16 + (header ? header.offsetHeight : 0);
-          var top = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset) - offset;
+          var top = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset) - scrollOffset();
           window.scrollTo(instant ? { top: Math.max(top, 0), behavior: 'instant' } : { top: Math.max(top, 0), behavior: 'smooth' });
         }
 

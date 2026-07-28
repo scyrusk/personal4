@@ -195,21 +195,22 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   margin-bottom: 22px;
 }
 
+/* SF-14: the one filled primary action in the rail (mockup) */
 .sidebar-email-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  background: white;
-  color: var(--green);
-  border: 1px solid var(--green-mid);
+  background: var(--green);
+  color: #fff;
+  border: 1px solid var(--green);
   font-size: var(--fs-sm);
   font-weight: 600;
   border-radius: var(--radius);
-  padding: 9px 12px;
+  padding: 10px 12px;
   text-decoration: none;
 
-  &:hover { background: #f0f8f2; border-color: var(--green); color: var(--green); text-decoration: none; }
+  &:hover { background: var(--green-dark); border-color: var(--green-dark); color: #fff; text-decoration: none; }
 
   svg { display: block; }
 }
