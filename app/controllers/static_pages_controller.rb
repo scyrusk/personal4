@@ -192,7 +192,7 @@ class StaticPagesController < ApplicationController
         info: "Physically-intuitive security", # SF-03
         alum: true,
         now: "now: JP Morgan Chase",
-        years: "2018-2023"
+        years: "2018–2023"
       },
       {
         name: "Yuxi Wu",
@@ -201,7 +201,7 @@ class StaticPagesController < ApplicationController
         info: "Privacy collective action", # SF-03
         alum: true,
         now: "now: Postdoc at Northeastern",
-        years: "2019-2024"
+        years: "2019–2024"
       },
       {
         name: "Jacob Logas",
@@ -210,7 +210,7 @@ class StaticPagesController < ApplicationController
         info: "Subversive AI",
         alum: true,
         now: "now: Asst. Prof (Franklin & Marshall)",
-        years: "2019-2025"
+        years: "2019–2025"
       },
       {
         name: "Hao-Ping (Hank) Lee",
@@ -219,7 +219,7 @@ class StaticPagesController < ApplicationController
         info: "AI Privacy",
         alum: false,
         now: "CMU Ph.D.",
-        years: "2021-present"
+        years: "2021–present"
       },
       {
         name: "Isadora Krsek",
@@ -228,7 +228,7 @@ class StaticPagesController < ApplicationController
         info: "NLP for privacy / security",
         alum: false,
         now: "CMU Ph.D.",
-        years: "2022-present"
+        years: "2022–present"
       },
       {
         name: "Kyzyl Monteiro",
@@ -237,7 +237,7 @@ class StaticPagesController < ApplicationController
         info: "Intelligent agents for security",
         alum: false,
         now: "CMU Ph.D.",
-        years: "2023-present"
+        years: "2023–present"
       },
       {
         name: "William Agnew",
@@ -246,7 +246,7 @@ class StaticPagesController < ApplicationController
         info: "Community-centered AI",
         alum: false,
         now: "CMU Postdoc",
-        years: "2023-present"
+        years: "2023–present"
       },
       {
         name: "Yuxuan Li",
@@ -255,7 +255,7 @@ class StaticPagesController < ApplicationController
         info: "Social agent simulation & policy",
         alum: false,
         now: "CMU Ph.D.",
-        years: "2024-present"
+        years: "2024–present"
       }
     ]
 

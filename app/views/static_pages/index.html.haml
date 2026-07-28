@@ -1,91 +1,131 @@
-.hero
-  .hero-main
-    %p.hero-pitch I design systems that give people more agency over their personal data and experiences online.
-    .hero-ctas
-      = link_to "Publications", "#publications", class: "btn-sd btn-sd-primary", "data-turbolinks" => "false"
-      = link_to "Recruiting", "#recruiting", class: "btn-sd btn-sd-secondary", "data-turbolinks" => "false"
-      = link_to "CV / Résumé", asset_path("cv.pdf"), class: "btn-sd btn-sd-secondary", target: "_blank", data: { analytics_event: "cv_download" }
-  .hero-avatar
-    = image_tag "sauvik_bio_sphere.png", alt: "Sauvik Das", fetchpriority: "high"
-
+-# #about wraps the hero too, so /about lands at the top of the page content
 .about-section#about
-  .about-text
-    I am an Associate Professor (without indefinite tenure) at
-    =link_to "Carnegie Mellon University's", "https://www.cmu.edu"
-    =link_to "Human-Computer Interaction Institute.", "https://www.hcii.cmu.edu"
-    I am also co-founder and Chief Technology Officer of
-    =link_to "FuguUX,", "https://www.fuguux.com"
-    an early-stage start-up dedicated to improving web usability.
-  .about-text
-    At CMU, I direct the
-    =link_to "SPUD (Security, Privacy, Usability and Design) Lab.", "https://cs.cmu.edu/~spudlab"
-    Our work, at the intersection of HCI, AI and cybersecurity, is oriented around answering:
-    %strong How can we design systems that empower people with improved agency over their personal data and experiences online?
-  .research-directions
-    %p Some key research directions include:
-    .research-dir
-      %b AI Privacy for Practitioners:
-      =link_to "Privy (CHI HM)", "https://www.sauvik.me/papers/69/serve", class: "project-highlight", target: "_blank"
-      =link_to "AI Privacy Taxonomy (CHI BP)", "https://sauvikdas.com/papers/51/serve", class: "project-highlight", target: "_blank"
-      =link_to "Barriers to AI Privacy Work (USENIX SEC DP)", "https://sauvikdas.com/papers/47/serve", class: "project-highlight", target: "_blank"
-      =link_to "Designing for AI Privacy (CSCW HM)", "https://sauvikdas.com/papers/31/serve", class: "project-highlight", target: "_blank"
-    .research-dir
-      %b Human-AI Teaming for Usable S&P:
-      =link_to "AI Privacy Risk Estimates (CHI)", "https://www.sauvik.me/papers/70/serve", class: "project-highlight", target: "_blank"
-      =link_to "Imago Obscura (UIST)", "https://sauvikdas.com/papers/66/serve", class: "project-highlight", target: "_blank"
-      =link_to "Informed Disclosure Decisions (CSCW)", "https://sauvikdas.com/papers/58/serve", class: "project-highlight", target: "_blank"
-    .research-dir
-      %b Evaluating Language Model Privacy:
-      =link_to "Agent Decisions Reveal Bias (FAccT)", "https://www.sauvik.me/papers/64/serve", class: "project-highlight", target: "_blank"
-      =link_to "VLM Geolocation Privacy (EMNLP)", "https://sauvikdas.com/papers/57/serve", class: "project-highlight", target: "_blank"
-      =link_to "VLM Contextual Integrity (ICLR)", "https://sauvikdas.com/papers/71/serve", class: "project-highlight", target: "_blank"
-    .research-dir
-      %b Human-centered Adversarial ML:
-      =link_to "Subversive AI (NeurIPS workshop)", "https://sauvikdas.com/papers/27/serve", class: "project-highlight", target: "_blank"
-      =link_to "Human-acceptability of Anti-Facial Recognition (CSCW)", "https://sauvikdas.com/papers/49/serve", class: "project-highlight", target: "_blank"
-      =link_to "Data Defenses against LLMs (pre-print)", "https://arxiv.org/abs/2410.13138", class: "project-highlight", target: "_blank"
-    .research-dir
-      %b Privacy Collective Action & Governance:
-      =link_to "Orchestrating Distributed Collectives (CHI)", "https://sauvikdas.com/papers/39/serve", class: "project-highlight", target: "_blank"
-      =link_to "Taxonomy of Lived Privacy Harms (FAccT)", "https://sauvikdas.com/papers/42/serve", class: "project-highlight", target: "_blank"
-      =link_to "Privacy for the People (IEEE S&P Mag)", "https://sauvikdas.com/papers/32/serve", class: "project-highlight", target: "_blank"
-    .research-dir
-      %b Physically-intuitive Privacy and Security:
-      =link_to "Smart Webcam Cover (IMWUT)", "https://sauvikdas.com/papers/35/serve", class: "project-highlight", target: "_blank"
-      =link_to "Powering for Privacy (USENIX SEC)", "https://sauvikdas.com/papers/46/serve", class: "project-highlight", target: "_blank"
-      =link_to "On-demand RFID (USEC)", "https://sauvikdas.com/papers/62/serve", class: "project-highlight", target: "_blank"
-    .research-dir
-      %b Social Cybersecurity:
-      =link_to "Social Proof & Security (CCS)", "https://sauvikdas.com/papers/9/serve", class: "project-highlight", target: "_blank"
-      =link_to "SoK: Social Cybersecurity (Oakland)", "https://sauvikdas.com/papers/36/serve", class: "project-highlight", target: "_blank"
-      =link_to "Group Security Decisions (CHI HM)", "https://sauvikdas.com/papers/23/serve", class: "project-highlight", target: "_blank"
-  .about-text
-    %p
-      %a.awards-filter-link#awardsFilterLink{href: "#publications"}
-        A few of my papers have been recognized with awards
-      \: a best paper at UbiComp (2013) and CHI (2024), a distinguished paper at SOUPS (2020) and USENIX Security (2024), five best paper honorable mentions at CHI (2016, 2017, 2020, 2024, 2026), a best paper honorable mention at CSCW (2021), and an honorable mention for the NSA's Best Scientific Cybersecurity Paper (2014). My lab's work has been generously supported by the NSF, Facebook, Georgia Tech, and CMU. My work has also been covered by the popular press, including features on The Atlantic, The Financial Times and Dark Reading.
+  .hero
+    = render "static_pages/section_label", section: "about"
+    -# Mobile-only identity card (desktop identity lives in the left rail)
+    .hero-idcard
+      .hero-avatar
+        = image_tag "sauvik_bio_sphere.png", alt: "Sauvik Das", fetchpriority: "high"
+      .hero-idcard-text
+        %p.hero-eyebrow Associate Professor · CMU HCII
+        %p.hero-tagline Human-centered security, privacy, AI
+    %h1.hero-pitch I design systems that give people more agency over their personal data and experiences online.
+    .hero-ctas
+      %a.btn-sd.btn-sd-primary{href: "/publications", "data-turbolinks" => "false", "data-section-link" => true}
+        %svg{width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+          %line{x1: "5", y1: "12", x2: "19", y2: "12"}
+          %polyline{points: "12 5 19 12 12 19"}
+        Publications
+      %a.btn-sd.btn-sd-secondary{href: "/recruiting", "data-turbolinks" => "false", "data-section-link" => true}
+        %svg{width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+          %path{d: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"}
+          %circle{cx: "9", cy: "7", r: "4"}
+          %path{d: "M23 21v-2a4 4 0 0 0-3-3.87"}
+          %path{d: "M16 3.13a4 4 0 0 1 0 7.75"}
+        Recruiting
+      = link_to asset_path("cv.pdf"), class: "btn-sd btn-sd-secondary", target: "_blank", data: { analytics_event: "cv_download" } do
+        %svg{width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+          %path{d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"}
+          %polyline{points: "14 2 14 8 20 8"}
+        CV / Résumé
+    -# SF-01 (mobile): recruiting status + recovery path directly under the CTAs
+    .hero-recruit
+      - if @recruiting_status.present?
+        %a.hero-recruit-badge{href: "/recruiting", "data-turbolinks" => "false", "data-section-link" => true}= "#{@recruiting_status} · #{@recruiting_cycle}"
+      %a.hero-apply-link{href: "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank", rel: "noopener noreferrer"}
+        Apply to the HCII Ph.D. program →
 
-.recruiting-box#recruiting
-  %p.recruiting-status= "#{@recruiting_status} · #{@recruiting_cycle}"
-  %h2.recruiting-title Prospective Ph.D. Students
-  .recruiting-body
-    %p
-      While I do not plan on accepting any new students at this time, I encourage you to apply to the
-      = link_to "HCII Ph.D. program", "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank"
-      at CMU to work with my fantastic colleagues.
-  .recruiting-ctas
-    = link_to "Apply via HCII", "https://www.hcii.cmu.edu/academics/phd-hci", class: "btn-sd btn-sd-primary", target: "_blank"
-    = link_to "Read advice for applicants", "https://www.youtube.com/watch?v=JqD2arlzXVE", class: "btn-sd btn-sd-secondary", target: "_blank"
+  .about-grid
+    .about-main
+      .about-text
+        I am an Associate Professor (without indefinite tenure) at
+        =link_to "Carnegie Mellon University's", "https://www.cmu.edu"
+        =link_to "Human-Computer Interaction Institute.", "https://www.hcii.cmu.edu"
+        I am also co-founder and Chief Technology Officer of
+        =link_to "FuguUX,", "https://www.fuguux.com"
+        an early-stage start-up dedicated to improving web usability.
+      .about-text
+        At CMU, I direct the
+        =link_to "SPUD (Security, Privacy, Usability and Design) Lab.", "https://cs.cmu.edu/~spudlab"
+        Our work, at the intersection of HCI, AI and cybersecurity, is oriented around answering:
+      %blockquote.about-question
+        How can we design systems that empower people with improved agency over their personal data and experiences online?
+    %aside.recognition-card{"aria-label" => "Recognition"}
+      %span.recognition-label Recognition
+      - @recognition[:awards].each do |row|
+        .recognition-row
+          - case row[:icon]
+          - when "medal"
+            %svg.recognition-icon{width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+              %circle{cx: "12", cy: "8", r: "6"}
+              %path{d: "M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"}
+          - when "trophy"
+            %svg.recognition-icon{width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+              %path{d: "M6 9H4.5a2.5 2.5 0 0 1 0-5H6"}
+              %path{d: "M18 9h1.5a2.5 2.5 0 0 0 0-5H18"}
+              %path{d: "M4 22h16"}
+              %path{d: "M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"}
+              %path{d: "M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"}
+              %path{d: "M18 2H6v7a6 6 0 0 0 12 0V2Z"}
+          - else
+            %svg.recognition-icon{width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+              %polygon{points: "12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"}
+          %span= row[:text]
+      %a.recognition-more#awardsFilterLink{href: "/publications?tag=award-winning", "data-turbolinks" => "false"}
+        See award-winning papers →
+      .recognition-divider
+      %span.recognition-label In the press
+      %p.recognition-press= @recognition[:press]
+
+  -# SF-11: research directions as chunked, scannable theme rows
+  .research-directions#researchDirections
+    .research-directions-head
+      %p.research-directions-title Some key research directions include:
+      %button.research-directions-toggle#directionsToggle{type: "button", "aria-expanded" => "false"}
+        = "+ #{@research_directions.length - 3} more directions"
+        %svg{width: "12", height: "12", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+          %polyline{points: "6 9 12 15 18 9"}
+    - @research_directions.each_with_index do |dir, i|
+      .research-dir{class: (i >= 3 ? "is-collapsed" : nil)}
+        %h3.research-dir-title= dir[:title]
+        .research-dir-links
+          - dir[:links].first(3).each do |l|
+            = link_to l[:label], l[:href], class: "project-highlight", target: "_blank"
+          - if dir[:links].length > 3
+            - dir[:links].drop(3).each do |l|
+              = link_to l[:label], l[:href], class: "project-highlight is-extra", target: "_blank", hidden: true
+            %button.research-dir-more{type: "button", "aria-expanded" => "false"}= "Show #{dir[:links].length - 3} more"
+    .venue-legend
+      %span.venue-legend-label Venue abbreviations
+      %span= @venue_legend
+
+%section#recruiting
+  = render "static_pages/section_label", section: "recruiting"
+  .recruiting-box
+    %p.recruiting-status= "#{@recruiting_status} · #{@recruiting_cycle}"
+    %h2.recruiting-title Prospective Ph.D. Students
+    .recruiting-body
+      %p
+        While I do not plan on accepting any new students at this time, I encourage you to apply to the
+        = link_to "HCII Ph.D. program", "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank"
+        at CMU to work with my fantastic colleagues.
+    .recruiting-ctas
+      = link_to "Apply via HCII", "https://www.hcii.cmu.edu/academics/phd-hci", class: "btn-sd btn-sd-primary", target: "_blank"
+      = link_to "Read advice for applicants", "https://www.youtube.com/watch?v=JqD2arlzXVE", class: "recruiting-advice-link", target: "_blank"
   %p.recruiting-updated= "Last updated #{@recruiting_status_updated_at}"
 
-
-%div#students
+%section#students
+  = render "static_pages/section_label", section: "students"
+  %h2.section-title Students
+  %p.section-subtitle The people who do the work in the SPUD Lab — current and former.
   = react_component('StudentsContainer', currentStudents: @currentStudents, alums: @alums)
 
 -# The publications content lives inside the #publications anchor so section
 -# tracking (journey_tracking.js) counts reading papers as time in the section.
-%div#publications
-  %h2.sr-only Publications
+%section#publications
+  = render "static_pages/section_label", section: "publications"
+  %h2.section-title Publications
+  %p.section-subtitle= "#{@papers_count} papers, #{@papers_year_range}."
   = react_component('TabContainer',
       papersUrl: papers_url(format: :json),
       paperAssets: @paperAssetMap,
@@ -102,14 +142,32 @@
 
 :javascript
   (function() {
+    // Recognition card → award-filtered publications view (in-page when possible)
     var link = document.getElementById('awardsFilterLink');
-    if (!link) return;
-    link.addEventListener('click', function(e) {
+    if (link) link.addEventListener('click', function(e) {
       e.preventDefault();
       document.getElementById('publications').scrollIntoView({ behavior: 'smooth' });
       setTimeout(function() {
         window.dispatchEvent(new CustomEvent('setActiveFilter', { detail: { filter: 'Award-winning' } }));
       }, 300);
+    });
+
+    // SF-11: "+ N more directions" reveals the collapsed themes
+    var toggle = document.getElementById('directionsToggle');
+    if (toggle) toggle.addEventListener('click', function() {
+      var container = document.getElementById('researchDirections');
+      var expanded = container.classList.toggle('is-expanded');
+      toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      toggle.childNodes[0].textContent = expanded ? 'Show fewer directions' : '+ #{@research_directions.length - 3} more directions';
+    });
+
+    // SF-11: per-theme "Show N more" link reveal
+    document.querySelectorAll('.research-dir-more').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var dir = btn.closest('.research-dir');
+        dir.querySelectorAll('.project-highlight.is-extra').forEach(function(a) { a.hidden = false; });
+        btn.remove();
+      });
     });
   })();
 

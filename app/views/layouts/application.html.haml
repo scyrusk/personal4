@@ -117,8 +117,10 @@
         function scrollToSection(id, instant) {
           var el = document.getElementById(id);
           if (!el) return;
-          var top = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset) - 16;
-          window.scrollTo(instant ? { top: top, behavior: 'instant' } : { top: top, behavior: 'smooth' });
+          var header = document.getElementById('mobileHeader');
+          var offset = 16 + (header ? header.offsetHeight : 0);
+          var top = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset) - offset;
+          window.scrollTo(instant ? { top: Math.max(top, 0), behavior: 'instant' } : { top: Math.max(top, 0), behavior: 'smooth' });
         }
 
         // SF-02: same-page section links navigate without a Turbolinks round-trip

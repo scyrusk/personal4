@@ -59,28 +59,31 @@ class StudentsContainer extends React.Component {
     var activeStudent = this.state.activeStudent;
     var handleStudentClick = this.handleStudentClick.bind(this);
 
+    // Row list per redesign mockup: photo · name/topic · years · role chip
     var renderStudent = function(student, i) {
       var isActive = activeStudent === student.name;
       return (
-        <div key={i} className={'student-card' + (isActive ? ' active' : '')}
+        <div key={i} className={'student-row' + (isActive ? ' active' : '')}
           onClick={function(e) { handleStudentClick(student.name, e); }}>
           <div className="student-avatar">
             {student.image ? (
-              <img src={student.image} alt={student.name} loading="lazy" decoding="async" />
+              <img src={student.image} alt={student.name} loading="lazy" decoding="async" width="40" height="40" />
             ) : (
               getInitials(student.name)
             )}
           </div>
-          <div className="student-card-name">
-            {student.link ? (
-              <a href={student.link} onClick={function(e) { e.stopPropagation(); }}>
-                {student.name}
-              </a>
-            ) : student.name}
+          <div className="student-row-main">
+            <div className="student-row-name">
+              {student.link ? (
+                <a href={student.link} onClick={function(e) { e.stopPropagation(); }}>
+                  {student.name}
+                </a>
+              ) : student.name}
+            </div>
+            {student.info && <div className="student-row-topic">{student.info}</div>}
           </div>
-          {student.info && <div className="student-card-topic">{student.info}</div>}
-          {student.years && <div className="student-card-meta">{student.years}</div>}
-          {student.now && <div className="student-card-meta" style={{fontStyle:'italic'}}>{student.now}</div>}
+          {student.years && <div className="student-row-years">{student.years}</div>}
+          {student.now && <span className="student-row-chip">{student.now}</span>}
         </div>
       );
     };
@@ -88,14 +91,14 @@ class StudentsContainer extends React.Component {
     return (
       <div className={'students-section' + (activeStudent ? ' has-active' : '')}>
         <div className="students-section-head">Current Ph.D. Students &amp; Post-Docs</div>
-        <div className="students-grid">
+        <div className="students-list">
           {currentStudents.map(renderStudent)}
         </div>
 
         {alums.length > 0 && (
           <div style={{marginTop: 32}}>
             <div className="students-section-head">Alumni</div>
-            <div className="students-grid">
+            <div className="students-list">
               {alums.map(renderStudent)}
             </div>
           </div>
