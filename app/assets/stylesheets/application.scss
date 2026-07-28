@@ -147,11 +147,21 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   margin-bottom: 20px;
 }
 
+/* SF-14: social row de-emphasized — plain muted glyphs pinned to the rail bottom */
 .sidebar-social {
   display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 24px;
   flex-wrap: wrap;
+
+  .social-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+
+    &:hover { color: var(--green); background: transparent; border: none; }
+  }
 }
 
 .social-btn {
@@ -227,6 +237,18 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   }
 
   &:hover { text-decoration: none; color: var(--amber-text); border-color: var(--amber-text); }
+}
+
+/* SF-01: immediate alternative next step under the "Not recruiting" badge */
+.sidebar-apply-link {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--green);
+  text-decoration: none;
+  line-height: 1.4;
+
+  &:hover { text-decoration: underline; color: var(--green); }
 }
 
 .sidebar-section {

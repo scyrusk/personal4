@@ -2,13 +2,15 @@
 %html
   %head
     %meta{:content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
-    %title Sauvik Das · Human-Centered Security, Privacy & AI
+    - site_title = "Sauvik Das · Human-Centered Security, Privacy & AI"
+    - page_title = (defined?(@page_title) && @page_title.present?) ? @page_title : site_title
+    %title= page_title
     - if defined?(@page_description) && @page_description.present?
       %meta{name: "description", content: @page_description}/
     - if defined?(@canonical_url) && @canonical_url.present?
       %link{rel: "canonical", href: @canonical_url}/
     -# Open Graph
-    %meta{property: "og:title", content: "Sauvik Das · Human-Centered Security, Privacy & AI"}/
+    %meta{property: "og:title", content: page_title}/
     - if defined?(@page_description) && @page_description.present?
       %meta{property: "og:description", content: @page_description}/
     %meta{property: "og:type", content: "profile"}/
@@ -18,7 +20,7 @@
       %meta{property: "og:image", content: @og_image_url}/
     -# Twitter card
     %meta{name: "twitter:card", content: "summary_large_image"}/
-    %meta{name: "twitter:title", content: "Sauvik Das · Human-Centered Security, Privacy & AI"}/
+    %meta{name: "twitter:title", content: page_title}/
     - if defined?(@page_description) && @page_description.present?
       %meta{name: "twitter:description", content: @page_description}/
     - if defined?(@og_image_url) && @og_image_url.present?
@@ -32,7 +34,7 @@
 
     = csrf_meta_tags
     %meta{:content => "width=device-width, initial-scale=1.0", :name => "viewport"}/
-  %body
+  %body{data: { scroll_target: (defined?(@scroll_target) ? @scroll_target : nil) }}
     .mobile-header#mobileHeader
       .mobile-header-row
         %span.mobile-name Sauvik Das
@@ -76,22 +78,77 @@
       · Thanks for stopping by!
     :javascript
       (function() {
+        // Section ids are an analytics invariant (journey_tracking.js, AnalyticsEventsController::SECTIONS)
         var sections = ['about', 'recruiting', 'students', 'publications'];
         var navLinks = {};
         sections.forEach(function(id) {
-          var link = document.querySelector('.sidebar-nav a[href="#' + id + '"]');
-          if (link) navLinks[id] = link;
+          navLinks[id] = document.querySelectorAll('.sidebar-nav a[href="/' + id + '"]');
         });
 
-        function updateActive() {
-          var scrollY = window.scrollY || window.pageYOffset;
+        function isSectionPath(path) {
+          return path === '/' || sections.indexOf(path.slice(1)) !== -1;
+        }
+        function pathSection(path) {
+          return path === '/' ? 'about' : path.slice(1);
+        }
+
+        function currentSection() {
           var current = sections[0];
           sections.forEach(function(id) {
             var el = document.getElementById(id);
             if (el && el.getBoundingClientRect().top <= 80) current = id;
           });
+          return current;
+        }
+
+        function updateActive() {
+          var current = currentSection();
           sections.forEach(function(id) {
-            if (navLinks[id]) navLinks[id].classList.toggle('active', id === current);
+            navLinks[id].forEach(function(link) {
+              link.classList.toggle('active', id === current);
+            });
+          });
+          // SF-02/SF-13: URL mirrors the section in view; keep any publication filter params
+          if (isSectionPath(location.pathname) && pathSection(location.pathname) !== current) {
+            history.replaceState(history.state, '', '/' + current + location.search + location.hash);
+          }
+        }
+
+        function scrollToSection(id, instant) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          var top = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset) - 16;
+          window.scrollTo(instant ? { top: top, behavior: 'instant' } : { top: top, behavior: 'smooth' });
+        }
+
+        // SF-02: same-page section links navigate without a Turbolinks round-trip
+        document.querySelectorAll('a[data-section-link]').forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            var id = link.getAttribute('href').replace(/^\//, '');
+            if (document.getElementById(id)) {
+              e.preventDefault();
+              history.pushState({}, '', '/' + id + location.search);
+              scrollToSection(id, false);
+            }
+          });
+        });
+
+        window.addEventListener('popstate', function() {
+          // Pathname-driven only; TabContainer owns search-param popstate handling
+          if (isSectionPath(location.pathname)) scrollToSection(pathSection(location.pathname), false);
+        });
+
+        // SF-02: /about-style entry URLs land on their section (React sections settle late,
+        // so retry until offsets stabilize unless the visitor has taken over scrolling)
+        var target = document.body.getAttribute('data-scroll-target');
+        if (target && !location.hash) {
+          var userScrolled = false;
+          ['wheel', 'touchstart', 'keydown'].forEach(function(evt) {
+            window.addEventListener(evt, function() { userScrolled = true; }, { passive: true, once: true });
+          });
+          scrollToSection(target, true);
+          [250, 750].forEach(function(delay) {
+            setTimeout(function() { if (!userScrolled) scrollToSection(target, true); }, delay);
           });
         }
 
@@ -111,7 +168,7 @@
         if (toggle) toggle.addEventListener('click', openDrawer);
         if (overlay) overlay.addEventListener('click', closeDrawer);
         if (close) close.addEventListener('click', closeDrawer);
-        if (drawer) drawer.querySelectorAll('a[href^="#"]').forEach(function(a) {
+        if (drawer) drawer.querySelectorAll('a[href^="#"], a[data-section-link]').forEach(function(a) {
           a.addEventListener('click', closeDrawer);
         });
       })();

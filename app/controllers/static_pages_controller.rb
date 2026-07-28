@@ -1,16 +1,100 @@
 class StaticPagesController < ApplicationController
   before_action :authenticate, :except => [:index]
 
+  SECTIONS = %w[about recruiting students publications].freeze
+
   def index
     @recruiting_status_updated_at = "April 2026"
     @recruiting_status = "Not recruiting"
     @recruiting_cycle  = "2026–27 cycle"
 
-    @canonical_url   = root_url
-    @page_description = "Sauvik Das — Associate Professor at Carnegie Mellon's HCI Institute. " \
+    # SF-02: four crawlable entry points into the one continuous page
+    @section = params[:section].presence_in(SECTIONS) || "about"
+    @scroll_target = params[:section].presence_in(SECTIONS)
+    @canonical_url = @scroll_target ? section_url(@scroll_target) : root_url
+
+    section_titles = {
+      "about"        => nil, # root/about keep the site-default title
+      "recruiting"   => "Prospective Ph.D. Students · Sauvik Das",
+      "students"     => "Students · Sauvik Das",
+      "publications" => "Publications · Sauvik Das"
+    }
+    section_descriptions = {
+      "recruiting"   => "Ph.D. recruiting status and next steps for prospective students " \
+        "interested in working with Sauvik Das at Carnegie Mellon's HCI Institute.",
+      "students"     => "Current Ph.D. students, post-docs, and alumni of the SPUD Lab, " \
+        "directed by Sauvik Das at Carnegie Mellon's HCI Institute.",
+      "publications" => "Searchable database of Sauvik Das's publications on human-centered " \
+        "security, privacy, and AI — filter by topic, venue, author, or year."
+    }
+    @page_title = section_titles[@section]
+    @page_description = section_descriptions[@section] ||
+      ("Sauvik Das — Associate Professor at Carnegie Mellon's HCI Institute. " \
       "I design human-centered security, privacy, and AI systems that give people more agency " \
-      "over their personal data and experiences online."
+      "over their personal data and experiences online.")
     @og_image_url = "#{request.base_url}#{ActionController::Base.helpers.asset_path("sauvik_bio_sphere.png")}"
+
+    @papers_count = Paper.count
+    @papers_year_range = "#{Paper.minimum(:year)}–#{Paper.maximum(:year)}"
+
+    # SF-13: shareable filtered views, linked from the footer
+    @publication_views = [
+      { label: "Award-winning",       href: "/publications?tag=award-winning",       meta: "?tag=award-winning" },
+      { label: "Most downloaded",     href: "/publications?sort=downloads",          meta: "?sort=downloads" },
+      { label: "Social Cybersecurity", href: "/publications?tag=social-cybersecurity", meta: "?tag=social-cyber" },
+      { label: "By year",             href: "/#{Paper.maximum(:year)}",              meta: "/#{Paper.maximum(:year)}" }
+    ]
+
+    # SF-11: research directions as structured data (rendered as chunked, scannable theme rows)
+    @research_directions = [
+      { title: "AI Privacy for Practitioners", links: [
+        { label: "Privy (CHI HM)", href: "https://www.sauvik.me/papers/69/serve" },
+        { label: "AI Privacy Taxonomy (CHI BP)", href: "https://sauvikdas.com/papers/51/serve" },
+        { label: "Barriers to AI Privacy Work (USENIX SEC DP)", href: "https://sauvikdas.com/papers/47/serve" },
+        { label: "Designing for AI Privacy (CSCW HM)", href: "https://sauvikdas.com/papers/31/serve" }
+      ] },
+      { title: "Human-AI Teaming for Usable S&P", links: [
+        { label: "AI Privacy Risk Estimates (CHI)", href: "https://www.sauvik.me/papers/70/serve" },
+        { label: "Imago Obscura (UIST)", href: "https://sauvikdas.com/papers/66/serve" },
+        { label: "Informed Disclosure Decisions (CSCW)", href: "https://sauvikdas.com/papers/58/serve" }
+      ] },
+      { title: "Evaluating Language Model Privacy", links: [
+        { label: "Agent Decisions Reveal Bias (FAccT)", href: "https://www.sauvik.me/papers/64/serve" },
+        { label: "VLM Geolocation Privacy (EMNLP)", href: "https://sauvikdas.com/papers/57/serve" },
+        { label: "VLM Contextual Integrity (ICLR)", href: "https://sauvikdas.com/papers/71/serve" }
+      ] },
+      { title: "Human-centered Adversarial ML", links: [
+        { label: "Subversive AI (NeurIPS workshop)", href: "https://sauvikdas.com/papers/27/serve" },
+        { label: "Human-acceptability of Anti-Facial Recognition (CSCW)", href: "https://sauvikdas.com/papers/49/serve" },
+        { label: "Data Defenses against LLMs (pre-print)", href: "https://arxiv.org/abs/2410.13138" }
+      ] },
+      { title: "Privacy Collective Action & Governance", links: [
+        { label: "Orchestrating Distributed Collectives (CHI)", href: "https://sauvikdas.com/papers/39/serve" },
+        { label: "Taxonomy of Lived Privacy Harms (FAccT)", href: "https://sauvikdas.com/papers/42/serve" },
+        { label: "Privacy for the People (IEEE S&P Mag)", href: "https://sauvikdas.com/papers/32/serve" }
+      ] },
+      { title: "Physically-intuitive Privacy and Security", links: [
+        { label: "Smart Webcam Cover (IMWUT)", href: "https://sauvikdas.com/papers/35/serve" },
+        { label: "Powering for Privacy (USENIX SEC)", href: "https://sauvikdas.com/papers/46/serve" },
+        { label: "On-demand RFID (USEC)", href: "https://sauvikdas.com/papers/62/serve" }
+      ] },
+      { title: "Social Cybersecurity", links: [
+        { label: "Social Proof & Security (CCS)", href: "https://sauvikdas.com/papers/9/serve" },
+        { label: "SoK: Social Cybersecurity (Oakland)", href: "https://sauvikdas.com/papers/36/serve" },
+        { label: "Group Security Decisions (CHI HM)", href: "https://sauvikdas.com/papers/23/serve" }
+      ] }
+    ]
+    @venue_legend = "BP = Best Paper · HM = Best Paper Honorable Mention · DP = Distinguished Paper"
+
+    # Recognition card content (mockup: About section, right of bio)
+    @recognition = {
+      awards: [
+        { icon: "medal", text: "Best paper · UbiComp 2013 · CHI 2024" },
+        { icon: "trophy", text: "Distinguished paper · SOUPS 2020 · USENIX Security 2024" },
+        { icon: "star", text: "5 best paper honorable mentions · CHI 2016–2026" }
+      ],
+      press: "The Atlantic · The Financial Times · Dark Reading"
+    }
 
     @updateAssetMap = {
       Update::Type::PAPER.to_s => ActionController::Base.helpers.asset_url("paper_update.png"),
@@ -105,7 +189,7 @@ class StaticPagesController < ApplicationController
         name: "Youngwook Do",
         link: "http://www.youngwookdo.me/",
         image: ActionController::Base.helpers.asset_url("ywd.png"),
-        info: "Phyiscally-intuitive security",
+        info: "Physically-intuitive security", # SF-03
         alum: true,
         now: "now: JP Morgan Chase",
         years: "2018-2023"
@@ -114,7 +198,7 @@ class StaticPagesController < ApplicationController
         name: "Yuxi Wu",
         link: "https://yuxi-wu.github.io/",
         image: ActionController::Base.helpers.asset_url("yw.jpg"),
-        info: "Privacy collectve action",
+        info: "Privacy collective action", # SF-03
         alum: true,
         now: "now: Postdoc at Northeastern",
         years: "2019-2024"

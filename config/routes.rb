@@ -7,6 +7,13 @@ Rails.application.routes.draw do
   match "dktest", to: 'static_pages#dktest', via: :get
   root 'static_pages#index'
 
+  # SF-02: crawlable, indexable section URLs (one continuous page, four entry points)
+  get "/:section", to: "static_pages#index", as: :section,
+      constraints: { section: /about|recruiting|students|publications/ }
+  # SF-13: shareable year views (footer "By year" links)
+  get "/:year", to: redirect("/publications?year=%{year}"),
+      constraints: { year: /20\d{2}/ }
+
   resources :papers do
     member do
       get 'serve'
