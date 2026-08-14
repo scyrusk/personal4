@@ -184,8 +184,9 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 }
 
 .social-btn {
-  width: 34px;
-  height: 34px;
+  /* SF-10: ≥44px touch target (icon stays 16px; the box carries the hit area) */
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: white;
@@ -535,6 +536,21 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   min-height: 32px;
 
   &:hover { color: var(--green-dark); text-decoration: underline; }
+}
+
+.hero-contact-copy {
+  border: 1px solid var(--chip-border);
+  background: var(--bg-card);
+  border-radius: 4px;
+  font-family: var(--sans);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-mid);
+  padding: 4px 10px;
+  min-height: 28px;
+  cursor: pointer;
+
+  &:hover { border-color: var(--green); color: var(--green); }
 }
 
 .hero-contact-sep { color: var(--border); }
@@ -2490,6 +2506,21 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   &:hover { border-color: var(--green); color: var(--green); }
 }
 
+/* SF-31: citation availability cue at the publications entry point */
+.pubs-cite-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--green-dark);
+  background: var(--green-light);
+  border: 1px solid var(--green-mid);
+  border-radius: 999px;
+  padding: 5px 12px;
+  margin: 8px 0 10px;
+}
+
 /* Chip grouping (SF-24) */
 .pubs-filter-groups {
   display: flex;
@@ -2555,6 +2586,40 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   .pub-author-link, .pub-venue-link { padding: 4px 0; }
   .pub-back-close { min-height: 44px; padding: 10px 14px; }
   .pubs-jump-select { min-height: 44px; }
+}
+
+/* SF-05/SF-25: alternatives inside the recruiting box */
+.recruiting-alternatives {
+  margin: 14px 0 16px;
+}
+
+.recruiting-alternatives-label {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber-text);
+  margin-bottom: 6px;
+}
+
+.recruiting-alternatives-list {
+  margin: 0 0 10px;
+  padding-left: 20px;
+  font-size: var(--fs-sm);
+  color: var(--text-mid);
+  line-height: 1.7;
+
+  a { color: var(--green); font-weight: 500; }
+  li + li { margin-top: 4px; }
+}
+
+.recruiting-next-cycle {
+  font-size: var(--fs-sm);
+  color: var(--text-mid);
+  margin: 0;
+
+  a { color: var(--green); font-weight: 500; }
 }
 
 /* SF-04: link-health recovery page */

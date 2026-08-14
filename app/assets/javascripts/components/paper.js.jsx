@@ -907,7 +907,12 @@ function toAsciiBibtex(str) {
     .replace(/\u00df/g, 'ss')
     .replace(/\u00e6/g, 'ae')
     .replace(/\u00f8/g, 'o')
-    .replace(/\u0142/g, 'l');
+    .replace(/\u0142/g, 'l')
+    .replace(/\u0141/g, 'L')
+    .replace(/\u00d8/g, 'O')
+    .replace(/\u00c6/g, 'AE')
+    .replace(/\u0111/g, 'd')
+    .replace(/\u0110/g, 'D');
   // Anything still outside printable ASCII gets dropped rather than shipped raw
   return s.replace(/[^\x20-\x7e\n]/g, '');
 }

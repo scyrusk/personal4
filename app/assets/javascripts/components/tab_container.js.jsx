@@ -508,6 +508,13 @@ class TabContainer extends React.Component {
 
           {activeTab === 'publications' && (
             <div>
+              {/* SF-31: citation formats are advertised at the section entry point */}
+              <div className="pubs-cite-cue">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path d="M3 4.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5z"/>
+                </svg>
+                BibTeX, RIS &amp; APA on every paper
+              </div>
               <div className="pubs-search-row">
                 <label htmlFor="pubs-search-input" className="sr-only">Search publications by title, author, venue, or tag</label>
                 <div className="pubs-search-wrap pubs-search-elevated">
@@ -601,7 +608,9 @@ class TabContainer extends React.Component {
                             aria-haspopup="dialog"
                             onClick={() => this.setState({ moreFiltersOpen: true, sheetTag: tag })}
                           >
-                            <span aria-hidden="true">⚙ </span>More filters <span aria-hidden="true">▾</span>
+                            <span aria-hidden="true">⚙ </span>
+                            {/* SF-24: badge the sheet with its active-filter count */}
+                            More filters{extraTagChip ? ' · 1' : ''} <span aria-hidden="true">▾</span>
                           </button>
                         )}
                         {hasActiveFilters && (

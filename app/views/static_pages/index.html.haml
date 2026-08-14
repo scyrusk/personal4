@@ -37,6 +37,7 @@
           %rect{x: "3", y: "5", width: "18", height: "14", rx: "2"}
           %path{d: "M3 7l9 6 9-6"}
         sauvik@cmu.edu
+      %button.hero-contact-copy#copyEmailBtn{type: "button", "aria-label" => "Copy email address"} Copy
       %span.hero-contact-sep{"aria-hidden" => "true"} |
       %span.hero-contact-affil Carnegie Mellon University · Human-Computer Interaction Institute
     -# SF-01 (mobile): recruiting status + recovery path directly under the CTAs
@@ -138,6 +139,23 @@
         While I do not plan on accepting any new students at this time, I encourage you to apply to the
         = link_to "HCII Ph.D. program", "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank"
         at CMU to work with my fantastic colleagues.
+    -# SF-05/SF-25: "not recruiting" is never a dead end — concrete alternatives + next-cycle timing
+    .recruiting-alternatives
+      %span.recruiting-alternatives-label What you can do instead
+      %ul.recruiting-alternatives-list
+        %li
+          = link_to "Apply to the HCII Ph.D. program", "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank", rel: "noopener noreferrer"
+          — you can work with my fantastic colleagues, and lab collaborations often cross advisors.
+        %li
+          = link_to "Watch my advice for Ph.D. applicants", "https://www.youtube.com/watch?v=JqD2arlzXVE", target: "_blank", rel: "noopener noreferrer"
+          before you write your statement.
+        %li
+          = mail_to "sauvik@cmu.edu", "Email me about collaborations or research questions"
+          — those are always welcome.
+      %p.recruiting-next-cycle
+        My status for the next (2027–28) cycle will be posted here once decided — check back, or watch the
+        = link_to "HCII admissions page", "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank", rel: "noopener noreferrer"
+        for cycle timing.
     .recruiting-ctas
       = link_to "Apply via HCII", "https://www.hcii.cmu.edu/academics/phd-hci", class: "btn-sd btn-sd-primary", target: "_blank", rel: "noopener noreferrer"
       = link_to "Read advice for applicants", "https://www.youtube.com/watch?v=JqD2arlzXVE", class: "recruiting-advice-link", target: "_blank", rel: "noopener noreferrer"
@@ -211,6 +229,18 @@
       var expanded = container.classList.toggle('is-expanded');
       toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
       toggle.childNodes[0].textContent = expanded ? 'Show fewer directions' : '+ #{@research_directions.length - 3} more directions';
+    });
+
+    // SF-30: one-click copy of the plain-text email
+    var copyEmail = document.getElementById('copyEmailBtn');
+    if (copyEmail) copyEmail.addEventListener('click', function() {
+      var done = function() {
+        copyEmail.textContent = '✓ Copied';
+        setTimeout(function() { copyEmail.textContent = 'Copy'; }, 2000);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText('sauvik@cmu.edu').then(done, function() {});
+      }
     });
 
     // SF-11: per-theme "Show N more" link reveal
