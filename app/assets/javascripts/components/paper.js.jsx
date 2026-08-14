@@ -458,7 +458,7 @@ class PaperList extends React.Component {
       <div key={'sel-' + paper.id} className="sw-card">
         {paper.thumbnail && (
           <div className="sw-thumb">
-            <img src={paper.thumbnail} alt="" loading="lazy" decoding="async" width="64" height="64" />
+            <img src={paper.thumbnail} srcSet={paper.thumbnail_srcset || undefined} sizes="64px" alt="" loading="lazy" decoding="async" width="64" height="64" />
           </div>
         )}
         <div className="sw-card-body">
@@ -892,6 +892,30 @@ function buildAPA(paper) {
   return authorStr + ' (' + paper.year + '). ' + paper.title + '. ' + paper.venue + '.';
 }
 
+// SF-22: remembered reader preference — where PDFs open (toolbar control writes it)
+function pdfOpenPref() {
+  try { return window.localStorage.getItem('pdfOpenTarget') === 'sameTab' ? 'sameTab' : 'newTab'; }
+  catch (_) { return 'newTab'; }
+}
+
+// SF-22: singleton in-page toast confirming the click registered and where the
+// PDF is opening; auto-dismisses so it never needs managing.
+function showPdfToast(message) {
+  var t = document.getElementById('pdf-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'pdf-toast';
+    t.className = 'pdf-toast';
+    t.setAttribute('role', 'status');
+    t.setAttribute('aria-live', 'polite');
+    document.body.appendChild(t);
+  }
+  t.textContent = message;
+  t.classList.add('is-visible');
+  if (showPdfToast._timer) clearTimeout(showPdfToast._timer);
+  showPdfToast._timer = setTimeout(function() { t.classList.remove('is-visible'); }, 2500);
+}
+
 // SF-14: BibTeX must compile in any toolchain — transliterate to plain ASCII
 // (smart quotes, dashes, accented characters) instead of emitting raw Unicode.
 function toAsciiBibtex(str) {
@@ -964,17 +988,22 @@ class PaperCard extends React.Component {
       copiedFormat: null,
       flipped: false,
       moreOpen: false,
-      pdfOpening: false
+      pdfOpening: false,
+      pdfError: false
     };
     this.citeWrapRef = React.createRef();
     this.citePanelRef = React.createRef();
     this.moreWrapRef = React.createRef();
+    this.citeBtnRef = React.createRef();
+    this.moreBtnRef = React.createRef();
+    this.moreMenuRef = React.createRef();
     this.handleCiteToggle = this.handleCiteToggle.bind(this);
     this.handleCopyFormat = this.handleCopyFormat.bind(this);
     this.handleDocClick = this.handleDocClick.bind(this);
     this.handleDocKey = this.handleDocKey.bind(this);
     this.handleCardClick = this.handleCardClick.bind(this);
     this.handleMoreToggle = this.handleMoreToggle.bind(this);
+    this.handleMenuKeyDown = this.handleMenuKeyDown.bind(this);
     this.handlePdfClick = this.handlePdfClick.bind(this);
     this.handleDownloadBib = this.handleDownloadBib.bind(this);
   }
@@ -1000,9 +1029,20 @@ class PaperCard extends React.Component {
     }
   }
 
-  // The cite panel closes on Esc (and says so in its header)
+  // SF-08: Esc closes the open cite panel / More menu and restores focus to
+  // the trigger that opened it
   handleDocKey(e) {
-    if (e.key === 'Escape' && this.state.citeOpen) this.setState({ citeOpen: false });
+    if (e.key !== 'Escape') return;
+    if (this.state.citeOpen) {
+      this.setState({ citeOpen: false }, function() {
+        if (this.citeBtnRef.current) this.citeBtnRef.current.focus();
+      }.bind(this));
+    }
+    if (this.state.moreOpen) {
+      this.setState({ moreOpen: false }, function() {
+        if (this.moreBtnRef.current) this.moreBtnRef.current.focus();
+      }.bind(this));
+    }
   }
 
   handleCiteToggle(e, format) {
@@ -1015,12 +1055,49 @@ class PaperCard extends React.Component {
         copiedFormat: null,
         moreOpen: false
       };
-    });
+    }, function() {
+      // Dialog pattern: focus moves into the panel when it opens
+      if (this.state.citeOpen && this.citePanelRef.current) this.citePanelRef.current.focus();
+    }.bind(this));
   }
 
-  // SF-12: the tap acknowledges immediately, even though the PDF opens in a new tab
-  handlePdfClick() {
-    gaSendEvent('Publications', 'PDFDownload', this.props.paper.id);
+  // SF-12: the tap acknowledges immediately; SF-04: hosted PDFs are probed first so
+  // a dead file surfaces an in-card alert with alternates instead of failing silently
+  handlePdfClick(e) {
+    var paper = this.props.paper;
+    gaSendEvent('Publications', 'PDFDownload', paper.id);
+    var href = paper.html_paper_url || ("/papers/" + paper.id + "/serve");
+    var sameTab = pdfOpenPref() === 'sameTab';
+    // SF-22: the in-page toast fires on every View PDF click, before any probe
+    showPdfToast(sameTab ? 'Opening PDF…' : 'Opening PDF in a new tab — it may take a moment');
+    var navigate = function() {
+      if (sameTab) { window.location.assign(href); return; }
+      var win = window.open(href, '_blank', 'noopener');
+      if (!win) window.location.href = href;
+    };
+    if (href.charAt(0) === '/' && typeof fetch === 'function' && e && e.preventDefault) {
+      e.preventDefault();
+      this.setState({ pdfOpening: true, pdfError: false });
+      var self = this;
+      fetch(href, { method: 'HEAD' }).then(function(res) {
+        self.setState({ pdfOpening: false });
+        if (res.ok) navigate();
+        else self.setState({ pdfError: true });
+      }).catch(function() {
+        // Probe itself failed (offline/proxy) — fall back to normal navigation,
+        // where a missing file still lands on the branded recovery page
+        self.setState({ pdfOpening: false });
+        navigate();
+      });
+      return;
+    }
+    // External publisher links can't be probed cross-origin
+    if (sameTab && e && e.preventDefault) {
+      e.preventDefault();
+      this.setState({ pdfOpening: true });
+      navigate();
+      return;
+    }
     this.setState({ pdfOpening: true });
     if (this._pdfTimer) clearTimeout(this._pdfTimer);
     this._pdfTimer = setTimeout(function() {
@@ -1056,7 +1133,31 @@ class PaperCard extends React.Component {
     e.stopPropagation();
     this.setState(function(prev) {
       return { moreOpen: !prev.moreOpen, citeOpen: false };
-    });
+    }, function() {
+      // Menu pattern: focus the first item on open
+      if (this.state.moreOpen && this.moreMenuRef.current) {
+        var first = this.moreMenuRef.current.querySelector('[role="menuitem"]');
+        if (first) first.focus();
+      }
+    }.bind(this));
+  }
+
+  // SF-08: ArrowUp/Down/Home/End move focus among the More menu's items
+  handleMenuKeyDown(e) {
+    var menu = this.moreMenuRef.current;
+    if (!menu) return;
+    var items = Array.prototype.slice.call(menu.querySelectorAll('[role="menuitem"]'));
+    if (!items.length) return;
+    var idx = items.indexOf(document.activeElement);
+    var next = null;
+    if (e.key === 'ArrowDown') next = items[(idx + 1) % items.length];
+    else if (e.key === 'ArrowUp') next = items[(idx - 1 + items.length) % items.length];
+    else if (e.key === 'Home') next = items[0];
+    else if (e.key === 'End') next = items[items.length - 1];
+    if (next) {
+      e.preventDefault();
+      next.focus();
+    }
   }
 
   handleCopyFormat(fmt, e) {
@@ -1093,7 +1194,7 @@ class PaperCard extends React.Component {
 
   renderMoreAction(href, label, iconPath, eventLabel) {
     return (
-      <a className="pub-more-item" href={href} target="_blank" rel="noopener noreferrer" onClick={eventLabel ? function() { gaSendEvent('Publications', eventLabel, this.props.paper.id); }.bind(this) : null}>
+      <a className="pub-more-item" role="menuitem" href={href} target="_blank" rel="noopener noreferrer" onClick={eventLabel ? function() { gaSendEvent('Publications', eventLabel, this.props.paper.id); }.bind(this) : null}>
         <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d={iconPath} /></svg>
         {label}
       </a>
@@ -1109,6 +1210,8 @@ class PaperCard extends React.Component {
     var moreOpen = this.state.moreOpen;
     var citeFormat = this.state.citeFormat;
     var pdfOpening = this.state.pdfOpening;
+    // SF-22: cues adapt to the remembered preference (re-read on every render)
+    var pdfSameTab = pdfOpenPref() === 'sameTab';
     // SF-19: two tags at rest keeps cards scannable; the rest sit behind "+N more"
     var MAX_TAGS = 2;
     var isFlippable = !!paper.summary;
@@ -1160,20 +1263,14 @@ class PaperCard extends React.Component {
         {isFlippable && (
           <div className="pub-flip-cue" aria-hidden="true">↺ takeaway</div>
         )}
-        {formatDownloadCount(paper.downloads) && (
-          <div className="pub-download-count" aria-label={parseDownloads(paper.downloads) + ' downloads'} title={parseDownloads(paper.downloads) + ' downloads'}>
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M8 1a.5.5 0 0 1 .5.5v7.793l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V1.5A.5.5 0 0 1 8 1zM2.5 12a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/>
-            </svg>
-            {formatDownloadCount(paper.downloads)}
-          </div>
-        )}
+        {/* SF-28: the download micro-metric moved into the More menu so the
+            default card view stays title-first; nothing else claims the corner */}
         <div className="pub-card-inner">
           {/* SF-10: no thumbnail block at all when there is no real image;
               SF-04: lazy + explicit dimensions to avoid layout shift */}
           {this.props.thumbnail && (
             <div className="pub-thumb">
-              <img src={this.props.thumbnail} alt="" loading="lazy" decoding="async" width="96" height="96" />
+              <img src={this.props.thumbnail} srcSet={paper.thumbnail_srcset || undefined} sizes="96px" alt="" loading="lazy" decoding="async" width="96" height="96" />
             </div>
           )}
 
@@ -1304,13 +1401,16 @@ class PaperCard extends React.Component {
             )}
 
             <div className="pub-actions">
+              <div aria-live="polite" aria-atomic="true" className="sr-only">
+                {pdfOpening ? (pdfSameTab ? 'Opening PDF' : 'Opening PDF in a new tab') : ''}
+              </div>
               {hasPDF && (
                 <a
                   className={'pub-action-primary' + (pdfOpening ? ' is-opening' : '')}
                   href={pdfLink}
-                  target="_blank"
+                  target={pdfSameTab ? '_self' : '_blank'}
                   rel="noopener noreferrer"
-                  aria-label={"View PDF: " + paper.title + " (opens in new tab)"}
+                  aria-label={"View PDF: " + paper.title + (pdfSameTab ? '' : ' (opens in new tab)')}
                   onClick={this.handlePdfClick}
                 >
                   {pdfOpening ? (
@@ -1321,8 +1421,8 @@ class PaperCard extends React.Component {
                     </svg>
                   )}
                   {pdfOpening ? ' Opening PDF…' : ' View PDF'}
-                  {!pdfOpening && <span className="pub-ext-cue" aria-hidden="true">↗</span>}
-                  <span className="sr-only">(opens in new tab)</span>
+                  {!pdfOpening && !pdfSameTab && <span className="pub-ext-cue" aria-hidden="true">↗</span>}
+                  {!pdfSameTab && <span className="sr-only">(opens in new tab)</span>}
                 </a>
               )}
               {!hasPDF && (
@@ -1356,6 +1456,7 @@ class PaperCard extends React.Component {
 
               <div className="cite-wrapper" ref={this.citeWrapRef}>
                 <button
+                  ref={this.citeBtnRef}
                   type="button"
                   className={'pub-action-secondary' + (citeOpen ? ' cite-active' : '')}
                   onClick={this.handleCiteToggle}
@@ -1373,6 +1474,7 @@ class PaperCard extends React.Component {
                   alternate sources even when a paper has no extra materials */}
               <div className="pub-more-wrap" ref={this.moreWrapRef}>
                 <button
+                  ref={this.moreBtnRef}
                   type="button"
                   className={'pub-action-secondary pub-action-more' + (moreOpen ? ' cite-active' : '')}
                   aria-haspopup="menu"
@@ -1383,7 +1485,16 @@ class PaperCard extends React.Component {
                   More {moreOpen ? '▲' : '▾'}
                 </button>
                 {moreOpen && (
-                  <div className="pub-more-menu" role="menu" aria-label="Additional resources">
+                  <div className="pub-more-menu" role="menu" aria-label="Additional resources" ref={this.moreMenuRef} onKeyDown={this.handleMenuKeyDown}>
+                    {/* SF-28: micro-metric lives here now, out of the skim view */}
+                    {formatDownloadCount(paper.downloads) && (
+                      <div className="pub-more-meta" role="presentation">
+                        <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                          <path d="M8 1a.5.5 0 0 1 .5.5v7.793l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V1.5A.5.5 0 0 1 8 1zM2.5 12a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/>
+                        </svg>
+                        {' '}{parseDownloads(paper.downloads).toLocaleString()} downloads
+                      </div>
+                    )}
                     {this.renderMoreAction(
                       scholarUrl(paper),
                       'Find on Google Scholar',
@@ -1420,14 +1531,22 @@ class PaperCard extends React.Component {
                       'Talk',
                       'M6 1a1 1 0 0 0-1 1v1H2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.5l-1 2h-1a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-1l-1-2H13a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-3V2a1 1 0 0 0-1-1H6zm0 1h4v1H6V2zm-4 2h12v6H2V4z'
                     )}
-                    {/* SF-04: a broken link is recoverable from right here */}
+                    {/* SF-04: a broken link is recoverable and reportable from right here */}
                     <a
                       className="pub-more-item"
                       role="menuitem"
-                      href={"mailto:sauvik@cmu.edu?subject=" + encodeURIComponent('Broken link: ' + paper.title)}
+                      href={"mailto:sauvik@cmu.edu?subject=" + encodeURIComponent('Paper copy request (paper ' + paper.id + '): ' + paper.title)}
                     >
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/></svg>
                       Email me for a copy
+                    </a>
+                    <a
+                      className="pub-more-item"
+                      role="menuitem"
+                      href={"mailto:sauvik@cmu.edu?subject=" + encodeURIComponent('Broken link report (paper ' + paper.id + ')') + "&body=" + encodeURIComponent('Page: ' + (typeof window !== 'undefined' ? window.location.href : '') + '\n\nPaper: ' + paper.title + '\nID: ' + paper.id + '\nProblem: ')}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
+                      Report broken link
                     </a>
                   </div>
                 )}
@@ -1436,13 +1555,35 @@ class PaperCard extends React.Component {
 
             {/* SF-22/SF-04: say what the tap will do, and where recovery lives */}
             <p className="pub-actions-note">
-              {hasPDF ? 'PDF opens in a new tab · ' : ''}if a link is broken, More → alternate sources
+              {hasPDF ? (pdfSameTab ? 'PDF opens in this tab · ' : 'PDF opens in a new tab · ') : ''}if a link is broken, More → alternate sources
             </p>
+
+            {/* SF-04: in-card failure state when the hosted PDF probe comes back dead */}
+            {this.state.pdfError && (
+              <div className="pub-pdf-alert" role="alert">
+                <span className="pub-pdf-alert-msg">
+                  <span aria-hidden="true">⚠ </span>PDF unavailable right now — alternate sources:
+                </span>
+                <div className="pub-pdf-alert-actions">
+                  {paper.doi && (
+                    <a href={"https://doi.org/" + paper.doi} target="_blank" rel="noopener noreferrer">DOI / publisher</a>
+                  )}
+                  <a href={scholarUrl(paper)} target="_blank" rel="noopener noreferrer">Google Scholar</a>
+                  <a href={"mailto:sauvik@cmu.edu?subject=" + encodeURIComponent('Broken link report (paper ' + paper.id + ')') + "&body=" + encodeURIComponent('Paper: ' + paper.title + '\nID: ' + paper.id + '\nProblem: hosted PDF returns an error')}>Report broken link</a>
+                  <button
+                    type="button"
+                    aria-label="Dismiss"
+                    className="pub-pdf-alert-close"
+                    onClick={function(e) { e.stopPropagation(); this.setState({ pdfError: false }); }.bind(this)}
+                  >×</button>
+                </div>
+              </div>
+            )}
 
             {/* SF-07/SF-14/SF-23: inline cite panel — named formats, named copy
                 feedback, ASCII-safe BibTeX, .bib download, Esc to close */}
             {citeOpen && (
-              <div className="cite-panel" role="dialog" aria-label={"Cite " + paper.title} ref={this.citePanelRef}>
+              <div className="cite-panel" role="dialog" aria-label={"Cite " + paper.title} ref={this.citePanelRef} tabIndex={-1}>
                 <div className="cite-panel-head">
                   <span className="cite-panel-title">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -1476,6 +1617,10 @@ class PaperCard extends React.Component {
                   <span aria-hidden="true">✓</span> Showing {citeFormat} — the Copy button below always names the format you will get
                 </div>
                 <pre className="cite-panel-text">{this.getCitationText(citeFormat)}</pre>
+                {/* SF-23: explicit completeness statement — no inferring from the box */}
+                <p className="cite-panel-complete">
+                  <span aria-hidden="true">✓</span> Full entry shown — {this.getCitationText(citeFormat).split('\n').filter(function(l) { return l.trim(); }).length} lines
+                </p>
                 {citeFormat === 'BibTeX' && (
                   <p className="cite-panel-ascii">ASCII-safe output — smart quotes and accents are transliterated so BibTeX compiles in any toolchain.</p>
                 )}
@@ -1486,6 +1631,14 @@ class PaperCard extends React.Component {
                     onClick={function(e) { this.handleCopyFormat(citeFormat, e); }.bind(this)}
                   >
                     {copiedFormat === citeFormat ? '✓ Copied ' + citeFormat : 'Copy ' + citeFormat}
+                  </button>
+                  {/* SF-23: copies the same source-of-truth string that renders the preview */}
+                  <button
+                    type="button"
+                    className="cite-panel-copyfull"
+                    onClick={function(e) { this.handleCopyFormat(citeFormat, e); }.bind(this)}
+                  >
+                    Copy full entry
                   </button>
                   {citeFormat === 'BibTeX' && (
                     <button type="button" className="cite-panel-download" onClick={this.handleDownloadBib}>

@@ -1,0 +1,29 @@
+# SF-04: automated link-integrity — runs on every deploy push, weekly, and on demand.
+# Fails the run (non-zero exit) on any missing hosted PDF, paper without a working
+# primary source, or dead external publisher/project/video/DOI link.
+name: Link check
+
+on:
+  push:
+    branches: [master]
+  schedule:
+    - cron: "0 6 * * 1" # weekly, Mondays 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2.2"
+          bundler-cache: true
+      - name: Prepare database
+        run: bin/rake db:schema:load
+        env:
+          RAILS_ENV: test
+      - name: Check hosted PDFs, CV asset, and external paper links
+        run: bin/rake links:check
+        env:
+          RAILS_ENV: test

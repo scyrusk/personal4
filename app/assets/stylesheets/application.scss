@@ -69,7 +69,18 @@ html { scroll-behavior: smooth; }
 .cite-panel-copy:active,
 .cite-panel-download:active,
 .pub-action-primary:active,
-.pub-action-secondary:active {
+.pub-action-secondary:active,
+.mobile-header-btn:active,
+.mobile-email-btn:active,
+.mobile-bottomnav-link:active,
+.mobile-recruit-apply:active,
+.mobile-drawer a:active,
+.top-utility-apply:active,
+.hero-apply-link:active,
+.recruiting-intent-btn:active,
+.pubs-mini-pager-btn:active,
+.pub-quick-link:active,
+.pub-more-item:active {
   transform: scale(0.98);
   filter: brightness(0.96);
 }
@@ -335,6 +346,29 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 
 @media (min-width: 769px) {
   body.pubs-browsing .page-wrap .sidebar {
+    /* SF-26: a genuinely slim rail — narrower column, condensed identity,
+       quieter surface — so the publications column clearly dominates. */
+    width: 176px;
+    min-width: 176px;
+    padding: 24px 16px 24px 0;
+    background: transparent;
+
+    .sidebar-photo {
+      width: 56px;
+      height: 56px;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-name {
+      font-size: var(--fs-base);
+      margin-bottom: 2px;
+    }
+
+    .sidebar-role {
+      letter-spacing: 0.02em;
+      margin-bottom: 10px;
+    }
+
     .sidebar-tagline,
     .sidebar-section,
     .sidebar-social { display: none; }
@@ -671,7 +705,8 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   a {
     color: var(--green);
     text-decoration: none;
-    border-bottom: 1px solid var(--green-mid);
+    /* SF-13: the resting underline reads clearly, not just on hover */
+    border-bottom: 1px solid rgba(42, 107, 60, 0.65);
 
     &:hover {
       border-bottom-color: var(--green);
@@ -951,14 +986,30 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   gap: 16px;
 }
 
-/* SF-01: advice link rendered as a green text action beside Apply (mockup) */
+/* SF-02: both recruiting CTAs are boxed ≥44px tap targets with instant touch response */
+.recruiting-ctas a { touch-action: manipulation; }
+
 .recruiting-advice-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid var(--green);
+  border-radius: var(--radius);
+  background: #fff;
   font-size: var(--fs-sm);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--green);
   text-decoration: none;
 
-  &:hover { text-decoration: underline; color: var(--green); background: transparent; }
+  &:hover { text-decoration: none; color: var(--green-dark); border-color: var(--green-dark); background: var(--green-light); }
+}
+
+@media (max-width: 768px) {
+  .recruiting-ctas { flex-direction: column; align-items: stretch; gap: 10px; }
+  .recruiting-ctas .btn-sd,
+  .recruiting-ctas .recruiting-advice-link { width: 100%; min-height: 48px; justify-content: center; }
 }
 
 /* ─── BUTTONS ───────────────────────────────────────────── */
@@ -1870,7 +1921,7 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 }
 
 .pub-tag {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm); /* SF-13: ≥14px tag labels */
   padding: 3px 10px;
   border-radius: 12px;
   background: #fff;
@@ -1885,7 +1936,7 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 }
 
 .pub-tag-more {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm); /* SF-13: matches the 14px tag labels */
   color: var(--text-muted);
   cursor: pointer;
   padding: 2px 4px;
@@ -1911,7 +1962,7 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   background: var(--green);
   color: white;
   border-radius: 5px;
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm); /* SF-16: 14px action labels */
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -1932,9 +1983,10 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   padding: 6px 12px;
   background: white;
   color: var(--text-mid);
-  border: 1px solid var(--border);
+  /* SF-16: the outline reads as a control (≥3:1), matching the chip treatment */
+  border: 1px solid var(--chip-border);
   border-radius: 5px;
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm); /* SF-16: secondary actions scan at the same 14px as primary */
   font-weight: 500;
   text-decoration: none;
   cursor: pointer;
@@ -1992,6 +2044,18 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 .pub-more-wrap {
   position: relative;
   display: inline-flex;
+}
+
+/* SF-28: the download metric row inside the More menu */
+.pub-more-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
 }
 
 .pub-more-menu {
@@ -2357,6 +2421,55 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   to { transform: rotate(360deg); }
 }
 
+/* SF-04: in-card PDF-failure alert with alternates */
+.pub-pdf-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--amber-mid);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius);
+  background: var(--amber-light);
+  font-size: var(--fs-sm);
+}
+
+.pub-pdf-alert-msg {
+  color: var(--amber-text);
+  font-weight: 600;
+}
+
+.pub-pdf-alert-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  a {
+    color: var(--green);
+    font-weight: 600;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+
+    &:hover { color: var(--green-dark); }
+  }
+}
+
+.pub-pdf-alert-close {
+  border: none;
+  background: transparent;
+  color: var(--amber-text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  min-height: 32px;
+}
+
 /* Inline cite panel (SF-07/SF-14/SF-23) */
 .cite-panel {
   margin-top: 12px;
@@ -2459,6 +2572,32 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   margin: 8px 0 0;
   font-size: var(--fs-xs);
   color: var(--text-muted);
+}
+
+/* SF-23: explicit completeness statement under the preview */
+.cite-panel-complete {
+  margin: 8px 0 0;
+  font-size: var(--fs-xs);
+  color: var(--green);
+  font-weight: 500;
+}
+
+.cite-panel-copyfull {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--chip-border);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover { border-color: var(--green); color: var(--green); }
 }
 
 .cite-panel-actions {
@@ -2578,10 +2717,11 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
      quick-links row's "Takeaway" link covers the affordance on mobile */
   .pub-flip-cue { display: none; }
 
-  /* SF-10: ≥40px touch targets for the dense in-card actions on mobile */
-  .pubs-mini-pager-btn { width: 40px; height: 40px; }
-  .pub-quick-link { min-height: 40px; padding: 10px; }
-  .pub-tag, .pub-tag-more { min-height: 40px; }
+  /* SF-10: ≥44px touch targets for the dense in-card actions on mobile */
+  .pubs-mini-pager-btn { width: 44px; height: 44px; }
+  .pub-quick-links { column-gap: 8px; }
+  .pub-quick-link { min-width: 44px; min-height: 44px; padding: 12px 10px; display: inline-flex; align-items: center; justify-content: center; }
+  .pub-tag, .pub-tag-more { min-height: 44px; }
   .pub-authors { line-height: 1.9; }
   .pub-author-link, .pub-venue-link { padding: 4px 0; }
   .pub-back-close { min-height: 44px; padding: 10px 14px; }
@@ -2601,6 +2741,33 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   text-transform: uppercase;
   color: var(--amber-text);
   margin-bottom: 6px;
+}
+
+.recruiting-intents {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+
+  .recruiting-alternatives-label { margin-bottom: 0; margin-right: 4px; }
+}
+
+.recruiting-intent-btn {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--amber-mid);
+  border-radius: 20px;
+  background: #fff;
+  font-family: var(--sans);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-mid);
+  cursor: pointer;
+  touch-action: manipulation;
+
+  &:hover { border-color: var(--amber); color: var(--text); }
+  &.active { background: var(--amber-text); border-color: var(--amber-text); color: #fff; font-weight: 600; }
 }
 
 .recruiting-alternatives-list {
@@ -2700,6 +2867,75 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 }
 
 .noscript-paper-meta { color: var(--text-mid); }
+
+/* SF-22: in-page confirmation the PDF click registered */
+.pdf-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translate(-50%, 12px);
+  background: var(--text);
+  color: #fff;
+  font-size: var(--fs-sm);
+  padding: 10px 18px;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 300;
+
+  &.is-visible { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* SF-22: remembered where-PDFs-open preference beside the density toggle */
+.pubs-pdftarget {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+
+  .pubs-density-btn { min-height: 36px; }
+}
+
+.pubs-pdftarget-label {
+  font-size: var(--fs-xs);
+  color: var(--text-mid);
+  margin-right: 2px;
+}
+
+.noscript-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+  font-size: var(--fs-sm);
+
+  input {
+    min-height: 40px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: var(--fs-sm);
+  }
+  button {
+    min-height: 40px;
+    padding: 6px 14px;
+    border: 1px solid var(--green);
+    border-radius: var(--radius);
+    background: var(--green);
+    color: white;
+    cursor: pointer;
+  }
+}
+
+.noscript-filter-summary {
+  margin: 0 0 14px;
+  font-size: var(--fs-sm);
+  color: var(--text-mid);
+  a { color: var(--green); text-decoration: underline; margin-left: 8px; }
+}
 
 .noscript-pagination {
   display: flex;
@@ -3463,11 +3699,6 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 .site-footer-social {
   display: flex;
   gap: 8px;
-
-  .social-btn {
-    width: 40px;
-    height: 40px;
-  }
 }
 
 .site-footer-label {
@@ -3635,18 +3866,32 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
     z-index: 9;
     background: var(--bg);
   }
+  /* SF-20: actions stay on ONE line — primary flexes, Cite/More keep 44px targets */
   .pub-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    column-gap: 8px;
     align-items: stretch;
   }
   .pub-action-primary, .pub-action-secondary {
     width: 100%;
     justify-content: center;
+    white-space: nowrap;
+  }
+  .pub-action-secondary {
+    min-width: 72px;
+    padding-left: 10px;
+    padding-right: 10px;
   }
   .pub-more-wrap, .cite-wrapper {
-    width: 100%;
+    width: auto;
+    display: flex;
   }
   .pub-more-menu, .cite-dropdown {
-    width: 100%;
+    width: max-content;
+    min-width: 210px;
+    left: auto;
+    right: 0;
   }
   .pub-card-face {
     padding-bottom: 36px;

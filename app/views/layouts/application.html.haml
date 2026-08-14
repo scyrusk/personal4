@@ -33,8 +33,15 @@
     %link{rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "anonymous"}/
     %link{rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"}/
     = stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true
-    = javascript_include_tag 'application', 'data-turbolinks-track' => true
-    = javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/mobx/5.15.7/mobx.umd.min.js'
+    -# SF-18: scripts are deferred so the server-rendered hero/filter HTML paints
+    -# before any JS parses or executes; React hydration begins on DOMContentLoaded.
+    = javascript_include_tag 'application', 'data-turbolinks-track' => true, defer: true
+    = javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/mobx/5.15.7/mobx.umd.min.js', defer: true
+
+    -# SF-33: schema.org Person + 69 ScholarlyArticles, served in <head> for crawlers
+    - if defined?(@structured_papers_json_ld) && @structured_papers_json_ld.present?
+      %script{type: "application/ld+json"}
+        = raw(@structured_papers_json_ld)
 
     = csrf_meta_tags
     %meta{:content => "width=device-width, initial-scale=1.0", :name => "viewport"}/

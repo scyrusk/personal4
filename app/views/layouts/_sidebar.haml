@@ -14,7 +14,8 @@
     Email me
   - if defined?(@recruiting_status) && @recruiting_status.present?
     -# Short cycle label (no "cycle") so the badge stays on one line in the rail
-    %a.sidebar-recruit-badge{href: "/recruiting", "data-turbolinks" => "false", "data-section-link" => true}= "#{@recruiting_status} · #{@recruiting_cycle_short}"
+    %a.sidebar-recruit-badge{href: "/recruiting", "data-turbolinks" => "false", "data-section-link" => true,
+      "aria-label" => "Recruiting status: #{@recruiting_status} · #{@recruiting_cycle} — see details and next steps"}= "#{@recruiting_status} · #{@recruiting_cycle_short}"
     -# SF-01: "not recruiting" is never a dead end — immediate alternative next steps
     %a.sidebar-apply-link{href: "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank", rel: "noopener noreferrer"}
       Apply via HCII ↗

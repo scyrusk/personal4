@@ -35,10 +35,17 @@ class TabContainer extends React.Component {
       sheetTag: null,
       copied: false,
       // SF-20: compact scan mode is the mobile default; desktop keeps full cards
-      density: (typeof window !== 'undefined' && window.innerWidth <= 768) ? 'compact' : 'detailed'
+      density: (typeof window !== 'undefined' && window.innerWidth <= 768) ? 'compact' : 'detailed',
+      // SF-22: remembered reader preference for where PDFs open
+      pdfTarget: (function() {
+        try { return window.localStorage.getItem('pdfOpenTarget') === 'sameTab' ? 'sameTab' : 'newTab'; }
+        catch (_) { return 'newTab'; }
+      })()
     };
     this.tabRefs = {};
     this.searchRef = React.createRef();
+    this.moreFiltersBtnRef = React.createRef();
+    this.sheetSearchRef = React.createRef();
     this._keyHandler = null;
     this._pushNextSync = false;
     this._restoringFromUrl = false;
@@ -56,7 +63,10 @@ class TabContainer extends React.Component {
     this.handleAllTags = this.handleAllTags.bind(this);
     this.handleTabKeyDown = this.handleTabKeyDown.bind(this);
     this.handleResetFilters = this.handleResetFilters.bind(this);
+    this.openMoreFilters = this.openMoreFilters.bind(this);
+    this.closeMoreFilters = this.closeMoreFilters.bind(this);
     this.handleCopyLink = this.handleCopyLink.bind(this);
+    this.handlePdfTargetChange = this.handlePdfTargetChange.bind(this);
     this.registerTabRef = this.registerTabRef.bind(this);
     this.emitQueryChanged = this.emitQueryChanged.bind(this);
     this.emitQueryAndSyncState = this.emitQueryAndSyncState.bind(this);
@@ -112,6 +122,11 @@ class TabContainer extends React.Component {
       const active = document.activeElement;
 
       if (e.key === 'Escape') {
+        // SF-08: Esc dismisses the More-filters sheet and returns focus to its trigger
+        if (this.state.moreFiltersOpen) {
+          this.closeMoreFilters();
+          return;
+        }
         if (this.searchRef.current) this.searchRef.current.blur();
         return;
       }
@@ -334,8 +349,13 @@ class TabContainer extends React.Component {
     e.target.value = '';
     var scrollToYear = function() {
       var el = document.getElementById('year-' + year);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      return !!el;
+      if (!el) return false;
+      // SF-27: land the year heading just below the sticky toolbar, not behind it
+      var sticky = document.querySelector('.pubs-sticky-header');
+      var offset = sticky ? sticky.getBoundingClientRect().height + 8 : 0;
+      var top = el.getBoundingClientRect().top + (window.pageYOffset || 0) - offset;
+      window.scrollTo({ top: top, behavior: 'smooth' });
+      return true;
     };
     // Ask the list to render every card first — the target year may be beyond
     // the incremental-render window.
@@ -360,7 +380,27 @@ class TabContainer extends React.Component {
     this.setState({ tag: null, pendingTagSlug: null, query: '', sort: 'newest', year: null, page: 1, activeTab: 'publications' });
   }
 
+  // SF-08: dialog focus management for the More-filters sheet — focus moves in
+  // on open and returns to the trigger on any close path
+  openMoreFilters() {
+    this.setState({ moreFiltersOpen: true, sheetTag: this.state.tag }, function() {
+      if (this.sheetSearchRef.current) this.sheetSearchRef.current.focus();
+    }.bind(this));
+  }
+
+  closeMoreFilters(extraState) {
+    this.setState(Object.assign({ moreFiltersOpen: false, tagQuery: '' }, extraState || {}), function() {
+      if (this.moreFiltersBtnRef.current) this.moreFiltersBtnRef.current.focus();
+    }.bind(this));
+  }
+
   // SF-13: one-click share of the current filtered view
+  // SF-22: the choice persists across visits; cards re-render and read it at click time
+  handlePdfTargetChange(target) {
+    try { window.localStorage.setItem('pdfOpenTarget', target); } catch (_) {}
+    this.setState({ pdfTarget: target });
+  }
+
   handleCopyLink() {
     var self = this;
     var url = window.location.href;
@@ -552,6 +592,22 @@ class TabContainer extends React.Component {
                   onClick={() => this.setState({ density: 'detailed' })}
                 >Detailed</button>
               </div>
+              {/* SF-22: remembered reader preference — PDFs in a new tab or this one */}
+              <div className="pubs-pdftarget" role="group" aria-label="Where PDFs open">
+                <span className="pubs-pdftarget-label">Open PDFs in:</span>
+                <button
+                  type="button"
+                  className={'pubs-density-btn' + (this.state.pdfTarget !== 'sameTab' ? ' active' : '')}
+                  aria-pressed={this.state.pdfTarget !== 'sameTab'}
+                  onClick={() => this.handlePdfTargetChange('newTab')}
+                >New tab</button>
+                <button
+                  type="button"
+                  className={'pubs-density-btn' + (this.state.pdfTarget === 'sameTab' ? ' active' : '')}
+                  aria-pressed={this.state.pdfTarget === 'sameTab'}
+                  onClick={() => this.handlePdfTargetChange('sameTab')}
+                >Same tab</button>
+              </div>
               {/* SF-09: three high-signal chips; every other facet lives in More filters */}
               <div className="pubs-filters-row">
                 {/* SF-24: chips grouped by what they do — preset views vs. topic filters */}
@@ -563,7 +619,8 @@ class TabContainer extends React.Component {
                         aria-pressed={!tag && !year && sort !== 'downloads'}
                         className={'pubs-filter-chip' + (!tag && !year && sort !== 'downloads' ? ' active' : '')}
                         onClick={this.handleResetFilters}
-                      >{labelWithCount('All', 'All')}</button>
+                      >{/* SF-29: the default newest-first state is the "Recent" intent */}
+                      {labelWithCount('All', 'Recent')}</button>
                       <button
                         aria-pressed={tag === AWARD_FILTER}
                         className={'pubs-filter-chip' + (tag === AWARD_FILTER ? ' active' : '')}
@@ -604,9 +661,12 @@ class TabContainer extends React.Component {
                         )}
                         {allTags.length > 0 && (
                           <button
+                            ref={this.moreFiltersBtnRef}
                             className="pubs-filter-chip pubs-more-filters"
                             aria-haspopup="dialog"
-                            onClick={() => this.setState({ moreFiltersOpen: true, sheetTag: tag })}
+                            aria-expanded={moreFiltersOpen}
+                            aria-controls="pubs-filter-sheet"
+                            onClick={this.openMoreFilters}
                           >
                             <span aria-hidden="true">⚙ </span>
                             {/* SF-24: badge the sheet with its active-filter count */}
@@ -679,15 +739,18 @@ class TabContainer extends React.Component {
                 </div>
               </div>
               {moreFiltersOpen && (
-                <div className="tag-sheet-overlay" onClick={() => this.setState({ moreFiltersOpen: false, tagQuery: '' })}>
+                <div className="tag-sheet-overlay" onClick={() => this.closeMoreFilters()}>
                   {/* SF-06: bottom sheet on mobile — big rows, explicit Apply */}
-                  <div className="tag-sheet" role="dialog" aria-label="More filters" onClick={e => e.stopPropagation()}>
+                  <div id="pubs-filter-sheet" className="tag-sheet" role="dialog" aria-label="More filters" onClick={e => e.stopPropagation()}>
                     <div className="tag-sheet-handle" aria-hidden="true"></div>
                     <div className="tag-sheet-head">
                       <span>More filters</span>
-                      <button className="tag-sheet-close" aria-label="Close" onClick={() => this.setState({ moreFiltersOpen: false, tagQuery: '' })}>×</button>
+                      <button className="tag-sheet-close" aria-label="Close More filters" onClick={() => this.closeMoreFilters()}>×</button>
                     </div>
+                    <label htmlFor="tag-sheet-search-input" className="sr-only">Search topics</label>
                     <input
+                      id="tag-sheet-search-input"
+                      ref={this.sheetSearchRef}
                       className="tag-sheet-search"
                       type="text"
                       placeholder="Search topics…"
@@ -713,7 +776,7 @@ class TabContainer extends React.Component {
                       className="tag-sheet-apply"
                       onClick={() => {
                         this._pushNextSync = true;
-                        this.setState({ tag: sheetTag, pendingTagSlug: null, activeTab: 'publications', moreFiltersOpen: false, tagQuery: '' });
+                        this.closeMoreFilters({ tag: sheetTag, pendingTagSlug: null, activeTab: 'publications', page: 1 });
                         var pubsEl = document.getElementById('publications');
                         if (pubsEl) pubsEl.scrollIntoView({ behavior: 'smooth' });
                       }}

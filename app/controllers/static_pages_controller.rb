@@ -38,15 +38,50 @@ class StaticPagesController < ApplicationController
     @papers_count = Paper.count
     @papers_year_range = "#{Paper.minimum(:year)}–#{Paper.maximum(:year)}"
 
-    # SF-01/SF-11: server-rendered fallback list — ?page= works as a plain anchor
-    # even with JavaScript unavailable (the React list reads the same param).
+    # SF-01/SF-11: server-rendered fallback list — the same ?page/?tag/?sort/?q/?year
+    # params the React list reads also filter this plain-HTML list, so every filter
+    # URL degrades to a working server-rendered view without JavaScript.
+    slugify = ->(label) { label.to_s.downcase.gsub(/[^a-z0-9]+/, "-").gsub(/\A-+|-+\z/, "") }
+    noscript_papers = Paper.includes(:awards, :paper_author_links => :author)
+                           .order(year: :desc, id: :desc).to_a
+    @noscript_filters = []
+    if params[:tag].present?
+      if params[:tag] == slugify.call("Award-winning")
+        noscript_papers = noscript_papers.select { |p| p.awards.any? }
+        @noscript_filters << "Award-winning"
+      else
+        label = noscript_papers.flat_map { |p| p.tags.to_s.split(";") }
+                               .find { |t| slugify.call(t) == params[:tag] }
+        noscript_papers = noscript_papers.select do |p|
+          p.tags.to_s.split(";").any? { |t| slugify.call(t) == params[:tag] }
+        end
+        @noscript_filters << (label || params[:tag].tr("-", " "))
+      end
+    end
+    if params[:year].to_i.positive?
+      noscript_papers = noscript_papers.select { |p| p.year == params[:year].to_i }
+      @noscript_filters << params[:year].to_i.to_s
+    end
+    if params[:q].present?
+      q = params[:q].downcase
+      noscript_papers = noscript_papers.select do |p|
+        p.title.to_s.downcase.include?(q) || p.venue.to_s.downcase.include?(q) ||
+          p.authors.any? { |a| a.name.downcase.include?(q) }
+      end
+      @noscript_filters << "“#{params[:q]}”"
+    end
+    if params[:sort] == "downloads"
+      noscript_papers = noscript_papers.sort_by { |p| -(p.downloads || 0) }
+      @noscript_filters << "most downloaded first"
+    end
+    @noscript_filtered_count = noscript_papers.length
+    @noscript_link_params = {
+      tag: params[:tag], sort: params[:sort], q: params[:q], year: params[:year]
+    }.reject { |_k, v| v.blank? }
     @noscript_page_size = 25
-    @noscript_total_pages = [(@papers_count.to_f / @noscript_page_size).ceil, 1].max
+    @noscript_total_pages = [(@noscript_filtered_count.to_f / @noscript_page_size).ceil, 1].max
     @noscript_page = params[:page].to_i.clamp(1, @noscript_total_pages)
-    @noscript_papers = Paper.includes(:awards, :paper_author_links => :author)
-                            .order(year: :desc, id: :desc)
-                            .offset((@noscript_page - 1) * @noscript_page_size)
-                            .limit(@noscript_page_size)
+    @noscript_papers = noscript_papers.slice((@noscript_page - 1) * @noscript_page_size, @noscript_page_size) || []
 
     # SF-13: shareable filtered views, linked from the footer
     @publication_views = [

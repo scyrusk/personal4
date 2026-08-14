@@ -93,10 +93,13 @@ class PapersController < ApplicationController
       render 'papers/recovery', status: :not_found and return
     end
 
-    @paper.downloads = @paper.downloads.present? ? @paper.downloads + 1 : 1
-    @paper.save
+    # HEAD requests are client-side availability probes (SF-04) — don't count them
+    unless request.head?
+      @paper.downloads = @paper.downloads.present? ? @paper.downloads + 1 : 1
+      @paper.save
+    end
 
-    unless session[:authenticated]
+    unless session[:authenticated] || request.head?
       begin
         Analytics::Tracker.track(request, event_name: 'download',
                                  properties: { 'paper_id' => @paper.id, 'title' => @paper.title })
