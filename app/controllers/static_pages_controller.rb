@@ -38,6 +38,16 @@ class StaticPagesController < ApplicationController
     @papers_count = Paper.count
     @papers_year_range = "#{Paper.minimum(:year)}–#{Paper.maximum(:year)}"
 
+    # SF-01/SF-11: server-rendered fallback list — ?page= works as a plain anchor
+    # even with JavaScript unavailable (the React list reads the same param).
+    @noscript_page_size = 25
+    @noscript_total_pages = [(@papers_count.to_f / @noscript_page_size).ceil, 1].max
+    @noscript_page = params[:page].to_i.clamp(1, @noscript_total_pages)
+    @noscript_papers = Paper.includes(:awards, :paper_author_links => :author)
+                            .order(year: :desc, id: :desc)
+                            .offset((@noscript_page - 1) * @noscript_page_size)
+                            .limit(@noscript_page_size)
+
     # SF-13: shareable filtered views, linked from the footer
     @publication_views = [
       { label: "Award-winning",       href: "/publications?tag=award-winning",       meta: "?tag=award-winning" },
@@ -264,12 +274,17 @@ class StaticPagesController < ApplicationController
     @currentStudents = all_students.select { |student| !student[:alum] }
     @alums = all_students.select { |student| student[:alum] }
 
-    @structured_papers = Paper.includes(:paper_author_links => :author).order(year: :desc, id: :desc).limit(60)
+    @structured_papers = Paper.includes(:paper_author_links => :author).order(year: :desc, id: :desc)
 
     person_node = {
       "@type" => "Person",
       "name" => "Sauvik Das",
       "jobTitle" => "Associate Professor",
+      "email" => "mailto:sauvik@cmu.edu",
+      "worksFor" => {
+        "@type" => "Organization",
+        "name" => "Carnegie Mellon University"
+      },
       "affiliation" => {
         "@type" => "Organization",
         "name" => "Carnegie Mellon University, Human-Computer Interaction Institute",

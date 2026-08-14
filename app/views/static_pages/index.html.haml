@@ -9,6 +9,8 @@
       .hero-idcard-text
         %p.hero-eyebrow Associate Professor · CMU HCII
         %p.hero-tagline Human-centered security, privacy, AI
+    -# SF-17: the lab + institution eyebrow anchors who this page belongs to
+    %p.hero-lab-eyebrow Security, Privacy, Usability and Design Lab · Carnegie Mellon HCII
     %h1.hero-pitch I design systems that give people more agency over their personal data and experiences online.
     .hero-ctas
       %a.btn-sd.btn-sd-primary{href: "/publications", "data-turbolinks" => "false", "data-section-link" => true}
@@ -22,12 +24,21 @@
           %circle{cx: "9", cy: "7", r: "4"}
           %path{d: "M23 21v-2a4 4 0 0 0-3-3.87"}
           %path{d: "M16 3.13a4 4 0 0 1 0 7.75"}
-        Recruiting
+        Recruiting status
       = link_to asset_path("cv.pdf"), class: "btn-sd btn-sd-secondary", target: "_blank", data: { analytics_event: "cv_download" } do
         %svg{width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
           %path{d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"}
           %polyline{points: "14 2 14 8 20 8"}
         CV / Résumé
+    -# SF-30/SF-21: crawlable contact details right under the primary CTAs
+    .hero-contact
+      %a.hero-contact-email{href: "mailto:sauvik@cmu.edu"}
+        %svg{width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+          %rect{x: "3", y: "5", width: "18", height: "14", rx: "2"}
+          %path{d: "M3 7l9 6 9-6"}
+        sauvik@cmu.edu
+      %span.hero-contact-sep{"aria-hidden" => "true"} |
+      %span.hero-contact-affil Carnegie Mellon University · Human-Computer Interaction Institute
     -# SF-01 (mobile): recruiting status + recovery path directly under the CTAs
     .hero-recruit
       - if @recruiting_status.present?
@@ -37,6 +48,26 @@
 
   .about-grid
     .about-main
+      -# SF-21: what students and collaborators can expect when they reach out
+      .reach-card{"aria-label" => "How to reach me and what to expect"}
+        %h2.reach-card-title How to reach me — and what to expect
+        .reach-card-row
+          %h3.reach-card-head Email — sauvik@cmu.edu
+          %p.reach-card-body
+            Best channel for research questions, collaborations and press. Include your CV and which
+            research direction below you would like to work on.
+        .reach-card-row
+          %h3.reach-card-head= "Prospective Ph.D. students — #{@recruiting_status.downcase} for #{@recruiting_cycle_short}"
+          %p.reach-card-body
+            While I do not plan on accepting any new students at this time, I encourage you to apply to the
+            = succeed "." do
+              = link_to "HCII Ph.D. program at CMU", "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank", rel: "noopener noreferrer"
+            I read every message from prospective students, though I cannot reply to all of them.
+        .reach-card-row
+          %h3.reach-card-head Lab and start-up — SPUD Lab · FuguUX
+          %p.reach-card-body
+            Our work sits at the intersection of HCI, AI and cybersecurity. FuguUX is an early-stage
+            start-up dedicated to improving web usability.
       .about-text
         I am an Associate Professor (without indefinite tenure) at
         =link_to "Carnegie Mellon University's", "https://www.cmu.edu"
@@ -108,9 +139,11 @@
         = link_to "HCII Ph.D. program", "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank"
         at CMU to work with my fantastic colleagues.
     .recruiting-ctas
-      = link_to "Apply via HCII", "https://www.hcii.cmu.edu/academics/phd-hci", class: "btn-sd btn-sd-primary", target: "_blank"
-      = link_to "Read advice for applicants", "https://www.youtube.com/watch?v=JqD2arlzXVE", class: "recruiting-advice-link", target: "_blank"
-  %p.recruiting-updated= "Last updated #{@recruiting_status_updated_at}"
+      = link_to "Apply via HCII", "https://www.hcii.cmu.edu/academics/phd-hci", class: "btn-sd btn-sd-primary", target: "_blank", rel: "noopener noreferrer"
+      = link_to "Read advice for applicants", "https://www.youtube.com/watch?v=JqD2arlzXVE", class: "recruiting-advice-link", target: "_blank", rel: "noopener noreferrer"
+  %p.recruiting-updated
+    = "Last updated #{@recruiting_status_updated_at} · "
+    I read every message from prospective students, though I cannot reply to all of them.
 
 %section#students
   = render "static_pages/section_label", section: "students", show_name: false
@@ -132,11 +165,32 @@
       courses: @courses,
       currentStudents: @currentStudents,
       alums: @alums)
+-# SF-01/SF-11: full papers list works without JavaScript — plain links, plain pagination
 %noscript
-  .about-text
-    JavaScript is disabled. You can still access papers directly via the
-    = link_to "publications index", papers_path(format: :json)
-    and each PDF link from that list.
+  .noscript-papers
+    .about-text
+      JavaScript is disabled — here is the same publications list as plain links.
+    %ol.noscript-paper-list{start: (@noscript_page - 1) * @noscript_page_size + 1}
+      - @noscript_papers.each do |paper|
+        %li
+          - if paper.pdf.present? || paper.html_paper_url.present?
+            = link_to paper.title, (paper.html_paper_url.presence || "/papers/#{paper.id}/serve"), target: "_blank", rel: "noopener noreferrer"
+          - else
+            %span= paper.title
+          %span.noscript-paper-meta= " · #{paper.venue} · #{paper.year}"
+          - if paper.doi.present?
+            = link_to "DOI", "https://doi.org/#{paper.doi}", target: "_blank", rel: "noopener noreferrer"
+    %nav.noscript-pagination{"aria-label" => "Publications pages (no JavaScript)"}
+      %span= "Page #{@noscript_page} of #{@noscript_total_pages}."
+      - if @noscript_page > 1
+        = link_to "← Previous page", "/publications?page=#{@noscript_page - 1}", "data-turbolinks" => "false"
+      - (1..@noscript_total_pages).each do |p|
+        - if p == @noscript_page
+          %strong= p
+        - else
+          = link_to p, "/publications?page=#{p}", "data-turbolinks" => "false"
+      - if @noscript_page < @noscript_total_pages
+        = link_to "Next page →", "/publications?page=#{@noscript_page + 1}", "data-turbolinks" => "false"
 
 :javascript
   (function() {

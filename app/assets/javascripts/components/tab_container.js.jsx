@@ -9,6 +9,8 @@ function slugifyTag(label) {
 
 var AWARD_FILTER = 'Award-winning';
 
+var PAGE_SIZE = 25;
+
 class TabContainer extends React.Component {
   constructor(props) {
     super(props);
@@ -19,16 +21,21 @@ class TabContainer extends React.Component {
       tag: initialState.tag,
       sort: initialState.sort,
       year: initialState.year,
+      page: initialState.page,
+      showAll: initialState.showAll,
       pendingTagSlug: initialState.pendingTagSlug,
       rendered: null,
       total: null,
+      years: [],
       topTags: [],
       allTags: [],
       chipCounts: {},
       moreFiltersOpen: false,
       tagQuery: '',
       sheetTag: null,
-      copied: false
+      copied: false,
+      // SF-20: compact scan mode is the mobile default; desktop keeps full cards
+      density: (typeof window !== 'undefined' && window.innerWidth <= 768) ? 'compact' : 'detailed'
     };
     this.tabRefs = {};
     this.searchRef = React.createRef();
@@ -39,6 +46,10 @@ class TabContainer extends React.Component {
     this.handleTagToggle = this.handleTagToggle.bind(this);
     this.handleSortToggle = this.handleSortToggle.bind(this);
     this.handleYearChange = this.handleYearChange.bind(this);
+    this.handlePageChange = this.handlePageChange.bind(this);
+    this.handleShowAllToggle = this.handleShowAllToggle.bind(this);
+    this.handleYears = this.handleYears.bind(this);
+    this.handleYearJump = this.handleYearJump.bind(this);
     this.handleResultCount = this.handleResultCount.bind(this);
     this.handleChipCounts = this.handleChipCounts.bind(this);
     this.handleTopTags = this.handleTopTags.bind(this);
@@ -63,6 +74,12 @@ class TabContainer extends React.Component {
       var year = null;
       if (/^20\d\d$/.test(params.get('year') || '')) year = parseInt(params.get('year'), 10);
 
+      // SF-01/SF-15: page + view are URL state, so paged views are shareable and
+      // reachable even without client-side interactivity (?page=2 links work).
+      var page = 1;
+      if (/^\d+$/.test(params.get('page') || '')) page = Math.max(1, parseInt(params.get('page'), 10));
+      var showAll = params.get('view') === 'all';
+
       var tag = null;
       var pendingTagSlug = null;
       var tagSlug = params.get('tag');
@@ -78,9 +95,9 @@ class TabContainer extends React.Component {
       if (legacyFilter === 'Most downloaded') sort = 'downloads';
       else if (legacyFilter) tag = legacyFilter;
 
-      return { activeTab: validTab, query: query, tag: tag, sort: sort, year: year, pendingTagSlug: pendingTagSlug };
+      return { activeTab: validTab, query: query, tag: tag, sort: sort, year: year, page: page, showAll: showAll, pendingTagSlug: pendingTagSlug };
     } catch (_) {
-      return { activeTab: 'publications', query: '', tag: null, sort: 'newest', year: null, pendingTagSlug: null };
+      return { activeTab: 'publications', query: '', tag: null, sort: 'newest', year: null, page: 1, showAll: false, pendingTagSlug: null };
     }
   }
 
@@ -126,7 +143,7 @@ class TabContainer extends React.Component {
     // When an author/tag/venue is clicked inside a paper card, filter by that value
     this._setSearchHandler = (e) => {
       var value = (e.detail && e.detail.value) || "";
-      this.setState({ activeTab: 'publications', query: value }, this.emitQueryAndSyncState);
+      this.setState({ activeTab: 'publications', query: value, page: 1 }, this.emitQueryAndSyncState);
       var pubsEl = document.getElementById('publications');
       if (pubsEl) pubsEl.scrollIntoView({ behavior: 'smooth' });
     };
@@ -137,9 +154,9 @@ class TabContainer extends React.Component {
       var filter = (e.detail && e.detail.filter) || null;
       this._pushNextSync = true;
       if (filter === 'Most downloaded') {
-        this.setState({ activeTab: 'publications', sort: 'downloads' });
+        this.setState({ activeTab: 'publications', sort: 'downloads', page: 1 });
       } else {
-        this.setState({ activeTab: 'publications', tag: filter, pendingTagSlug: null });
+        this.setState({ activeTab: 'publications', tag: filter, pendingTagSlug: null, page: 1 });
       }
     };
     window.addEventListener('setActiveFilter', this._setActiveFilterHandler);
@@ -199,7 +216,9 @@ class TabContainer extends React.Component {
       prevState.query !== this.state.query ||
       prevState.tag !== this.state.tag ||
       prevState.sort !== this.state.sort ||
-      prevState.year !== this.state.year
+      prevState.year !== this.state.year ||
+      prevState.page !== this.state.page ||
+      prevState.showAll !== this.state.showAll
     ) {
       if (!this._restoringFromUrl) {
         this.syncUrlState(this._pushNextSync);
@@ -236,9 +255,12 @@ class TabContainer extends React.Component {
     else params.delete('sort');
     if (this.state.year) params.set('year', String(this.state.year));
     else params.delete('year');
+    if (this.state.showAll) params.set('view', 'all');
+    else params.delete('view');
+    if (this.state.page > 1 && !this.state.showAll) params.set('page', String(this.state.page));
+    else params.delete('page');
     // Legacy params are superseded by the vocabulary above
     params.delete('filter');
-    params.delete('view');
     return params.toString();
   }
 
@@ -262,7 +284,8 @@ class TabContainer extends React.Component {
   }
 
   handleQueryChange(query) {
-    this.setState({ query: query, activeTab: 'publications' });
+    // Any filter change restarts from page 1 so the range readout stays truthful
+    this.setState({ query: query, page: 1, activeTab: 'publications' });
   }
 
   handleTagToggle(tagLabel) {
@@ -270,6 +293,7 @@ class TabContainer extends React.Component {
     this.setState(prev => ({
       activeTab: 'publications',
       tag: prev.tag === tagLabel ? null : tagLabel,
+      page: 1,
       pendingTagSlug: null
     }));
     var pubsEl = document.getElementById('publications');
@@ -278,17 +302,62 @@ class TabContainer extends React.Component {
 
   handleSortToggle(sort) {
     this._pushNextSync = true;
-    this.setState({ sort: sort, activeTab: 'publications' });
+    this.setState({ sort: sort, page: 1, activeTab: 'publications' });
   }
 
   handleYearChange(year) {
     this._pushNextSync = true;
-    this.setState({ year: year, activeTab: 'publications' });
+    this.setState({ year: year, page: 1, activeTab: 'publications' });
+  }
+
+  // SF-01: explicit pagination — deliberate navigation, so push a history entry
+  handlePageChange(page) {
+    this._pushNextSync = true;
+    this.setState({ page: page, activeTab: 'publications' });
+    this.scrollPublicationsToTop();
+  }
+
+  handleShowAllToggle(showAll) {
+    this._pushNextSync = true;
+    this.setState({ showAll: showAll, page: 1, activeTab: 'publications' });
+    if (!showAll) this.scrollPublicationsToTop();
+  }
+
+  handleYears(years) {
+    this.setState({ years: years });
+  }
+
+  // SF-27: jump-to-year — switch to the single-page view, then land on that year
+  handleYearJump(e) {
+    var year = e.target.value;
+    if (!year) return;
+    e.target.value = '';
+    var scrollToYear = function() {
+      var el = document.getElementById('year-' + year);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return !!el;
+    };
+    // Ask the list to render every card first — the target year may be beyond
+    // the incremental-render window.
+    window.dispatchEvent(new CustomEvent('pubsRenderAll'));
+    var retry = function() {
+      if (!scrollToYear()) {
+        [150, 400, 900].forEach(function(d) { window.setTimeout(scrollToYear, d); });
+      }
+    };
+    if (this.state.showAll) {
+      window.requestAnimationFrame(retry);
+    } else {
+      this._pushNextSync = true;
+      this.setState({ showAll: true, page: 1, activeTab: 'publications' }, function() {
+        window.requestAnimationFrame(retry);
+      });
+    }
   }
 
   handleResetFilters() {
     this._pushNextSync = true;
-    this.setState({ tag: null, pendingTagSlug: null, query: '', sort: 'newest', year: null, activeTab: 'publications' });
+    this.setState({ tag: null, pendingTagSlug: null, query: '', sort: 'newest', year: null, page: 1, activeTab: 'publications' });
   }
 
   // SF-13: one-click share of the current filtered view
@@ -331,10 +400,11 @@ class TabContainer extends React.Component {
   }
 
   handleResultCount(info) {
+    var start = info && typeof info === 'object' ? info.start : 1;
     var rendered = info && typeof info === 'object' ? info.rendered : info;
     var total = info && typeof info === 'object' ? info.total : info;
-    if (this.state.rendered !== rendered || this.state.total !== total) {
-      this.setState({ rendered: rendered, total: total });
+    if (this.state.rendered !== rendered || this.state.total !== total || this.state.rangeStart !== start) {
+      this.setState({ rangeStart: start, rendered: rendered, total: total });
     }
   }
 
@@ -361,23 +431,40 @@ class TabContainer extends React.Component {
   }
 
   render() {
-    const { activeTab, query, tag, sort, year, rendered, total, allTags, chipCounts, moreFiltersOpen, tagQuery, sheetTag, copied } = this.state;
+    const { activeTab, query, tag, sort, year, page, showAll, rangeStart, rendered, total, years, topTags, allTags, chipCounts, moreFiltersOpen, tagQuery, sheetTag, copied } = this.state;
     const hasActiveFilters = !!(query || tag || year || sort === 'downloads');
     const labelWithCount = (key, label) => {
       var c = chipCounts[key];
       return (c === null || c === undefined) ? label : label + ' ' + c;
     };
+    // SF-09: the summary always states the real rendered range and total
     var countText = '';
+    var totalPages = 1;
     if (total !== null && total !== undefined) {
-      countText = total === 0 ? 'No papers' : ('Showing 1–' + rendered + ' of ' + total + ' papers');
+      totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      if (total === 0) {
+        countText = 'No papers';
+      } else {
+        var start = rangeStart || 1;
+        var end = start + rendered - 1;
+        countText = 'Showing ' + start + '–' + end + ' of ' + total + ' papers';
+      }
     }
+    // SF-09: name the active constraints (or say there are none) beside the count
+    var filterBits = [];
+    if (tag) filterBits.push(tag);
+    if (year) filterBits.push(String(year));
+    if (query) filterBits.push('“' + query + '”');
+    var sortLabel = sort === 'downloads' ? 'most downloaded first' : 'newest first';
+    var filterSummary = (filterBits.length ? 'Filtered: ' + filterBits.join(' · ') : 'No filters applied') + ' · ' + sortLabel;
     var paramString = this.buildParamString();
     var urlPillText = paramString ? '?' + paramString : '/publications';
     // A non-default tag (from the More-filters sheet) gets its own active chip
     var extraTagChip = tag && tag !== AWARD_FILTER ? tag : null;
 
+    const density = this.state.density;
     return (
-      <div className="pubs-section">
+      <div className={'pubs-section' + (density === 'compact' ? ' pubs-compact' : '')}>
         <div className="pubs-sticky-header">
           <div className="pubs-tabs-row">
             <div className="pubs-tabs" role="tablist" aria-label="Publications panel" onKeyDown={this.handleTabKeyDown}>
@@ -443,49 +530,85 @@ class TabContainer extends React.Component {
                     : <kbd className="pubs-search-kbd" aria-hidden="true">/</kbd>}
                 </div>
               </div>
+              {/* SF-20: compact/detailed scan modes (mobile) */}
+              <div className="pubs-density" role="group" aria-label="List density">
+                <button
+                  type="button"
+                  className={'pubs-density-btn' + (density === 'compact' ? ' active' : '')}
+                  aria-pressed={density === 'compact'}
+                  onClick={() => this.setState({ density: 'compact' })}
+                >Compact</button>
+                <button
+                  type="button"
+                  className={'pubs-density-btn' + (density === 'detailed' ? ' active' : '')}
+                  aria-pressed={density === 'detailed'}
+                  onClick={() => this.setState({ density: 'detailed' })}
+                >Detailed</button>
+              </div>
               {/* SF-09: three high-signal chips; every other facet lives in More filters */}
               <div className="pubs-filters-row">
-                <div className="pubs-filters">
-                  <button
-                    aria-pressed={!tag && !year && sort !== 'downloads'}
-                    className={'pubs-filter-chip' + (!tag && !year && sort !== 'downloads' ? ' active' : '')}
-                    onClick={this.handleResetFilters}
-                  >{labelWithCount('All', 'All')}</button>
-                  <button
-                    aria-pressed={tag === AWARD_FILTER}
-                    className={'pubs-filter-chip' + (tag === AWARD_FILTER ? ' active' : '')}
-                    onClick={() => this.handleTagToggle(AWARD_FILTER)}
-                  >{labelWithCount(AWARD_FILTER, AWARD_FILTER)}</button>
-                  <button
-                    aria-pressed={sort === 'downloads'}
-                    className={'pubs-filter-chip' + (sort === 'downloads' ? ' active' : '')}
-                    onClick={() => this.handleSortToggle(sort === 'downloads' ? 'newest' : 'downloads')}
-                  >{labelWithCount('Most downloaded', 'Most downloaded')}</button>
-                  {extraTagChip && (
-                    <button
-                      aria-pressed="true"
-                      className="pubs-filter-chip active"
-                      onClick={() => this.handleTagToggle(extraTagChip)}
-                    >{labelWithCount(extraTagChip, extraTagChip)}</button>
-                  )}
-                  {year && (
-                    <button
-                      aria-pressed="true"
-                      className="pubs-filter-chip active"
-                      onClick={() => this.handleYearChange(null)}
-                    >{String(year)}</button>
-                  )}
-                  {allTags.length > 0 && (
-                    <button
-                      className="pubs-filter-chip pubs-more-filters"
-                      aria-haspopup="dialog"
-                      onClick={() => this.setState({ moreFiltersOpen: true, sheetTag: tag })}
-                    >
-                      <span aria-hidden="true">⚙ </span>More filters <span aria-hidden="true">▾</span>
-                    </button>
-                  )}
-                  {hasActiveFilters && (
-                    <button className="pubs-clear-all" onClick={this.handleResetFilters}>Clear filters</button>
+                {/* SF-24: chips grouped by what they do — preset views vs. topic filters */}
+                <div className="pubs-filter-groups">
+                  <div className="pubs-filter-group">
+                    <span className="pubs-filter-group-label" id="pubs-group-presets">Preset views</span>
+                    <div className="pubs-filters" role="group" aria-labelledby="pubs-group-presets">
+                      <button
+                        aria-pressed={!tag && !year && sort !== 'downloads'}
+                        className={'pubs-filter-chip' + (!tag && !year && sort !== 'downloads' ? ' active' : '')}
+                        onClick={this.handleResetFilters}
+                      >{labelWithCount('All', 'All')}</button>
+                      <button
+                        aria-pressed={tag === AWARD_FILTER}
+                        className={'pubs-filter-chip' + (tag === AWARD_FILTER ? ' active' : '')}
+                        onClick={() => this.handleTagToggle(AWARD_FILTER)}
+                      >{labelWithCount(AWARD_FILTER, AWARD_FILTER)}</button>
+                      <button
+                        aria-pressed={sort === 'downloads'}
+                        className={'pubs-filter-chip' + (sort === 'downloads' ? ' active' : '')}
+                        onClick={() => this.handleSortToggle(sort === 'downloads' ? 'newest' : 'downloads')}
+                      >{labelWithCount('Most downloaded', 'Most downloaded')}</button>
+                    </div>
+                  </div>
+                  {topTags.length > 0 && (
+                    <div className="pubs-filter-group">
+                      <span className="pubs-filter-group-label" id="pubs-group-topics">Topics &amp; methods</span>
+                      <div className="pubs-filters" role="group" aria-labelledby="pubs-group-topics">
+                        {topTags.map(t => (
+                          <button
+                            key={t}
+                            aria-pressed={tag === t}
+                            className={'pubs-filter-chip' + (tag === t ? ' active' : '')}
+                            onClick={() => this.handleTagToggle(t)}
+                          >{labelWithCount(t, t)}</button>
+                        ))}
+                        {extraTagChip && topTags.indexOf(extraTagChip) < 0 && (
+                          <button
+                            aria-pressed="true"
+                            className="pubs-filter-chip active"
+                            onClick={() => this.handleTagToggle(extraTagChip)}
+                          >{labelWithCount(extraTagChip, extraTagChip)}</button>
+                        )}
+                        {year && (
+                          <button
+                            aria-pressed="true"
+                            className="pubs-filter-chip active"
+                            onClick={() => this.handleYearChange(null)}
+                          >{String(year)}</button>
+                        )}
+                        {allTags.length > 0 && (
+                          <button
+                            className="pubs-filter-chip pubs-more-filters"
+                            aria-haspopup="dialog"
+                            onClick={() => this.setState({ moreFiltersOpen: true, sheetTag: tag })}
+                          >
+                            <span aria-hidden="true">⚙ </span>More filters <span aria-hidden="true">▾</span>
+                          </button>
+                        )}
+                        {hasActiveFilters && (
+                          <button className="pubs-clear-all" onClick={this.handleResetFilters}>Clear filters</button>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
                 {/* SF-13: crawlable address + one-click share of the current view */}
@@ -503,18 +626,48 @@ class TabContainer extends React.Component {
                 </div>
               </div>
               <div className="pubs-results-bar">
-                <span className="pubs-result-count" aria-live="polite">{countText}</span>
-                <label className="pubs-sort">
-                  <span className="sr-only">Sort papers</span>
-                  <select
-                    className="pubs-sort-select"
-                    value={sort}
-                    onChange={e => this.handleSortToggle(e.target.value)}
-                  >
-                    <option value="newest">Newest first</option>
-                    <option value="downloads">Most downloaded</option>
-                  </select>
-                </label>
+                <div className="pubs-results-summary">
+                  <span className="pubs-result-count" aria-live="polite">{countText}</span>
+                  <span className="pubs-result-filters">{filterSummary}</span>
+                </div>
+                <div className="pubs-results-tools">
+                  {/* SF-01: paging affordance mirrored in the sticky results bar */}
+                  {!showAll && totalPages > 1 && (
+                    <div className="pubs-mini-pager" role="group" aria-label="Publications pages">
+                      <button
+                        type="button"
+                        className="pubs-mini-pager-btn"
+                        aria-label="Previous page"
+                        disabled={page <= 1}
+                        onClick={() => this.handlePageChange(page - 1)}
+                      >‹</button>
+                      <span className="pubs-mini-pager-label">Page {Math.min(page, totalPages)} of {totalPages}</span>
+                      <button
+                        type="button"
+                        className="pubs-mini-pager-btn"
+                        aria-label="Next page"
+                        disabled={page >= totalPages}
+                        onClick={() => this.handlePageChange(page + 1)}
+                      >›</button>
+                    </div>
+                  )}
+                  {/* SF-27: jump-to-year promoted to a first-class shortcut */}
+                  {years.length > 1 && (
+                    <label className="pubs-jump-year">
+                      <span className="sr-only">Jump to year</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="18" rx="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                      </svg>
+                      <select id="jump-year" className="pubs-jump-select" defaultValue="" onChange={this.handleYearJump}>
+                        <option value="">Jump to year…</option>
+                        {years.map(function(y) { return <option key={y} value={y}>{y}</option>; })}
+                      </select>
+                    </label>
+                  )}
+                </div>
               </div>
               {moreFiltersOpen && (
                 <div className="tag-sheet-overlay" onClick={() => this.setState({ moreFiltersOpen: false, tagQuery: '' })}>
@@ -576,9 +729,15 @@ class TabContainer extends React.Component {
               activeTag={tag}
               sort={sort}
               year={year}
+              page={page}
+              showAll={showAll}
+              pageSize={PAGE_SIZE}
               onResetFilters={this.handleResetFilters}
               onTagToggle={this.handleTagToggle}
               onYearChange={this.handleYearChange}
+              onPageChange={this.handlePageChange}
+              onShowAllToggle={this.handleShowAllToggle}
+              onYears={this.handleYears}
               onResultCount={this.handleResultCount}
               onChipCounts={this.handleChipCounts}
               onTopTags={this.handleTopTags}

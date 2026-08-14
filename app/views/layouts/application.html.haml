@@ -39,19 +39,43 @@
     = csrf_meta_tags
     %meta{:content => "width=device-width, initial-scale=1.0", :name => "viewport"}/
   %body{data: { scroll_target: (defined?(@scroll_target) ? @scroll_target : nil) }}
+    -# SF-05/SF-21: recruiting status + next step + crawlable email before anything else (desktop)
+    - if defined?(@recruiting_status) && @recruiting_status.present?
+      .top-utility-bar
+        .top-utility-left
+          %a.top-utility-status{href: "/recruiting", "data-turbolinks" => "false", "data-section-link" => true}
+            %span.top-utility-dot{"aria-hidden" => "true"} ●
+            = "#{@recruiting_status} for the #{@recruiting_cycle}"
+          %span.top-utility-sep{"aria-hidden" => "true"} |
+          %a.top-utility-apply{href: "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank", rel: "noopener noreferrer"}
+            Apply to the HCII Ph.D. program ↗
+        %a.top-utility-email{href: "mailto:sauvik@cmu.edu"}
+          %svg{width: "14", height: "14", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+            %rect{x: "3", y: "5", width: "18", height: "14", rx: "2"}
+            %path{d: "M3 7l9 6 9-6"}
+          sauvik@cmu.edu
     .mobile-header#mobileHeader
       .mobile-header-row
         %span.mobile-name Sauvik Das
         .mobile-header-actions
-          %button.mobile-header-btn#mobileSearchBtn{"aria-label" => "Search publications"}
-            %svg{width: "18", height: "18", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", "stroke-width": "1.5", "stroke-linecap": "round"}
-              %circle{cx: "6.5", cy: "6.5", r: "4"}
-              %line{x1: "10", y1: "10", x2: "14", y2: "14"}
-          %button.mobile-header-btn#drawerToggle{"aria-label" => "Open menu"}
+          -# SF-06: Email is the sticky primary action on mobile
+          %a.mobile-email-btn{href: "mailto:sauvik@cmu.edu"}
+            %svg{width: "15", height: "15", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+              %rect{x: "3", y: "5", width: "18", height: "14", rx: "2"}
+              %path{d: "M3 7l9 6 9-6"}
+            Email me
+          %button.mobile-header-btn#drawerToggle{"aria-label" => "Open menu", "aria-expanded" => "false", "aria-controls" => "mobileDrawer"}
             %svg{width: "20", height: "20", viewBox: "0 0 22 22", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round"}
               %line{x1: "3", y1: "6", x2: "19", y2: "6"}
               %line{x1: "3", y1: "11", x2: "19", y2: "11"}
               %line{x1: "3", y1: "16", x2: "19", y2: "16"}
+      -# SF-05: recruiting status + next step ride along under the mobile header
+      - if defined?(@recruiting_status) && @recruiting_status.present?
+        .mobile-recruit-strip
+          %a.mobile-recruit-status{href: "/recruiting", "data-turbolinks" => "false", "data-section-link" => true}
+            %span.top-utility-dot{"aria-hidden" => "true"} ●
+            = "#{@recruiting_status} · #{@recruiting_cycle}"
+          %a.mobile-recruit-apply{href: "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank", rel: "noopener noreferrer"} Apply via HCII ↗
     .page-wrap
       %aside.sidebar
         = render partial: "layouts/sidebar"
@@ -62,6 +86,30 @@
       .mobile-drawer-panel
         %button.mobile-drawer-close#drawerClose ×
         = render partial: "layouts/sidebar"
+    -# SF-03: always-visible fallback navigation — works even if the drawer fails
+    %nav.mobile-bottomnav{"aria-label" => "Primary sections"}
+      %a.mobile-bottomnav-link{href: "/about", "data-turbolinks" => "false", "data-section-link" => true}
+        %svg{width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+          %path{d: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"}
+          %circle{cx: "12", cy: "7", r: "4"}
+        %span About
+      %a.mobile-bottomnav-link{href: "/recruiting", "data-turbolinks" => "false", "data-section-link" => true}
+        %svg{width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+          %circle{cx: "12", cy: "12", r: "9"}
+          %circle{cx: "12", cy: "12", r: "3"}
+        %span Recruiting
+      %a.mobile-bottomnav-link{href: "/students", "data-turbolinks" => "false", "data-section-link" => true}
+        %svg{width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+          %path{d: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"}
+          %circle{cx: "9", cy: "7", r: "4"}
+          %path{d: "M23 21v-2a4 4 0 0 0-3-3.87"}
+          %path{d: "M16 3.13a4 4 0 0 1 0 7.75"}
+        %span Students
+      %a.mobile-bottomnav-link{href: "/publications", "data-turbolinks" => "false", "data-section-link" => true}
+        %svg{width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
+          %path{d: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20"}
+          %path{d: "M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"}
+        %span Publications
     -# SF-14/SF-02/SF-13: full footer — identity, section sitemap, shareable views, links
     %footer.site-footer{role: "contentinfo"}
       .site-footer-inner
@@ -116,7 +164,7 @@
         var sections = ['about', 'recruiting', 'students', 'publications'];
         var navLinks = {};
         sections.forEach(function(id) {
-          navLinks[id] = document.querySelectorAll('.sidebar-nav a[href="/' + id + '"]');
+          navLinks[id] = document.querySelectorAll('.sidebar-nav a[href="/' + id + '"], .mobile-bottomnav a[href="/' + id + '"]');
         });
 
         function isSectionPath(path) {
@@ -130,6 +178,15 @@
           var header = document.getElementById('mobileHeader');
           return 16 + (header ? header.offsetHeight : 0);
         }
+
+        // Publish the real header height so sticky offsets track it (strip may wrap)
+        function publishHeaderHeight() {
+          var header = document.getElementById('mobileHeader');
+          if (header) document.documentElement.style.setProperty('--mobile-header-h', header.offsetHeight + 'px');
+        }
+        publishHeaderHeight();
+        window.addEventListener('resize', publishHeaderHeight);
+        window.addEventListener('load', publishHeaderHeight);
 
         function currentSection() {
           // Threshold matches scrollToSection's landing offset (plus slack), so a
@@ -150,6 +207,8 @@
               link.classList.toggle('active', id === current);
             });
           });
+          // SF-26: the desktop rail collapses while the visitor browses publications
+          document.body.classList.toggle('pubs-browsing', current === 'publications');
           // SF-02/SF-13: URL mirrors the section in view; keep any publication filter params
           if (isSectionPath(location.pathname) && pathSection(location.pathname) !== current) {
             history.replaceState(history.state, '', '/' + current + location.search + location.hash);
@@ -194,6 +253,13 @@
           });
         }
 
+        document.querySelectorAll('.sidebar-backtop').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            history.pushState({}, '', '/about' + location.search);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+        });
+
         updateActive();
         window.addEventListener('scroll', updateActive, { passive: true });
       })();
@@ -204,8 +270,17 @@
         var overlay = document.getElementById('drawerOverlay');
         var close = document.getElementById('drawerClose');
 
-        function openDrawer() { if (drawer) drawer.classList.add('open'); }
-        function closeDrawer() { if (drawer) drawer.classList.remove('open'); }
+        function openDrawer() {
+          if (!drawer) return;
+          drawer.classList.add('open');
+          if (toggle) toggle.setAttribute('aria-expanded', 'true');
+          if (close) close.focus();
+        }
+        function closeDrawer() {
+          if (!drawer) return;
+          drawer.classList.remove('open');
+          if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        }
 
         if (toggle) toggle.addEventListener('click', openDrawer);
         if (overlay) overlay.addEventListener('click', closeDrawer);
@@ -213,15 +288,11 @@
         if (drawer) drawer.querySelectorAll('a[href^="#"], a[data-section-link]').forEach(function(a) {
           a.addEventListener('click', closeDrawer);
         });
-
-        // Mobile header search: land in the publications search box
-        var searchBtn = document.getElementById('mobileSearchBtn');
-        if (searchBtn) searchBtn.addEventListener('click', function() {
-          var pubs = document.getElementById('publications');
-          if (pubs) pubs.scrollIntoView({ behavior: 'smooth' });
-          setTimeout(function() {
-            var input = document.getElementById('pubs-search-input');
-            if (input) input.focus({ preventScroll: true });
-          }, 400);
+        // SF-03: the drawer is keyboard-operable — Esc dismisses it
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && drawer && drawer.classList.contains('open')) {
+            closeDrawer();
+            if (toggle) toggle.focus();
+          }
         });
       })();

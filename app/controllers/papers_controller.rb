@@ -2,6 +2,12 @@ class PapersController < ApplicationController
   before_action :set_paper, only: [:edit, :update, :serve, :destroy]
   before_action :authenticate, :except => [:index, :serve]
 
+  # SF-04: an unknown paper id also lands on the recovery page, not an error
+  rescue_from ActiveRecord::RecordNotFound do
+    @paper = nil
+    render 'papers/recovery', status: :not_found
+  end
+
   def index
     @papers = Paper.all
     respond_to do |format|
@@ -79,6 +85,14 @@ class PapersController < ApplicationController
   end
 
   def serve
+    # SF-04: a missing or unhosted PDF lands on a branded recovery page with
+    # alternate sources — never a bare 404/500.
+    pdf_path = @paper.pdf.present? && @paper.pdf.path.present? ? Rails.root.join('public', @paper.pdf.path) : nil
+    unless pdf_path && File.exist?(pdf_path)
+      Rails.logger.warn("[link-health] missing PDF for paper #{@paper.id} (#{@paper.title})")
+      render 'papers/recovery', status: :not_found and return
+    end
+
     @paper.downloads = @paper.downloads.present? ? @paper.downloads + 1 : 1
     @paper.save
 
@@ -90,8 +104,6 @@ class PapersController < ApplicationController
         Rails.logger.error("[analytics] failed to track download: #{e.class}: #{e.message}")
       end
     end
-
-    pdf_path =  Rails.root.join('public', @paper.pdf.path)
 
     begin
       filename = "#{@paper.self_order == 1 ? "Das" : @paper.authors.first.name.split(" ").last}#{@paper.year}"

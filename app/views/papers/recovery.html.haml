@@ -1,0 +1,39 @@
+-# SF-04: branded recovery page for missing paper resources — alternates + a way back
+- @page_title = "Paper unavailable · Sauvik Das"
+.recovery-page
+  .recovery-card
+    %span.recovery-eyebrow
+      %span.top-utility-dot{"aria-hidden" => "true"} ●
+      Link health · Recovery
+    - if @paper
+      %h1.recovery-title This paper's file isn't available right now
+      %p.recovery-body
+        The hosted copy of
+        %strong= @paper.title
+        - if @paper.venue.present?
+          = "(#{@paper.venue} · #{@paper.year})"
+        couldn't be found. Every alternate source we know about is below — same paper, no dead end.
+      .recovery-actions
+        %a.btn-sd.btn-sd-primary{href: "https://scholar.google.com/scholar?q=#{ERB::Util.url_encode("\"#{@paper.title}\"")}", target: "_blank", rel: "noopener noreferrer"}
+          Find on Google Scholar ↗
+        - if @paper.html_paper_url.present?
+          %a.btn-sd.btn-sd-secondary{href: @paper.html_paper_url, target: "_blank", rel: "noopener noreferrer"}
+            Publisher page ↗
+        - if @paper.respond_to?(:doi) && @paper.doi.present?
+          %a.btn-sd.btn-sd-secondary{href: "https://doi.org/#{@paper.doi}", target: "_blank", rel: "noopener noreferrer"}
+            DOI ↗
+        %a.btn-sd.btn-sd-secondary{href: "mailto:sauvik@cmu.edu?subject=#{ERB::Util.url_encode("Paper copy request: #{@paper.title}")}"}
+          Email me for a copy
+    - else
+      %h1.recovery-title That paper doesn't exist
+      %p.recovery-body
+        The link you followed points at a paper we don't have. The full, searchable list of
+        publications is one click away — or email me and I'll send you what you were after.
+      .recovery-actions
+        %a.btn-sd.btn-sd-secondary{href: "mailto:sauvik@cmu.edu?subject=Paper%20copy%20request"}
+          Email me for a copy
+    %p.recovery-report
+      Report a broken link:
+      %a{href: "mailto:sauvik@cmu.edu?subject=Broken%20link%20report"} sauvik@cmu.edu
+    %a.recovery-back{href: "/publications", "data-turbolinks" => "false"}
+      ← Back to all publications
