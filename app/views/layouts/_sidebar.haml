@@ -33,11 +33,9 @@
 -# SF-26: while the visitor is deep in Publications, the rail collapses to these
 -# two accordions + Back to top (body.pubs-browsing, desktop only)
 .sidebar-collapsed
-  %p.sidebar-collapsed-note Collapsed while browsing publications
   %details.sidebar-acc
     %summary
       %span Sections
-      %span.sidebar-acc-count 4
     %nav.sidebar-nav{"aria-label" => "Section navigation (collapsed)"}
       %a.sidebar-link{href: "/about", "data-turbolinks" => "false", "data-section-link" => true} About
       %a.sidebar-link{href: "/recruiting", "data-turbolinks" => "false", "data-section-link" => true} Recruiting status
@@ -46,7 +44,6 @@
   %details.sidebar-acc
     %summary
       %span Links
-      %span.sidebar-acc-count 4
     = link_to "CV (PDF)", asset_path("cv.pdf"), class: "sidebar-link", data: { analytics_event: "cv_download" }
     = link_to "Academic Blog", "https://sauvik-das.medium.com/", class: "sidebar-link"
     = link_to "FuguUX", "https://www.fuguux.com", class: "sidebar-link", target: "_blank", rel: "noopener noreferrer"

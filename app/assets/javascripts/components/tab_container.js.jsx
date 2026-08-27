@@ -35,12 +35,7 @@ class TabContainer extends React.Component {
       sheetTag: null,
       copied: false,
       // SF-20: compact scan mode is the mobile default; desktop keeps full cards
-      density: (typeof window !== 'undefined' && window.innerWidth <= 768) ? 'compact' : 'detailed',
-      // SF-22: remembered reader preference for where PDFs open
-      pdfTarget: (function() {
-        try { return window.localStorage.getItem('pdfOpenTarget') === 'sameTab' ? 'sameTab' : 'newTab'; }
-        catch (_) { return 'newTab'; }
-      })()
+      density: (typeof window !== 'undefined' && window.innerWidth <= 768) ? 'compact' : 'detailed'
     };
     this.tabRefs = {};
     this.searchRef = React.createRef();
@@ -66,7 +61,6 @@ class TabContainer extends React.Component {
     this.openMoreFilters = this.openMoreFilters.bind(this);
     this.closeMoreFilters = this.closeMoreFilters.bind(this);
     this.handleCopyLink = this.handleCopyLink.bind(this);
-    this.handlePdfTargetChange = this.handlePdfTargetChange.bind(this);
     this.registerTabRef = this.registerTabRef.bind(this);
     this.emitQueryChanged = this.emitQueryChanged.bind(this);
     this.emitQueryAndSyncState = this.emitQueryAndSyncState.bind(this);
@@ -395,12 +389,6 @@ class TabContainer extends React.Component {
   }
 
   // SF-13: one-click share of the current filtered view
-  // SF-22: the choice persists across visits; cards re-render and read it at click time
-  handlePdfTargetChange(target) {
-    try { window.localStorage.setItem('pdfOpenTarget', target); } catch (_) {}
-    this.setState({ pdfTarget: target });
-  }
-
   handleCopyLink() {
     var self = this;
     var url = window.location.href;
@@ -539,22 +527,10 @@ class TabContainer extends React.Component {
                 tabIndex={activeTab === 'teaching' ? 0 : -1}
               >Teaching</button>
             </div>
-            {/* SF-07: disambiguate in-panel tabs from left-rail section navigation */}
-            <p className="pubs-tabs-hint">
-              <span className="pubs-tabs-hint-desktop">These tabs switch this panel only — the left rail moves you between page sections.</span>
-              <span className="pubs-tabs-hint-mobile">Tabs switch this panel. Use the menu to jump between page sections.</span>
-            </p>
           </div>
 
           {activeTab === 'publications' && (
             <div>
-              {/* SF-31: citation formats are advertised at the section entry point */}
-              <div className="pubs-cite-cue">
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                  <path d="M3 4.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5z"/>
-                </svg>
-                BibTeX, RIS &amp; APA on every paper
-              </div>
               <div className="pubs-search-row">
                 <label htmlFor="pubs-search-input" className="sr-only">Search publications by title, author, venue, or tag</label>
                 <div className="pubs-search-wrap pubs-search-elevated">
@@ -592,92 +568,64 @@ class TabContainer extends React.Component {
                   onClick={() => this.setState({ density: 'detailed' })}
                 >Detailed</button>
               </div>
-              {/* SF-22: remembered reader preference — PDFs in a new tab or this one */}
-              <div className="pubs-pdftarget" role="group" aria-label="Where PDFs open">
-                <span className="pubs-pdftarget-label">Open PDFs in:</span>
-                <button
-                  type="button"
-                  className={'pubs-density-btn' + (this.state.pdfTarget !== 'sameTab' ? ' active' : '')}
-                  aria-pressed={this.state.pdfTarget !== 'sameTab'}
-                  onClick={() => this.handlePdfTargetChange('newTab')}
-                >New tab</button>
-                <button
-                  type="button"
-                  className={'pubs-density-btn' + (this.state.pdfTarget === 'sameTab' ? ' active' : '')}
-                  aria-pressed={this.state.pdfTarget === 'sameTab'}
-                  onClick={() => this.handlePdfTargetChange('sameTab')}
-                >Same tab</button>
-              </div>
               {/* SF-09: three high-signal chips; every other facet lives in More filters */}
               <div className="pubs-filters-row">
-                {/* SF-24: chips grouped by what they do — preset views vs. topic filters */}
-                <div className="pubs-filter-groups">
-                  <div className="pubs-filter-group">
-                    <span className="pubs-filter-group-label" id="pubs-group-presets">Preset views</span>
-                    <div className="pubs-filters" role="group" aria-labelledby="pubs-group-presets">
-                      <button
-                        aria-pressed={!tag && !year && sort !== 'downloads'}
-                        className={'pubs-filter-chip' + (!tag && !year && sort !== 'downloads' ? ' active' : '')}
-                        onClick={this.handleResetFilters}
-                      >{/* SF-29: the default newest-first state is the "Recent" intent */}
-                      {labelWithCount('All', 'Recent')}</button>
-                      <button
-                        aria-pressed={tag === AWARD_FILTER}
-                        className={'pubs-filter-chip' + (tag === AWARD_FILTER ? ' active' : '')}
-                        onClick={() => this.handleTagToggle(AWARD_FILTER)}
-                      >{labelWithCount(AWARD_FILTER, AWARD_FILTER)}</button>
-                      <button
-                        aria-pressed={sort === 'downloads'}
-                        className={'pubs-filter-chip' + (sort === 'downloads' ? ' active' : '')}
-                        onClick={() => this.handleSortToggle(sort === 'downloads' ? 'newest' : 'downloads')}
-                      >{labelWithCount('Most downloaded', 'Most downloaded')}</button>
-                    </div>
-                  </div>
-                  {topTags.length > 0 && (
-                    <div className="pubs-filter-group">
-                      <span className="pubs-filter-group-label" id="pubs-group-topics">Topics &amp; methods</span>
-                      <div className="pubs-filters" role="group" aria-labelledby="pubs-group-topics">
-                        {topTags.map(t => (
-                          <button
-                            key={t}
-                            aria-pressed={tag === t}
-                            className={'pubs-filter-chip' + (tag === t ? ' active' : '')}
-                            onClick={() => this.handleTagToggle(t)}
-                          >{labelWithCount(t, t)}</button>
-                        ))}
-                        {extraTagChip && topTags.indexOf(extraTagChip) < 0 && (
-                          <button
-                            aria-pressed="true"
-                            className="pubs-filter-chip active"
-                            onClick={() => this.handleTagToggle(extraTagChip)}
-                          >{labelWithCount(extraTagChip, extraTagChip)}</button>
-                        )}
-                        {year && (
-                          <button
-                            aria-pressed="true"
-                            className="pubs-filter-chip active"
-                            onClick={() => this.handleYearChange(null)}
-                          >{String(year)}</button>
-                        )}
-                        {allTags.length > 0 && (
-                          <button
-                            ref={this.moreFiltersBtnRef}
-                            className="pubs-filter-chip pubs-more-filters"
-                            aria-haspopup="dialog"
-                            aria-expanded={moreFiltersOpen}
-                            aria-controls="pubs-filter-sheet"
-                            onClick={this.openMoreFilters}
-                          >
-                            <span aria-hidden="true">⚙ </span>
-                            {/* SF-24: badge the sheet with its active-filter count */}
-                            More filters{extraTagChip ? ' · 1' : ''} <span aria-hidden="true">▾</span>
-                          </button>
-                        )}
-                        {hasActiveFilters && (
-                          <button className="pubs-clear-all" onClick={this.handleResetFilters}>Clear filters</button>
-                        )}
-                      </div>
-                    </div>
+                {/* One flat wrapping row: preset views, then topic chips, then More filters */}
+                <div className="pubs-filters" role="group" aria-label="Filter publications">
+                  <button
+                    aria-pressed={!tag && !year && sort !== 'downloads'}
+                    className={'pubs-filter-chip' + (!tag && !year && sort !== 'downloads' ? ' active' : '')}
+                    onClick={this.handleResetFilters}
+                  >{/* SF-29: the default newest-first state is the "Recent" intent */}
+                  {labelWithCount('All', 'Recent')}</button>
+                  <button
+                    aria-pressed={tag === AWARD_FILTER}
+                    className={'pubs-filter-chip' + (tag === AWARD_FILTER ? ' active' : '')}
+                    onClick={() => this.handleTagToggle(AWARD_FILTER)}
+                  >{labelWithCount(AWARD_FILTER, AWARD_FILTER)}</button>
+                  <button
+                    aria-pressed={sort === 'downloads'}
+                    className={'pubs-filter-chip' + (sort === 'downloads' ? ' active' : '')}
+                    onClick={() => this.handleSortToggle(sort === 'downloads' ? 'newest' : 'downloads')}
+                  >{labelWithCount('Most downloaded', 'Most downloaded')}</button>
+                  {topTags.map(t => (
+                    <button
+                      key={t}
+                      aria-pressed={tag === t}
+                      className={'pubs-filter-chip' + (tag === t ? ' active' : '')}
+                      onClick={() => this.handleTagToggle(t)}
+                    >{labelWithCount(t, t)}</button>
+                  ))}
+                  {extraTagChip && topTags.indexOf(extraTagChip) < 0 && (
+                    <button
+                      aria-pressed="true"
+                      className="pubs-filter-chip active"
+                      onClick={() => this.handleTagToggle(extraTagChip)}
+                    >{labelWithCount(extraTagChip, extraTagChip)}</button>
+                  )}
+                  {year && (
+                    <button
+                      aria-pressed="true"
+                      className="pubs-filter-chip active"
+                      onClick={() => this.handleYearChange(null)}
+                    >{String(year)}</button>
+                  )}
+                  {allTags.length > 0 && (
+                    <button
+                      ref={this.moreFiltersBtnRef}
+                      className="pubs-filter-chip pubs-more-filters"
+                      aria-haspopup="dialog"
+                      aria-expanded={moreFiltersOpen}
+                      aria-controls="pubs-filter-sheet"
+                      onClick={this.openMoreFilters}
+                    >
+                      <span aria-hidden="true">⚙ </span>
+                      {/* SF-24: badge the sheet with its active-filter count */}
+                      More filters{extraTagChip ? ' · 1' : ''} <span aria-hidden="true">▾</span>
+                    </button>
+                  )}
+                  {hasActiveFilters && (
+                    <button className="pubs-clear-all" onClick={this.handleResetFilters}>Clear filters</button>
                   )}
                 </div>
                 {/* SF-13: crawlable address + one-click share of the current view */}

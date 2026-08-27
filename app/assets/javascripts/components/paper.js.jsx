@@ -892,12 +892,6 @@ function buildAPA(paper) {
   return authorStr + ' (' + paper.year + '). ' + paper.title + '. ' + paper.venue + '.';
 }
 
-// SF-22: remembered reader preference — where PDFs open (toolbar control writes it)
-function pdfOpenPref() {
-  try { return window.localStorage.getItem('pdfOpenTarget') === 'sameTab' ? 'sameTab' : 'newTab'; }
-  catch (_) { return 'newTab'; }
-}
-
 // SF-22: singleton in-page toast confirming the click registered and where the
 // PDF is opening; auto-dismisses so it never needs managing.
 function showPdfToast(message) {
@@ -1067,11 +1061,9 @@ class PaperCard extends React.Component {
     var paper = this.props.paper;
     gaSendEvent('Publications', 'PDFDownload', paper.id);
     var href = paper.html_paper_url || ("/papers/" + paper.id + "/serve");
-    var sameTab = pdfOpenPref() === 'sameTab';
     // SF-22: the in-page toast fires on every View PDF click, before any probe
-    showPdfToast(sameTab ? 'Opening PDF…' : 'Opening PDF in a new tab — it may take a moment');
+    showPdfToast('Opening PDF in a new tab — it may take a moment');
     var navigate = function() {
-      if (sameTab) { window.location.assign(href); return; }
       var win = window.open(href, '_blank', 'noopener');
       if (!win) window.location.href = href;
     };
@@ -1210,8 +1202,6 @@ class PaperCard extends React.Component {
     var moreOpen = this.state.moreOpen;
     var citeFormat = this.state.citeFormat;
     var pdfOpening = this.state.pdfOpening;
-    // SF-22: cues adapt to the remembered preference (re-read on every render)
-    var pdfSameTab = pdfOpenPref() === 'sameTab';
     // SF-19: two tags at rest keeps cards scannable; the rest sit behind "+N more"
     var MAX_TAGS = 2;
     var isFlippable = !!paper.summary;
@@ -1402,15 +1392,15 @@ class PaperCard extends React.Component {
 
             <div className="pub-actions">
               <div aria-live="polite" aria-atomic="true" className="sr-only">
-                {pdfOpening ? (pdfSameTab ? 'Opening PDF' : 'Opening PDF in a new tab') : ''}
+                {pdfOpening ? 'Opening PDF in a new tab' : ''}
               </div>
               {hasPDF && (
                 <a
                   className={'pub-action-primary' + (pdfOpening ? ' is-opening' : '')}
                   href={pdfLink}
-                  target={pdfSameTab ? '_self' : '_blank'}
+                  target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={"View PDF: " + paper.title + (pdfSameTab ? '' : ' (opens in new tab)')}
+                  aria-label={"View PDF: " + paper.title + " (opens in new tab)"}
                   onClick={this.handlePdfClick}
                 >
                   {pdfOpening ? (
@@ -1421,8 +1411,8 @@ class PaperCard extends React.Component {
                     </svg>
                   )}
                   {pdfOpening ? ' Opening PDF…' : ' View PDF'}
-                  {!pdfOpening && !pdfSameTab && <span className="pub-ext-cue" aria-hidden="true">↗</span>}
-                  {!pdfSameTab && <span className="sr-only">(opens in new tab)</span>}
+                  {!pdfOpening && <span className="pub-ext-cue" aria-hidden="true">↗</span>}
+                  <span className="sr-only">(opens in new tab)</span>
                 </a>
               )}
               {!hasPDF && (
@@ -1555,7 +1545,7 @@ class PaperCard extends React.Component {
 
             {/* SF-22/SF-04: say what the tap will do, and where recovery lives */}
             <p className="pub-actions-note">
-              {hasPDF ? (pdfSameTab ? 'PDF opens in this tab · ' : 'PDF opens in a new tab · ') : ''}if a link is broken, More → alternate sources
+              {hasPDF ? 'PDF opens in a new tab · ' : ''}if a link is broken, More → alternate sources
             </p>
 
             {/* SF-04: in-card failure state when the hosted PDF probe comes back dead */}

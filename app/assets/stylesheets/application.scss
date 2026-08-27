@@ -59,7 +59,6 @@ html { scroll-behavior: smooth; }
 /* SF-12: every high-intent control acknowledges the press immediately */
 .btn-sd:active,
 .sidebar-email-btn:active,
-.hero-contact-email:active,
 .recruiting-advice-link:active,
 .papers-load-more:active,
 .papers-page-btn:active,
@@ -286,13 +285,6 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 /* SF-26: collapsed rail while browsing publications (desktop only) */
 .sidebar-collapsed { display: none; }
 
-.sidebar-collapsed-note {
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
-  margin: 14px 0 10px;
-  line-height: 1.5;
-}
-
 .sidebar-acc {
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -320,12 +312,6 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   &[open] summary::after { content: "⌃"; }
 
   .sidebar-link { padding: 6px 0; display: block; }
-}
-
-.sidebar-acc-count {
-  margin-left: auto;
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
 }
 
 .sidebar-backtop {
@@ -550,85 +536,6 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   margin-bottom: 20px;
 }
 
-/* SF-30/SF-21: crawlable contact line right under the CTAs */
-.hero-contact {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 16px;
-  font-size: var(--fs-sm);
-}
-
-.hero-contact-email {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-weight: 600;
-  color: var(--green);
-  text-decoration: none;
-  min-height: 32px;
-
-  &:hover { color: var(--green-dark); text-decoration: underline; }
-}
-
-.hero-contact-copy {
-  border: 1px solid var(--chip-border);
-  background: var(--bg-card);
-  border-radius: 4px;
-  font-family: var(--sans);
-  font-size: var(--fs-xs);
-  font-weight: 500;
-  color: var(--text-mid);
-  padding: 4px 10px;
-  min-height: 28px;
-  cursor: pointer;
-
-  &:hover { border-color: var(--green); color: var(--green); }
-}
-
-.hero-contact-sep { color: var(--border); }
-
-.hero-contact-affil { color: var(--text-mid); }
-
-/* SF-21: expectations card — what students/collaborators can expect */
-.reach-card {
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--green);
-  border-radius: 8px;
-  background: var(--bg-card);
-  padding: 20px 22px;
-  margin-bottom: 20px;
-}
-
-.reach-card-title {
-  font-family: var(--serif);
-  font-size: var(--fs-md);
-  font-weight: 600;
-  color: var(--text);
-  margin: 0 0 14px;
-}
-
-.reach-card-row {
-  & + .reach-card-row { margin-top: 14px; }
-}
-
-.reach-card-head {
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--text);
-  margin: 0 0 4px;
-}
-
-.reach-card-body {
-  font-size: var(--fs-sm);
-  color: var(--text-mid);
-  line-height: 1.6;
-  margin: 0;
-
-  a { color: var(--green); }
-}
-
 .hero-avatar {
   width: 88px;
   height: 88px;
@@ -776,7 +683,7 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 
 /* SF-11: chunked theme rows — 2–3 representative links each, rest disclosed */
 .research-directions {
-  margin: 14px 0;
+  margin: 20px 0 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1181,18 +1088,6 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   display: flex;
   gap: 0;
   margin-bottom: 0;
-}
-
-/* SF-07: tab-scope helper — tabs switch this panel, the rail switches sections */
-.pubs-tabs-hint {
-  font-size: var(--fs-xs);
-  color: var(--text-mid);
-  text-align: right;
-  max-width: 320px;
-  line-height: 1.4;
-  margin: 0;
-
-  .pubs-tabs-hint-mobile { display: none; }
 }
 
 .pubs-tab {
@@ -2645,39 +2540,6 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   &:hover { border-color: var(--green); color: var(--green); }
 }
 
-/* SF-31: citation availability cue at the publications entry point */
-.pubs-cite-cue {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  color: var(--green-dark);
-  background: var(--green-light);
-  border: 1px solid var(--green-mid);
-  border-radius: 999px;
-  padding: 5px 12px;
-  margin: 8px 0 10px;
-}
-
-/* Chip grouping (SF-24) */
-.pubs-filter-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-
-.pubs-filter-group-label {
-  display: block;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-
 /* Density toggle (SF-20) — mobile-only control */
 .pubs-density {
   display: none;
@@ -2886,22 +2748,6 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   z-index: 300;
 
   &.is-visible { opacity: 1; transform: translate(-50%, 0); }
-}
-
-/* SF-22: remembered where-PDFs-open preference beside the density toggle */
-.pubs-pdftarget {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 8px 0 0;
-
-  .pubs-density-btn { min-height: 36px; }
-}
-
-.pubs-pdftarget-label {
-  font-size: var(--fs-xs);
-  color: var(--text-mid);
-  margin-right: 2px;
 }
 
 .noscript-search {
@@ -3796,8 +3642,6 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 
   /* SF-06: touch-friendly filters — 44px chips wrapping into rows (mobile mockup) */
   .pubs-filters {
-    flex-wrap: wrap;
-    overflow-x: visible;
     gap: 10px;
     padding-bottom: 10px;
   }
@@ -3805,16 +3649,6 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
     min-height: 44px;
     padding: 10px 18px;
     border-radius: 24px;
-  }
-
-  /* SF-07: shorter helper copy, left-aligned with air between tabs and hint */
-  .pubs-tabs-hint {
-    text-align: left;
-    max-width: none;
-    margin: 10px 0 2px;
-
-    .pubs-tabs-hint-desktop { display: none; }
-    .pubs-tabs-hint-mobile { display: inline; }
   }
 
   .pubs-url-tools { width: 100%; justify-content: space-between; }
