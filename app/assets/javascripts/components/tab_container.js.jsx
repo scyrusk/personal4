@@ -29,6 +29,7 @@ class TabContainer extends React.Component {
       sort: initialState.sort,
       year: initialState.year,
       status: initialState.status,
+      preprints: initialState.preprints,
       page: initialState.page,
       showAll: initialState.showAll,
       pendingTagSlug: initialState.pendingTagSlug,
@@ -57,6 +58,8 @@ class TabContainer extends React.Component {
     this.handleSortToggle = this.handleSortToggle.bind(this);
     this.handleYearChange = this.handleYearChange.bind(this);
     this.handleStatusChange = this.handleStatusChange.bind(this);
+    this.handlePreprintsToggle = this.handlePreprintsToggle.bind(this);
+    this.handleRecent = this.handleRecent.bind(this);
     this.handlePageChange = this.handlePageChange.bind(this);
     this.handleShowAllToggle = this.handleShowAllToggle.bind(this);
     this.handleYears = this.handleYears.bind(this);
@@ -87,6 +90,8 @@ class TabContainer extends React.Component {
       var year = null;
       if (/^20\d\d$/.test(params.get('year') || '')) year = parseInt(params.get('year'), 10);
       var status = slugToStatus(params.get('status'));
+      // Pre-prints are hidden unless ?preprints=on
+      var preprints = params.get('preprints') === 'on';
 
       // SF-01/SF-15: page + view are URL state, so paged views are shareable and
       // reachable even without client-side interactivity (?page=2 links work).
@@ -109,9 +114,9 @@ class TabContainer extends React.Component {
       if (legacyFilter === 'Most downloaded') sort = 'downloads';
       else if (legacyFilter) tag = legacyFilter;
 
-      return { activeTab: validTab, query: query, tag: tag, sort: sort, year: year, status: status, page: page, showAll: showAll, pendingTagSlug: pendingTagSlug };
+      return { activeTab: validTab, query: query, tag: tag, sort: sort, year: year, status: status, preprints: preprints, page: page, showAll: showAll, pendingTagSlug: pendingTagSlug };
     } catch (_) {
-      return { activeTab: 'publications', query: '', tag: null, sort: 'newest', year: null, status: null, page: 1, showAll: false, pendingTagSlug: null };
+      return { activeTab: 'publications', query: '', tag: null, sort: 'newest', year: null, status: null, preprints: false, page: 1, showAll: false, pendingTagSlug: null };
     }
   }
 
@@ -193,7 +198,7 @@ class TabContainer extends React.Component {
 
     this.emitQueryChanged();
 
-    if ((this.state.tag || this.state.pendingTagSlug || this.state.year || this.state.status || this.state.sort === 'downloads') && !window.location.hash) {
+    if ((this.state.tag || this.state.pendingTagSlug || this.state.year || this.state.status || this.state.preprints || this.state.sort === 'downloads') && !window.location.hash) {
       this.scrollPublicationsToTop();
       window.requestAnimationFrame(this.scrollPublicationsToTop);
       window.setTimeout(this.scrollPublicationsToTop, 250);
@@ -237,6 +242,7 @@ class TabContainer extends React.Component {
       prevState.sort !== this.state.sort ||
       prevState.year !== this.state.year ||
       prevState.status !== this.state.status ||
+      prevState.preprints !== this.state.preprints ||
       prevState.page !== this.state.page ||
       prevState.showAll !== this.state.showAll
     ) {
@@ -277,6 +283,8 @@ class TabContainer extends React.Component {
     else params.delete('year');
     if (this.state.status) params.set('status', statusToSlug(this.state.status));
     else params.delete('status');
+    if (this.state.preprints) params.set('preprints', 'on');
+    else params.delete('preprints');
     if (this.state.showAll) params.set('view', 'all');
     else params.delete('view');
     if (this.state.page > 1 && !this.state.showAll) params.set('page', String(this.state.page));
@@ -337,6 +345,18 @@ class TabContainer extends React.Component {
     this.setState({ status: status || null, page: 1, activeTab: 'publications' });
   }
 
+  // "+ Pre-prints": mixes pre-prints into every view. Turning it off also drops
+  // a Status narrowing to pre-prints, which would otherwise keep showing them.
+  handlePreprintsToggle(on) {
+    this._pushNextSync = true;
+    this.setState(prev => ({
+      preprints: on,
+      status: !on && prev.status === 'preprint' ? null : prev.status,
+      page: 1,
+      activeTab: 'publications'
+    }));
+  }
+
   // SF-01: explicit pagination — deliberate navigation, so push a history entry
   handlePageChange(page) {
     this._pushNextSync = true;
@@ -387,7 +407,14 @@ class TabContainer extends React.Component {
     }
   }
 
+  // Back to the default view, pre-prints hidden
   handleResetFilters() {
+    this._pushNextSync = true;
+    this.setState({ tag: null, pendingTagSlug: null, query: '', sort: 'newest', year: null, status: null, preprints: false, page: 1, activeTab: 'publications' });
+  }
+
+  // "Recent" clears the filters but keeps the visitor's pre-prints choice
+  handleRecent() {
     this._pushNextSync = true;
     this.setState({ tag: null, pendingTagSlug: null, query: '', sort: 'newest', year: null, status: null, page: 1, activeTab: 'publications' });
   }
@@ -477,8 +504,9 @@ class TabContainer extends React.Component {
   }
 
   render() {
-    const { activeTab, query, tag, sort, year, status, page, showAll, rangeStart, rendered, total, years, topTags, allTags, chipCounts, moreFiltersOpen, tagQuery, sheetTag, copied } = this.state;
-    const hasActiveFilters = !!(query || tag || year || status || sort === 'downloads');
+    const { activeTab, query, tag, sort, year, status, preprints, page, showAll, rangeStart, rendered, total, years, topTags, allTags, chipCounts, moreFiltersOpen, tagQuery, sheetTag, copied } = this.state;
+    const hasActiveFilters = !!(query || tag || year || status || preprints || sort === 'downloads');
+    const preprintsShown = preprints || status === 'preprint';
     const isRecent = !tag && !year && !status && sort !== 'downloads';
     const preprintCount = chipCounts['status:preprint'] || 0;
     const labelWithCount = (key, label) => {
@@ -504,6 +532,7 @@ class TabContainer extends React.Component {
     if (tag) filterBits.push(tag);
     if (year) filterBits.push(String(year));
     if (query) filterBits.push('“' + query + '”');
+    if (preprints && status !== 'preprint') filterBits.push('including pre-prints');
     var sortLabel = sort === 'downloads' ? 'most downloaded first' : 'newest first';
     var filterSummary = (filterBits.length ? 'Filtered: ' + filterBits.join(' · ') : 'No filters applied') + ' · ' + sortLabel;
     var paramString = this.buildParamString();
@@ -596,16 +625,18 @@ class TabContainer extends React.Component {
                   <button
                     aria-pressed={isRecent}
                     className={'pubs-filter-chip' + (isRecent ? ' active' : '')}
-                    onClick={this.handleResetFilters}
+                    onClick={this.handleRecent}
                   >{/* SF-29: the default newest-first state is the "Recent" intent */}
                   {labelWithCount('All', 'Recent')}</button>
-                  {/* Pre-prints: papers posted before they appear at their venue */}
-                  {(preprintCount > 0 || status === 'preprint') && (
+                  {/* "+ Pre-prints" adds papers posted before they appear at their venue;
+                      hidden by default */}
+                  {(preprintCount > 0 || preprintsShown) && (
                     <button
-                      aria-pressed={status === 'preprint'}
-                      className={'pubs-filter-chip pubs-filter-chip-preprint' + (status === 'preprint' ? ' active' : '')}
-                      onClick={() => this.handleStatusChange(status === 'preprint' ? null : 'preprint')}
-                    >{labelWithCount('status:preprint', 'Pre-prints')}</button>
+                      aria-pressed={preprintsShown}
+                      aria-label={(preprintsShown ? 'Hide' : 'Show') + ' ' + preprintCount + ' pre-prints'}
+                      className={'pubs-filter-chip pubs-filter-chip-preprint' + (preprintsShown ? ' active' : '')}
+                      onClick={() => this.handlePreprintsToggle(!preprintsShown)}
+                    ><span aria-hidden="true">{preprintsShown ? '✓ ' : '+ '}</span>{labelWithCount('status:preprint', 'Pre-prints')}</button>
                   )}
                   <button
                     aria-pressed={tag === AWARD_FILTER}
@@ -803,6 +834,8 @@ class TabContainer extends React.Component {
               sort={sort}
               year={year}
               status={status}
+              includePreprints={preprints}
+              onPreprintsToggle={this.handlePreprintsToggle}
               page={page}
               showAll={showAll}
               pageSize={PAGE_SIZE}

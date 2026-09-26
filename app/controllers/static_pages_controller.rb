@@ -35,7 +35,9 @@ class StaticPagesController < ApplicationController
       "over their personal data and experiences online.")
     @og_image_url = "#{request.base_url}#{ActionController::Base.helpers.asset_path("sauvik_bio_sphere.png")}"
 
-    @papers_count = Paper.count
+    # Pre-prints are counted apart: they're hidden from the list by default
+    @papers_count = Paper.where.not(status: :preprint).count
+    @preprints_count = Paper.preprint.count
     @papers_year_range = "#{Paper.minimum(:year)}–#{Paper.maximum(:year)}"
 
     # SF-01/SF-11: server-rendered fallback list — the same ?page/?tag/?sort/?q/?year
@@ -58,10 +60,16 @@ class StaticPagesController < ApplicationController
         @noscript_filters << (label || params[:tag].tr("-", " "))
       end
     end
+    # Same visibility rule as the React list: pre-prints only with ?preprints=on,
+    # or when ?status= narrows to them
     noscript_status = params[:status].to_s.tr("-", "_")
     if Paper.statuses.key?(noscript_status)
       noscript_papers = noscript_papers.select { |p| p.status == noscript_status }
       @noscript_filters << Paper::STATUS_LABELS[noscript_status][:many]
+    elsif params[:preprints] == "on"
+      @noscript_filters << "including pre-prints"
+    else
+      noscript_papers = noscript_papers.reject(&:preprint?)
     end
     if params[:year].to_i.positive?
       noscript_papers = noscript_papers.select { |p| p.year == params[:year].to_i }
@@ -81,7 +89,8 @@ class StaticPagesController < ApplicationController
     end
     @noscript_filtered_count = noscript_papers.length
     @noscript_link_params = {
-      tag: params[:tag], sort: params[:sort], q: params[:q], year: params[:year], status: params[:status]
+      tag: params[:tag], sort: params[:sort], q: params[:q], year: params[:year], status: params[:status],
+      preprints: params[:preprints]
     }.reject { |_k, v| v.blank? }
     @noscript_page_size = 25
     @noscript_total_pages = [(@noscript_filtered_count.to_f / @noscript_page_size).ceil, 1].max

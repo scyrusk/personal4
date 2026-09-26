@@ -1703,6 +1703,43 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 .pub-status-banner ~ .pub-featured-badge,
 .pub-status-banner ~ .pub-flip-cue { top: 40px; }
 
+/* "N matching pre-prints are hidden · Show pre-prints" above a filtered list */
+.pubs-preprint-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 14px 0 4px;
+  padding: 8px 8px 8px 14px;
+  border: 1px solid var(--amber-mid);
+  border-radius: var(--radius);
+  background: var(--amber-light);
+  color: var(--amber-text);
+  font-size: var(--fs-sm);
+}
+
+.pubs-preprint-hint-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pubs-preprint-hint-btn {
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  background: white;
+  color: var(--amber-text);
+  font-family: var(--sans);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover { border-color: var(--amber-text); }
+}
+
 /* Key for the banners, above the list */
 .pubs-status-legend {
   display: flex;

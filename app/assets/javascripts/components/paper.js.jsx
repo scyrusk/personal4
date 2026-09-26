@@ -142,27 +142,44 @@ function randomString(n) {
 // SF-13: query (q), tag, sort, and year are independent, composable filters.
 var AWARD_TAG = "Award-winning";
 
-function getTopTags(papers, n) {
-  var counts = {};
+// Tags are counted case-insensitively ("AI" and "ai" are one topic, matching
+// paperMatchesTag). The label is the most common capitalised spelling when one
+// exists ("AI", "Privacy", "LLMs"), so the chip row reads consistently.
+function tallyTags(papers) {
+  var counts = {}, spellings = {};
   papers.forEach(function(p) {
     if (!p.tags) return;
+    var seen = {};
     p.tags.split(";").forEach(function(t) {
-      var tag = t.trim();
-      if (tag) counts[tag] = (counts[tag] || 0) + 1;
+      var tag = t.trim(), key = tag.toLowerCase();
+      if (!tag || seen[key]) return;
+      seen[key] = true;
+      counts[key] = (counts[key] || 0) + 1;
+      spellings[key] = spellings[key] || {};
+      spellings[key][tag] = (spellings[key][tag] || 0) + 1;
     });
   });
-  return Object.keys(counts).sort(function(a, b) { return counts[b] - counts[a]; }).slice(0, n);
+  var labels = {};
+  Object.keys(spellings).forEach(function(key) {
+    var variants = spellings[key];
+    var names = Object.keys(variants);
+    var capitalised = names.filter(function(v) { return v !== v.toLowerCase(); });
+    labels[key] = (capitalised.length ? capitalised : names).reduce(function(best, v) { return variants[v] > variants[best] ? v : best; });
+  });
+  return { counts: counts, labels: labels };
+}
+
+function getTopTags(papers, n) {
+  var tally = tallyTags(papers);
+  return Object.keys(tally.counts)
+    .sort(function(a, b) { return tally.counts[b] - tally.counts[a]; })
+    .slice(0, n)
+    .map(function(key) { return tally.labels[key]; });
 }
 
 function getTagCounts(papers) {
-  var counts = {};
-  papers.forEach(function(p) {
-    if (!p.tags) return;
-    p.tags.split(";").forEach(function(t) {
-      var tag = t.trim();
-      if (tag) counts[tag] = (counts[tag] || 0) + 1;
-    });
-  });
+  var tally = tallyTags(papers), counts = {};
+  Object.keys(tally.counts).forEach(function(key) { counts[tally.labels[key]] = tally.counts[key]; });
   return counts;
 }
 
@@ -196,8 +213,9 @@ function sortByDownloadsThenRecency(a, b) {
   return b.id - a.id;
 }
 
-// Publication status (Paper#status): every card carries a banner naming it,
-// and the Pre-prints chip / Status select filter on it.
+// Publication status (Paper#status): every card carries a banner naming it.
+// Pre-prints are hidden unless the "+ Pre-prints" toggle is on; the Status
+// select narrows the list to one status.
 var PAPER_STATUSES = {
   preprint:     { label: 'Pre-print',    plural: 'Pre-prints',   note: 'Posted before it appears at its venue', noVenueNote: 'Not yet at a venue' },
   camera_ready: { label: 'Camera-ready', plural: 'Camera-ready', note: null },
@@ -209,8 +227,15 @@ function paperStatus(paper) {
   return PAPER_STATUSES[paper.status] ? paper.status : 'published';
 }
 
-function paperMatchesStatus(paper, status) {
-  return !status || paperStatus(paper) === status;
+// The papers in play before any query/tag/year filter: one status when the
+// Status select names it (choosing Pre-prints there shows them regardless of
+// the toggle), otherwise everything but pre-prints unless they're toggled on.
+function scopePapers(papers, status, includePreprints) {
+  return papers.filter(function(paper) {
+    var st = paperStatus(paper);
+    if (status) return st === status;
+    return includePreprints || st !== 'preprint';
+  });
 }
 
 function PaperStatusIcon(props) {
@@ -230,11 +255,10 @@ function PaperStatusIcon(props) {
   return <svg {...common}><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2zM22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>;
 }
 
-function getVisiblePapers(papers, query, tag, sort, year, status) {
+function getVisiblePapers(papers, query, tag, sort, year) {
   var base = papers.filter(function(paper) {
     return paperMatchesQuery(paper, query) &&
            paperMatchesTag(paper, tag) &&
-           paperMatchesStatus(paper, status) &&
            (!year || paper.year === year);
   });
 
@@ -283,9 +307,7 @@ class PaperContainer extends React.Component {
       dataType: 'json',
       cache: false,
       success: function(data) {
-        var reversed = data.reverse();
-        this.setState({ data: reversed, loading: false, loadError: false });
-        if (this.props.onTopTags) this.props.onTopTags(getTopTags(reversed, 5));
+        this.setState({ data: data.reverse(), loading: false, loadError: false });
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -317,19 +339,25 @@ class PaperContainer extends React.Component {
                          prevProps.activeTag !== this.props.activeTag ||
                          prevProps.sort !== this.props.sort ||
                          prevProps.year !== this.props.year ||
-                         prevProps.status !== this.props.status;
+                         prevProps.status !== this.props.status ||
+                         prevProps.includePreprints !== this.props.includePreprints;
+    var scopeChanged = prevState.data !== this.state.data ||
+                       prevProps.status !== this.props.status ||
+                       prevProps.includePreprints !== this.props.includePreprints;
     var pagingChanged = prevProps.page !== this.props.page ||
                         prevProps.showAll !== this.props.showAll;
-    var changed = filtersChanged || pagingChanged ||
-                  prevState.data !== this.state.data ||
+    var changed = filtersChanged || pagingChanged || scopeChanged ||
                   prevState.visibleCount !== this.state.visibleCount;
     if (changed) this.reportCounts();
-    if (prevState.data !== this.state.data) {
-      if (this.props.onTopTags) this.props.onTopTags(getTopTags(this.state.data, 5));
-      if (this.props.onAllTags) this.props.onAllTags(getTopTags(this.state.data, 1000));
+    // Topic chips and years describe the papers in scope, so hidden pre-prints
+    // never add a chip or a year the list can't show
+    if (scopeChanged) {
+      var scoped = this.scopedPapers();
+      if (this.props.onTopTags) this.props.onTopTags(getTopTags(scoped, 5));
+      if (this.props.onAllTags) this.props.onAllTags(getTopTags(scoped, 1000));
       if (this.props.onYears) {
         var yearsSet = {};
-        this.state.data.forEach(function(p) { yearsSet[p.year] = true; });
+        scoped.forEach(function(p) { yearsSet[p.year] = true; });
         this.props.onYears(Object.keys(yearsSet).sort(function(a, b) { return b - a; }));
       }
     }
@@ -349,6 +377,10 @@ class PaperContainer extends React.Component {
     return this.props.pageSize || 25;
   }
 
+  scopedPapers() {
+    return scopePapers(this.state.data, this.props.status, !!this.props.includePreprints);
+  }
+
   // Clamp so an out-of-range ?page= URL lands on the last real page
   currentPage(filteredTotal) {
     var totalPages = Math.max(1, Math.ceil(filteredTotal / this.pageSize()));
@@ -356,11 +388,11 @@ class PaperContainer extends React.Component {
   }
 
   reportCounts() {
-    var data = this.state.data;
+    var data = this.scopedPapers();
     var query = (this.props.query || "").toLowerCase().trim();
 
     // Result range reflects the current query/filters.
-    var filteredTotal = getVisiblePapers(data, query, this.props.activeTag, this.props.sort, this.props.year, this.props.status).length;
+    var filteredTotal = getVisiblePapers(data, query, this.props.activeTag, this.props.sort, this.props.year).length;
     var start, rendered;
     if (this.props.showAll) {
       start = 1;
@@ -373,14 +405,17 @@ class PaperContainer extends React.Component {
     }
     if (this.props.onResultCount) this.props.onResultCount({ start: start, rendered: rendered, total: filteredTotal });
 
-    // Chip counts are category totals (query-independent) so they stay stable while typing.
+    // Chip counts are category totals over the papers in scope (query-independent,
+    // so they stay stable while typing); status counts span every paper.
     if (this.props.onChipCounts) {
       var counts = getTagCounts(data);
-      counts['All'] = data.length;
+      // "Recent" clears the Status narrowing, so its count ignores it
+      counts['All'] = scopePapers(this.state.data, null, !!this.props.includePreprints).length;
       counts[AWARD_TAG] = getVisiblePapers(data, '', AWARD_TAG, 'newest', null).length;
       counts['Most downloaded'] = getVisiblePapers(data, '', null, 'downloads', null).length;
+      var all = this.state.data;
       PAPER_STATUS_ORDER.forEach(function(st) {
-        counts['status:' + st] = data.filter(function(p) { return paperStatus(p) === st; }).length;
+        counts['status:' + st] = all.filter(function(p) { return paperStatus(p) === st; }).length;
       });
       this.props.onChipCounts(counts);
     }
@@ -396,7 +431,10 @@ class PaperContainer extends React.Component {
   render() {
     return (
       <PaperList
-        data={this.state.data}
+        data={this.scopedPapers()}
+        allData={this.state.data}
+        includePreprints={!!this.props.includePreprints}
+        onPreprintsToggle={this.props.onPreprintsToggle}
         assets={this.props.assets}
         query={this.props.query || ""}
         activeTag={this.props.activeTag || null}
@@ -569,6 +607,29 @@ class PaperList extends React.Component {
   }
 
   // SF-08: first-class 0-results state — explain, show constraints, offer recovery
+  // With pre-prints hidden, a search or filter that also matches pre-prints
+  // says so and offers to show them, so a visitor looking for one isn't stuck
+  renderHiddenPreprints() {
+    if (this.props.includePreprints || this.props.status) return null;
+    var query = (this.props.query || '').toLowerCase().trim();
+    if (!query && !this.props.activeTag && !this.props.year) return null;
+    var preprints = (this.props.allData || []).filter(function(p) { return paperStatus(p) === 'preprint'; });
+    var n = getVisiblePapers(preprints, query, this.props.activeTag, 'newest', this.props.year).length;
+    if (!n) return null;
+    var self = this;
+    return (
+      <div className="pubs-preprint-hint" role="note">
+        <span className="pubs-preprint-hint-text">
+          <PaperStatusIcon status="preprint" />
+          {n} matching pre-print{n === 1 ? ' is' : 's are'} hidden
+        </span>
+        <button type="button" className="pubs-preprint-hint-btn" onClick={function() { if (self.props.onPreprintsToggle) self.props.onPreprintsToggle(true); }}>
+          Show pre-prints
+        </button>
+      </div>
+    );
+  }
+
   renderEmptyState() {
     var self = this;
     var query = this.props.query || '';
@@ -585,14 +646,16 @@ class PaperList extends React.Component {
 
     var title = constraints.length >= 2 ? 'No papers match both filters' : 'No papers match your search';
     var names = constraints.map(function(c) { return c.label; });
+    // "All N" is what clearing the filters shows, whatever the Status select narrowed to
+    var allCount = scopePapers(this.props.allData || this.props.data, null, this.props.includePreprints).length;
     var explanation;
     if (constraints.length >= 2) {
       explanation = names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] +
-        ' are both on. Turn one off, or start again from all ' + this.props.data.length + ' papers.';
+        ' are both on. Turn one off, or start again from all ' + allCount + ' papers.';
     } else if (constraints.length === 1) {
-      explanation = names[0] + ' matches nothing. Start again from all ' + this.props.data.length + ' papers.';
+      explanation = names[0] + ' matches nothing. Start again from all ' + allCount + ' papers.';
     } else {
-      explanation = 'Start again from all ' + this.props.data.length + ' papers.';
+      explanation = 'Start again from all ' + allCount + ' papers.';
     }
 
     // Fallback: drop the narrowest constraint and surface the closest matches
@@ -600,10 +663,10 @@ class PaperList extends React.Component {
     var fallbackLabel = null;
     if (constraints.length >= 1) {
       if (year) {
-        fallback = getVisiblePapers(this.props.data, query.toLowerCase().trim(), tag, 'newest', null, status);
+        fallback = getVisiblePapers(this.props.data, query.toLowerCase().trim(), tag, 'newest', null);
         fallbackLabel = [status ? PAPER_STATUSES[status].label.toLowerCase() : null, tag ? tag.toLowerCase() : null].filter(Boolean).join(' ') || null;
       } else if (query && (tag || status)) {
-        fallback = getVisiblePapers(this.props.data, '', tag, 'newest', null, status);
+        fallback = getVisiblePapers(this.props.data, '', tag, 'newest', null);
         fallbackLabel = [status ? PAPER_STATUSES[status].label.toLowerCase() : null, tag ? tag.toLowerCase() : null].filter(Boolean).join(' ');
       } else if (tag) {
         fallback = [];
@@ -615,6 +678,7 @@ class PaperList extends React.Component {
 
     return (
       <div className="paper-list">
+        {this.renderHiddenPreprints()}
         <div className="pubs-empty">
           <svg className="pubs-empty-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
             <circle cx="12" cy="12" r="9"/>
@@ -780,6 +844,7 @@ class PaperList extends React.Component {
     var sort = this.props.sort || 'newest';
     var yearFilter = this.props.year;
     var statusFilter = this.props.status;
+    var hiddenPreprints = this.renderHiddenPreprints();
     var assets = this.props.assets;
     var visibleCount = this.props.visibleCount || 50;
     var self = this;
@@ -809,14 +874,14 @@ class PaperList extends React.Component {
       );
     }
 
-    var filtered = getVisiblePapers(this.props.data, query, tag, sort, yearFilter, statusFilter);
+    var filtered = getVisiblePapers(this.props.data, query, tag, sort, yearFilter);
     var total = filtered.length;
     var pageSize = this.props.pageSize || 25;
     var totalPages = Math.max(1, Math.ceil(total / pageSize));
     var page = Math.min(Math.max(1, this.props.page || 1), totalPages);
     var showAll = this.props.showAll;
 
-    if (total === 0 && this.props.data.length > 0) {
+    if (total === 0 && (this.props.allData || this.props.data).length > 0) {
       return this.renderEmptyState();
     }
 
@@ -853,6 +918,7 @@ class PaperList extends React.Component {
     if (sort === 'downloads') {
       return (
         <div className="paper-list">
+          {hiddenPreprints}
           {paged.map(function(paper) {
             return (
               <PaperCard key={paper.id} paper={paper} num={numById[paper.id]} thumbnail={paper.thumbnail || null} assets={assets} />
@@ -873,6 +939,7 @@ class PaperList extends React.Component {
 
     return (
       <div className="paper-list">
+        {hiddenPreprints}
         {pristine && this.renderSelectedModule(this.props.data.length)}
         {years.map(function(year) {
           return (

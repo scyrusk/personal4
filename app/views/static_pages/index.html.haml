@@ -157,7 +157,7 @@
 %section#publications
   = render "static_pages/section_label", section: "publications", show_name: false
   %h2.section-title Publications
-  %p.section-subtitle= "#{@papers_count} papers, #{@papers_year_range}."
+  %p.section-subtitle= "#{@papers_count} papers#{" and #{@preprints_count} #{'pre-print'.pluralize(@preprints_count)}" if @preprints_count.positive?}, #{@papers_year_range}."
   = react_component('TabContainer',
       papersUrl: papers_url(format: :json),
       paperAssets: @paperAssetMap,
@@ -196,7 +196,7 @@
             = link_to "DOI", "https://doi.org/#{paper.doi}", target: "_blank", rel: "noopener noreferrer"
     %nav.noscript-pagination{"aria-label" => "Publications pages (no JavaScript)"}
       %span= "Page #{@noscript_page} of #{@noscript_total_pages}."
-      -# Page anchors carry the active ?tag/?sort/?q/?year/?status filters through
+      -# Page anchors carry the active ?tag/?sort/?q/?year/?status/?preprints filters through
       - noscript_page_href = ->(p) { "/publications?#{@noscript_link_params.merge(page: p).to_query}" }
       - if @noscript_page > 1
         = link_to "← Previous page", noscript_page_href.call(@noscript_page - 1), "data-turbolinks" => "false"
