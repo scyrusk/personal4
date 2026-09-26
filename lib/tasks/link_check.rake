@@ -32,10 +32,11 @@ namespace :links do
       if paper.pdf.present? && paper.pdf.path.present?
         path = Rails.root.join('public', paper.pdf.path)
         failures << "paper #{paper.id} (#{paper.title}): hosted PDF missing at #{path}" unless File.exist?(path)
-      elsif paper.html_paper_url.blank?
-        failures << "paper #{paper.id} (#{paper.title}): no hosted PDF and no publisher link"
+      elsif paper.html_paper_url.blank? && paper.arxiv_url.blank?
+        failures << "paper #{paper.id} (#{paper.title}): no hosted PDF, publisher link, or arXiv link"
       end
       check_url.call(paper.html_paper_url, "paper #{paper.id} publisher")
+      check_url.call(paper.arxiv_url, "paper #{paper.id} arXiv")
       check_url.call(paper.project_page_url, "paper #{paper.id} project page")
       check_url.call(paper.video_url, "paper #{paper.id} video")
       check_url.call("https://doi.org/#{paper.doi}", "paper #{paper.id} DOI") if paper.respond_to?(:doi) && paper.doi.present?

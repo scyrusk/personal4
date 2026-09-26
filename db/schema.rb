@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_07_04_000000) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_25_120100) do
   create_table "analytics_events", force: :cascade do |t|
     t.string "event_name", default: "pageview", null: false
     t.string "visitor_token", null: false
@@ -93,6 +93,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_07_04_000000) do
     t.string "doi"
     t.text "bibtex"
     t.boolean "featured", default: false, null: false
+    t.integer "status", default: 0, null: false
+    t.string "arxiv_url"
   end
 
   create_table "travels", force: :cascade do |t|

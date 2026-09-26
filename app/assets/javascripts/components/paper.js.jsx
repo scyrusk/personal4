@@ -196,10 +196,45 @@ function sortByDownloadsThenRecency(a, b) {
   return b.id - a.id;
 }
 
-function getVisiblePapers(papers, query, tag, sort, year) {
+// Publication status (Paper#status): every card carries a banner naming it,
+// and the Pre-prints chip / Status select filter on it.
+var PAPER_STATUSES = {
+  preprint:     { label: 'Pre-print',    plural: 'Pre-prints',   note: 'Posted before it appears at its venue', noVenueNote: 'Not yet at a venue' },
+  camera_ready: { label: 'Camera-ready', plural: 'Camera-ready', note: null },
+  published:    { label: 'Published',    plural: 'Published',    note: null }
+};
+var PAPER_STATUS_ORDER = ['preprint', 'camera_ready', 'published'];
+
+function paperStatus(paper) {
+  return PAPER_STATUSES[paper.status] ? paper.status : 'published';
+}
+
+function paperMatchesStatus(paper, status) {
+  return !status || paperStatus(paper) === status;
+}
+
+function PaperStatusIcon(props) {
+  var common = {
+    className: 'pub-status-icon', width: 12, height: 12, viewBox: '0 0 24 24', fill: 'none',
+    stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': 'true'
+  };
+  if (props.status === 'preprint') {
+    // hourglass — waiting on the venue
+    return <svg {...common}><path d="M6 2h12M6 22h12M7 2v4a5 5 0 0 0 10 0V2M7 22v-4a5 5 0 0 1 10 0v4"/></svg>;
+  }
+  if (props.status === 'camera_ready') {
+    // double check — accepted and final
+    return <svg {...common}><path d="M2 12.5l4.5 4.5L15 8.5M10.5 16l1 1L22 6.5"/></svg>;
+  }
+  // open book — in the proceedings
+  return <svg {...common}><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2zM22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>;
+}
+
+function getVisiblePapers(papers, query, tag, sort, year, status) {
   var base = papers.filter(function(paper) {
     return paperMatchesQuery(paper, query) &&
            paperMatchesTag(paper, tag) &&
+           paperMatchesStatus(paper, status) &&
            (!year || paper.year === year);
   });
 
@@ -223,7 +258,7 @@ function paperMatchesQuery(paper, ft) {
   var re = new RegExp(escapeRegExp(q), 'i');
   return (
     re.test(paper.title) ||
-    re.test(paper.venue) ||
+    re.test(paper.venue || (paper.arxiv_url ? 'arXiv' : '')) ||
     paper.year.toString().indexOf(q) >= 0 ||
     paper.authors.some(function(a) { return re.test(a.name); }) ||
     paper.awards.some(function(a) { return re.test(a.body); }) ||
@@ -281,7 +316,8 @@ class PaperContainer extends React.Component {
     var filtersChanged = prevProps.query !== this.props.query ||
                          prevProps.activeTag !== this.props.activeTag ||
                          prevProps.sort !== this.props.sort ||
-                         prevProps.year !== this.props.year;
+                         prevProps.year !== this.props.year ||
+                         prevProps.status !== this.props.status;
     var pagingChanged = prevProps.page !== this.props.page ||
                         prevProps.showAll !== this.props.showAll;
     var changed = filtersChanged || pagingChanged ||
@@ -324,7 +360,7 @@ class PaperContainer extends React.Component {
     var query = (this.props.query || "").toLowerCase().trim();
 
     // Result range reflects the current query/filters.
-    var filteredTotal = getVisiblePapers(data, query, this.props.activeTag, this.props.sort, this.props.year).length;
+    var filteredTotal = getVisiblePapers(data, query, this.props.activeTag, this.props.sort, this.props.year, this.props.status).length;
     var start, rendered;
     if (this.props.showAll) {
       start = 1;
@@ -343,6 +379,9 @@ class PaperContainer extends React.Component {
       counts['All'] = data.length;
       counts[AWARD_TAG] = getVisiblePapers(data, '', AWARD_TAG, 'newest', null).length;
       counts['Most downloaded'] = getVisiblePapers(data, '', null, 'downloads', null).length;
+      PAPER_STATUS_ORDER.forEach(function(st) {
+        counts['status:' + st] = data.filter(function(p) { return paperStatus(p) === st; }).length;
+      });
       this.props.onChipCounts(counts);
     }
   }
@@ -363,12 +402,14 @@ class PaperContainer extends React.Component {
         activeTag={this.props.activeTag || null}
         sort={this.props.sort || 'newest'}
         year={this.props.year || null}
+        status={this.props.status || null}
         loading={this.state.loading}
         loadError={this.state.loadError}
         onRetry={this.handleRetry}
         onResetFilters={this.props.onResetFilters}
         onTagToggle={this.props.onTagToggle}
         onYearChange={this.props.onYearChange}
+        onStatusChange={this.props.onStatusChange}
         page={this.props.page || 1}
         showAll={!!this.props.showAll}
         pageSize={this.pageSize()}
@@ -533,7 +574,9 @@ class PaperList extends React.Component {
     var query = this.props.query || '';
     var tag = this.props.activeTag;
     var year = this.props.year;
+    var status = this.props.status;
     var constraints = [];
+    if (status) constraints.push({ label: PAPER_STATUSES[status].plural, remove: function() { if (self.props.onStatusChange) self.props.onStatusChange(null); } });
     if (tag) constraints.push({ label: tag, remove: function() { if (self.props.onTagToggle) self.props.onTagToggle(tag); } });
     if (year) constraints.push({ label: String(year), remove: function() { if (self.props.onYearChange) self.props.onYearChange(null); } });
     if (query) constraints.push({ label: '“' + query + '”', remove: function() {
@@ -557,11 +600,11 @@ class PaperList extends React.Component {
     var fallbackLabel = null;
     if (constraints.length >= 1) {
       if (year) {
-        fallback = getVisiblePapers(this.props.data, query.toLowerCase().trim(), tag, 'newest', null);
-        fallbackLabel = tag ? tag.toLowerCase() : null;
-      } else if (query && tag) {
-        fallback = getVisiblePapers(this.props.data, '', tag, 'newest', null);
-        fallbackLabel = tag.toLowerCase();
+        fallback = getVisiblePapers(this.props.data, query.toLowerCase().trim(), tag, 'newest', null, status);
+        fallbackLabel = [status ? PAPER_STATUSES[status].label.toLowerCase() : null, tag ? tag.toLowerCase() : null].filter(Boolean).join(' ') || null;
+      } else if (query && (tag || status)) {
+        fallback = getVisiblePapers(this.props.data, '', tag, 'newest', null, status);
+        fallbackLabel = [status ? PAPER_STATUSES[status].label.toLowerCase() : null, tag ? tag.toLowerCase() : null].filter(Boolean).join(' ');
       } else if (tag) {
         fallback = [];
       } else if (query) {
@@ -736,6 +779,7 @@ class PaperList extends React.Component {
     var tag = this.props.activeTag;
     var sort = this.props.sort || 'newest';
     var yearFilter = this.props.year;
+    var statusFilter = this.props.status;
     var assets = this.props.assets;
     var visibleCount = this.props.visibleCount || 50;
     var self = this;
@@ -765,7 +809,7 @@ class PaperList extends React.Component {
       );
     }
 
-    var filtered = getVisiblePapers(this.props.data, query, tag, sort, yearFilter);
+    var filtered = getVisiblePapers(this.props.data, query, tag, sort, yearFilter, statusFilter);
     var total = filtered.length;
     var pageSize = this.props.pageSize || 25;
     var totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -803,7 +847,7 @@ class PaperList extends React.Component {
 
     // SF-12: pristine view opens with the Selected publications module; the full
     // year-grouped catalog always renders below it.
-    var pristine = !query && !tag && !yearFilter && sort === 'newest' && page === 1;
+    var pristine = !query && !tag && !yearFilter && !statusFilter && sort === 'newest' && page === 1;
 
     // "Most downloaded" — flat top-10 list, no year groups
     if (sort === 'downloads') {
@@ -865,6 +909,15 @@ function formatNameInitials(fullName) {
   return last + ', ' + initials;
 }
 
+// Pre-prints may not have a venue yet; they cite as arXiv pre-prints instead.
+function citeVenue(paper) {
+  return paper.venue || (paper.arxiv_url ? 'arXiv' : '');
+}
+
+function isArxivOnly(paper) {
+  return !paper.venue && !!paper.arxiv_url;
+}
+
 function buildMLA(paper) {
   var names = paper.authors.map(function(a) { return a.name; });
   var authorStr;
@@ -875,7 +928,10 @@ function buildMLA(paper) {
   } else {
     authorStr = formatNameLastFirst(names[0]) + ', et al';
   }
-  return authorStr + '. "' + paper.title + '." ' + paper.venue + ', ' + paper.year + '.';
+  if (isArxivOnly(paper)) {
+    return authorStr + '. "' + paper.title + '." arXiv, ' + paper.year + ', ' + paper.arxiv_url.replace(/^https?:\/\//, '') + '.';
+  }
+  return authorStr + '. "' + paper.title + '." ' + [citeVenue(paper), paper.year].filter(Boolean).join(', ') + '.';
 }
 
 function buildAPA(paper) {
@@ -889,7 +945,10 @@ function buildAPA(paper) {
   } else {
     authorStr = formatted.slice(0, 6).join(', ') + ', ... ' + formatted[formatted.length - 1];
   }
-  return authorStr + ' (' + paper.year + '). ' + paper.title + '. ' + paper.venue + '.';
+  if (isArxivOnly(paper)) {
+    return authorStr + ' (' + paper.year + '). ' + paper.title + ' [Preprint]. arXiv. ' + paper.arxiv_url;
+  }
+  return authorStr + ' (' + paper.year + '). ' + paper.title + '.' + (paper.venue ? ' ' + paper.venue + '.' : '');
 }
 
 // SF-22: singleton in-page toast confirming the click registered and where the
@@ -944,25 +1003,36 @@ function bibtexKey(paper) {
 
 function buildBibTeX(paper) {
   var names = paper.authors.map(function(a) { return a.name; });
+  var fields = [
+    ['author', names.join(' and ')],
+    ['title', '{' + paper.title + '}']
+  ];
+  if (paper.venue) {
+    fields.push(['booktitle', paper.venue]);
+  } else if (paper.arxiv_id) {
+    fields.push(['eprint', paper.arxiv_id], ['archivePrefix', 'arXiv']);
+  }
+  fields.push(['year', paper.year]);
+  if (!paper.venue && paper.arxiv_url) fields.push(['url', paper.arxiv_url]);
+  var width = Math.max.apply(null, fields.map(function(f) { return f[0].length; }));
+  var body = fields.map(function(f) {
+    return '  ' + f[0] + new Array(width - f[0].length + 1).join(' ') + ' = {' + f[1] + '}';
+  }).join(',\n');
   return toAsciiBibtex(
-    '@inproceedings{' + bibtexKey(paper) + ',\n' +
-    '  author    = {' + names.join(' and ') + '},\n' +
-    '  title     = {{' + paper.title + '}},\n' +
-    '  booktitle = {' + paper.venue + '},\n' +
-    '  year      = {' + paper.year + '}\n' +
-    '}'
+    '@' + (paper.venue ? 'inproceedings' : 'misc') + '{' + bibtexKey(paper) + ',\n' + body + '\n}'
   );
 }
 
 function buildRIS(paper) {
-  var lines = ['TY  - CONF'];
+  var lines = [paper.venue ? 'TY  - CONF' : 'TY  - UNPB'];
   paper.authors.forEach(function(a) {
     lines.push('AU  - ' + formatNameLastFirst(a.name));
   });
   lines.push('TI  - ' + paper.title);
-  lines.push('T2  - ' + paper.venue);
+  if (citeVenue(paper)) lines.push('T2  - ' + citeVenue(paper));
   lines.push('PY  - ' + paper.year);
   if (paper.doi) lines.push('DO  - ' + paper.doi);
+  if (paper.arxiv_url) lines.push('UR  - ' + paper.arxiv_url);
   lines.push('ER  - ');
   return lines.join('\n');
 }
@@ -1055,42 +1125,24 @@ class PaperCard extends React.Component {
     }.bind(this));
   }
 
-  // SF-12: the tap acknowledges immediately; SF-04: hosted PDFs are probed first so
-  // a dead file surfaces an in-card alert with alternates instead of failing silently
-  handlePdfClick(e) {
+  // SF-12: the tap acknowledges immediately. The link itself (target="_blank")
+  // opens the PDF — exactly one new tab, never the current one. SF-04: hosted
+  // PDFs are probed alongside so a dead file also surfaces an in-card alert
+  // with alternates (the new tab lands on the branded recovery page).
+  handlePdfClick() {
     var paper = this.props.paper;
     gaSendEvent('Publications', 'PDFDownload', paper.id);
     var href = paper.html_paper_url || ("/papers/" + paper.id + "/serve");
-    // SF-22: the in-page toast fires on every View PDF click, before any probe
+    // SF-22: the in-page toast fires on every View PDF click
     showPdfToast('Opening PDF in a new tab — it may take a moment');
-    var navigate = function() {
-      var win = window.open(href, '_blank', 'noopener');
-      if (!win) window.location.href = href;
-    };
-    if (href.charAt(0) === '/' && typeof fetch === 'function' && e && e.preventDefault) {
-      e.preventDefault();
-      this.setState({ pdfOpening: true, pdfError: false });
+    // External publisher links can't be probed cross-origin
+    if (href.charAt(0) === '/' && typeof fetch === 'function') {
       var self = this;
       fetch(href, { method: 'HEAD' }).then(function(res) {
-        self.setState({ pdfOpening: false });
-        if (res.ok) navigate();
-        else self.setState({ pdfError: true });
-      }).catch(function() {
-        // Probe itself failed (offline/proxy) — fall back to normal navigation,
-        // where a missing file still lands on the branded recovery page
-        self.setState({ pdfOpening: false });
-        navigate();
-      });
-      return;
+        if (!res.ok) self.setState({ pdfError: true, pdfOpening: false });
+      }).catch(function() {});
     }
-    // External publisher links can't be probed cross-origin
-    if (sameTab && e && e.preventDefault) {
-      e.preventDefault();
-      this.setState({ pdfOpening: true });
-      navigate();
-      return;
-    }
-    this.setState({ pdfOpening: true });
+    this.setState({ pdfOpening: true, pdfError: false });
     if (this._pdfTimer) clearTimeout(this._pdfTimer);
     this._pdfTimer = setTimeout(function() {
       this.setState({ pdfOpening: false });
@@ -1220,11 +1272,15 @@ class PaperCard extends React.Component {
     // best external source so every card keeps a working primary link (SF-04)
     var pdfLink = paper.html_paper_url || ("/papers/" + paper.id + "/serve");
     var hasPDF = paper.pdf || paper.html_paper_url;
-    var fallbackHref = paper.doi ? ("https://doi.org/" + paper.doi) : scholarUrl(paper);
-    var fallbackLabel = paper.doi ? 'Publisher page' : 'Find on Google Scholar';
+    // Pre-prints can link straight to arXiv instead of hosting a PDF
+    var fallbackHref = paper.arxiv_url || (paper.doi ? ("https://doi.org/" + paper.doi) : scholarUrl(paper));
+    var fallbackLabel = paper.arxiv_url ? 'View on arXiv' : (paper.doi ? 'Publisher page' : 'Find on Google Scholar');
 
     // Summary link (tweet thread)
     var summaryLink = paper.tweets;
+
+    var status = paperStatus(paper);
+    var statusInfo = PAPER_STATUSES[status];
 
     return (
       <div className={
@@ -1232,6 +1288,7 @@ class PaperCard extends React.Component {
         (flipped ? ' is-flipped' : '') +
         (isFlippable ? ' is-flippable' : '') +
         (this.props.featured ? ' is-featured' : '') +
+        ' is-status-' + status.replace('_', '-') +
         ((moreOpen || citeOpen) ? ' has-overlay-open' : '')
       } onClick={this.handleCardClick}>
         <div className="pub-card-flipper">
@@ -1247,6 +1304,15 @@ class PaperCard extends React.Component {
 
         {/* Front face */}
         <div className="pub-card-face pub-card-front">
+        {/* Status banner: where the paper is in its life cycle, plus its #N */}
+        <div className="pub-status-banner">
+          <span className="pub-status-label">
+            <PaperStatusIcon status={status} />
+            {statusInfo.label}
+          </span>
+          {statusInfo.note && <span className="pub-status-note">{(!paper.venue && statusInfo.noVenueNote) || statusInfo.note}</span>}
+          {this.props.num != null && <span className="pub-status-num">#{this.props.num}</span>}
+        </div>
         {this.props.featured && (
           <div className="pub-featured-badge">Featured</div>
         )}
@@ -1265,6 +1331,8 @@ class PaperCard extends React.Component {
           )}
 
           <div className="pub-content">
+            {/* Reserves the floating takeaway pill's corner so the first line wraps around it */}
+            {isFlippable && <span className="pub-flip-cue-spacer" aria-hidden="true"></span>}
             {allAwards.map(function(award) {
               return (
                 <div key={award.id || award.body} className="pub-award">
@@ -1313,14 +1381,18 @@ class PaperCard extends React.Component {
             </div>
 
             <div className="pub-venue">
-              <button
-                type="button"
-                className="pub-venue-link"
-                onClick={() => this.setFilter(paper.venue)}
-                title={"Filter by venue"}
-                aria-label={"Filter by venue " + paper.venue}
-              >{paper.venue}</button>
-              {' · '}
+              {paper.venue ? (
+                <button
+                  type="button"
+                  className="pub-venue-link"
+                  onClick={() => this.setFilter(paper.venue)}
+                  title={"Filter by venue"}
+                  aria-label={"Filter by venue " + paper.venue}
+                >{paper.venue}</button>
+              ) : (
+                paper.arxiv_url ? <span>arXiv</span> : null
+              )}
+              {(paper.venue || paper.arxiv_url) ? ' · ' : ''}
               <button
                 type="button"
                 className="pub-venue-link"
@@ -1331,9 +1403,9 @@ class PaperCard extends React.Component {
             </div>
 
             {/* SF-28: compact expert quick-links; SF-32: #N anchors the card in the
-                current view; SF-31: BibTeX is one click from the card surface */}
+                current view (shown in the status banner); SF-31: BibTeX is one click
+                from the card surface */}
             <div className="pub-quick-links">
-              {this.props.num != null && <span className="pub-num">#{this.props.num}</span>}
               {hasPDF && (
                 <a
                   className="pub-quick-link"
@@ -1342,6 +1414,16 @@ class PaperCard extends React.Component {
                   rel="noopener noreferrer"
                   onClick={this.handlePdfClick}
                 >PDF</a>
+              )}
+              {paper.arxiv_url && (
+                <a
+                  className="pub-quick-link"
+                  href={paper.arxiv_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={paper.title + " on arXiv (opens in new tab)"}
+                  onClick={function() { gaSendEvent('Publications', 'ArXiv', paper.id); }}
+                >arXiv</a>
               )}
               <button
                 type="button"
@@ -1363,7 +1445,7 @@ class PaperCard extends React.Component {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={"Find " + paper.title + " on Google Scholar (opens in new tab)"}
-              >Google Scholar</a>
+              ><span className="pub-quick-link-long">Google </span>Scholar</a>
             </div>
 
             {allTags.length > 0 && (
@@ -1421,9 +1503,15 @@ class PaperCard extends React.Component {
                   href={fallbackHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={fallbackLabel + ' for ' + paper.title + ' (opens in new tab)'}
+                  aria-label={fallbackLabel + ': ' + paper.title + ' (opens in new tab)'}
+                  onClick={paper.arxiv_url ? function() { gaSendEvent('Publications', 'ArXiv', paper.id); } : undefined}
                 >
-                  {fallbackLabel}
+                  {paper.arxiv_url && (
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M9 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5L9 1zm0 1.5L12.5 5H9V2.5zM5.5 9.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1zm0-2h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1zm0 4h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1 0-1z"/>
+                    </svg>
+                  )}
+                  {paper.arxiv_url ? ' ' : ''}{fallbackLabel}
                   <span className="pub-ext-cue" aria-hidden="true">↗</span>
                   <span className="sr-only">(opens in new tab)</span>
                 </a>
@@ -1490,6 +1578,12 @@ class PaperCard extends React.Component {
                       'Find on Google Scholar',
                       'M6.5 1a5.5 5.5 0 1 0 3.45 9.79l3.63 3.62a.75.75 0 1 0 1.06-1.06l-3.62-3.63A5.5 5.5 0 0 0 6.5 1zM2.5 6.5a4 4 0 1 1 8 0 4 4 0 0 1-8 0z'
                     )}
+                    {paper.arxiv_url && this.renderMoreAction(
+                      paper.arxiv_url,
+                      'arXiv pre-print',
+                      'M9 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5L9 1zm0 1.5L12.5 5H9V2.5z',
+                      'ArXiv'
+                    )}
                     {paper.doi && this.renderMoreAction(
                       "https://doi.org/" + paper.doi,
                       'DOI (publisher page)',
@@ -1555,6 +1649,9 @@ class PaperCard extends React.Component {
                   <span aria-hidden="true">⚠ </span>PDF unavailable right now — alternate sources:
                 </span>
                 <div className="pub-pdf-alert-actions">
+                  {paper.arxiv_url && (
+                    <a href={paper.arxiv_url} target="_blank" rel="noopener noreferrer">arXiv</a>
+                  )}
                   {paper.doi && (
                     <a href={"https://doi.org/" + paper.doi} target="_blank" rel="noopener noreferrer">DOI / publisher</a>
                   )}
@@ -1689,11 +1786,14 @@ class Paper extends React.Component {
       tags: this.props.tags || "",
       pdf: this.props.pdf,
       html_paper_url: this.props.html_paper_url,
+      arxiv_url: this.props.arxiv_url,
+      arxiv_id: this.props.arxiv_id,
       doi: this.props.doi,
       bibtex: this.props.bibtex,
       summary: this.props.summary,
       slides: this.props.slides,
-      video_url: this.props.video_url
+      video_url: this.props.video_url,
+      status: this.props.status
     };
     return <PaperCard paper={paper} thumbnail={this.props.thumbnail} assets={this.props.assets || {}} />;
   }
@@ -1710,13 +1810,17 @@ class PaperForm extends React.Component {
       year:             p.year != null ? String(p.year) : '',
       authors:          (p.authors || []).map(function(a) { return a.name; }).join(', '),
       awards:           (p.awards || []).map(function(a) { return a.body; }).join(', '),
-      type:             p.type != null ? p.type : '',
+      // Default to the first option ('Conference'): the select renders it as
+      // chosen, so the submitted value must match or backing_type saves as nil.
+      type:             p.type != null ? p.type : '0',
+      status:           p.status || 'published',
       thumbnail:        null,
       pdf:              null,
       downloads:        p.downloads != null ? String(p.downloads) : '',
       slides:           null,
       html_slides_url:  p.html_slides_url || '',
       html_paper_url:   p.html_paper_url || '',
+      arxiv_url:        p.arxiv_url || '',
       doi:              p.doi || '',
       bibtex:           p.bibtex || '',
       presentation_url: p.presentation_url || '',
@@ -1743,38 +1847,47 @@ class PaperForm extends React.Component {
   _handleSubmit(e) {
     e.preventDefault();
     var s = this.state;
-    var paper = {
-      paper: {
-        title:            s.title,
-        venue:            s.venue,
-        year:             s.year,
-        self_order:       s.selfOrder,
-        authors:          s.authors,
-        awards:           s.awards,
-        backing_type:     s.type,
-        thumbnail:        s.thumbnail,
-        pdf:              s.pdf,
-        downloads:        s.downloads,
-        slides:           s.slides,
-        html_slides_url:  s.html_slides_url,
-        html_paper_url:   s.html_paper_url,
-        doi:              s.doi,
-        bibtex:           s.bibtex,
-        presentation_url: s.presentation_url,
-        project_page_url: s.project_page_url,
-        video_url:        s.video_url,
-        summary:          s.summary,
-        tweets:           s.tweets,
-        tags:             s.tags,
-        featured:         s.featured
-      }
+    var fields = {
+      title:            s.title,
+      venue:            s.venue,
+      year:             s.year,
+      self_order:       s.selfOrder,
+      authors:          s.authors,
+      awards:           s.awards,
+      backing_type:     s.type,
+      status:           s.status,
+      downloads:        s.downloads,
+      html_slides_url:  s.html_slides_url,
+      html_paper_url:   s.html_paper_url,
+      arxiv_url:        s.arxiv_url,
+      doi:              s.doi,
+      bibtex:           s.bibtex,
+      presentation_url: s.presentation_url,
+      project_page_url: s.project_page_url,
+      video_url:        s.video_url,
+      summary:          s.summary,
+      tweets:           s.tweets,
+      tags:             s.tags,
+      featured:         s.featured
     };
+
+    // Multipart, with files as real file parts. Base64-in-urlencoded-body
+    // uploads exceed rack's 4MB parse cap (rack >= 2.2.14) and 400.
+    var data = new FormData();
+    Object.keys(fields).forEach(function(key) {
+      data.append('paper[' + key + ']', fields[key]);
+    });
+    [['thumbnail', s.thumbnail], ['pdf', s.pdf], ['slides', s.slides]].forEach(function(entry) {
+      if (entry[1]) data.append('paper[' + entry[0] + ']', entry[1]);
+    });
 
     $.ajax({
       url: this.props.url,
       dataType: 'json',
       type: this.props.action,
-      data: paper,
+      data: data,
+      processData: false,
+      contentType: false,
       success: function(data) { window.location.href = "/"; }.bind(this),
       error: function(xhr, status, err) { console.error(this.props.url, status, err.toString()); }.bind(this)
     });
@@ -1790,12 +1903,21 @@ class PaperForm extends React.Component {
     ];
   }
 
+  _statusOptions() {
+    return PAPER_STATUS_ORDER.map(function(st) {
+      return { value: st, rendered: PAPER_STATUSES[st].label };
+    });
+  }
+
   render() {
     var s = this.state;
     return (
       <form className="paper-form form-horizontal" onSubmit={this._handleSubmit} encType="multipart/form-data">
         <InputField name="Title"         type="text"   value={s.title}            onChange={this._set('title')} />
         <InputField name="Venue"         type="text"   value={s.venue}            onChange={this._set('venue')} />
+        {/* Pre-print → paper: switch Status to Published and fill in Venue */}
+        <SelectField name="Status" options={this._statusOptions()} value={s.status} onChange={this._set('status')} />
+        <InputField name="arXiv URL"     type="text"   value={s.arxiv_url}        onChange={this._set('arxiv_url')} />
         <InputField name="Self Order"    type="number" value={s.selfOrder}        onChange={this._set('selfOrder')} />
         <InputField name="Year"          type="number" value={s.year}             onChange={this._set('year')} />
         <InputField name="Authors"       type="text"   value={s.authors}          onChange={this._set('authors')} />

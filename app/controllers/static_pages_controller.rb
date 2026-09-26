@@ -58,6 +58,11 @@ class StaticPagesController < ApplicationController
         @noscript_filters << (label || params[:tag].tr("-", " "))
       end
     end
+    noscript_status = params[:status].to_s.tr("-", "_")
+    if Paper.statuses.key?(noscript_status)
+      noscript_papers = noscript_papers.select { |p| p.status == noscript_status }
+      @noscript_filters << Paper::STATUS_LABELS[noscript_status][:many]
+    end
     if params[:year].to_i.positive?
       noscript_papers = noscript_papers.select { |p| p.year == params[:year].to_i }
       @noscript_filters << params[:year].to_i.to_s
@@ -76,7 +81,7 @@ class StaticPagesController < ApplicationController
     end
     @noscript_filtered_count = noscript_papers.length
     @noscript_link_params = {
-      tag: params[:tag], sort: params[:sort], q: params[:q], year: params[:year]
+      tag: params[:tag], sort: params[:sort], q: params[:q], year: params[:year], status: params[:status]
     }.reject { |_k, v| v.blank? }
     @noscript_page_size = 25
     @noscript_total_pages = [(@noscript_filtered_count.to_f / @noscript_page_size).ceil, 1].max
@@ -87,9 +92,10 @@ class StaticPagesController < ApplicationController
     @publication_views = [
       { label: "Award-winning",       href: "/publications?tag=award-winning",       meta: "?tag=award-winning" },
       { label: "Most downloaded",     href: "/publications?sort=downloads",          meta: "?sort=downloads" },
+      ({ label: "Pre-prints",         href: "/publications?status=preprint",         meta: "?status=preprint" } if Paper.preprint.exists?),
       { label: "Social Cybersecurity", href: "/publications?tag=social-cybersecurity", meta: "?tag=social-cyber" },
       { label: "By year",             href: "/#{Paper.maximum(:year)}",              meta: "/#{Paper.maximum(:year)}" }
-    ]
+    ].compact
 
     # SF-11: research directions as structured data (rendered as chunked, scannable theme rows)
     @research_directions = [

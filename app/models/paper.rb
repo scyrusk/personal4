@@ -39,6 +39,37 @@ class Paper < ActiveRecord::Base
     :WORKSHOP
   )
 
+  # Where a paper is in its publication life cycle; shown as the banner on
+  # each publication card and filterable via the Pre-prints chip / ?status=.
+  enum :status, { published: 0, camera_ready: 1, preprint: 2 }
+
+  # Display labels, mirroring PAPER_STATUSES in paper.js.jsx
+  STATUS_LABELS = {
+    "preprint"     => { one: "Pre-print",    many: "Pre-prints" },
+    "camera_ready" => { one: "Camera-ready", many: "Camera-ready" },
+    "published"    => { one: "Published",    many: "Published" }
+  }.freeze
+
+  def status_label
+    STATUS_LABELS[status][:one]
+  end
+
+  # New-style (2501.01234v2) and old-style (cs.HC/0601001) arXiv identifiers
+  ARXIV_ID = %r{(\d{4}\.\d{4,5}(?:v\d+)?|[a-z-]+(?:\.[A-Z]{2})?/\d{7}(?:v\d+)?)}
+
+  # Accepts a bare arXiv id or any arxiv.org abs/pdf URL and stores the
+  # canonical abstract-page URL; anything else is kept as entered.
+  def arxiv_url=(value)
+    value = value.to_s.strip
+    id = value[%r{\A#{ARXIV_ID}\z}, 1] ||
+         value[%r{\Ahttps?://(?:www\.)?arxiv\.org/(?:abs|pdf)/#{ARXIV_ID}(?:\.pdf)?/?\z}, 1]
+    super(id ? "https://arxiv.org/abs/#{id}" : value.presence)
+  end
+
+  def arxiv_id
+    arxiv_url.to_s[%r{\Ahttps://arxiv\.org/abs/#{ARXIV_ID}\z}, 1]
+  end
+
   def authors
     self.paper_author_links.sort { |a,b| a.author_order - b.author_order }.map do |pal|
       pal.author
@@ -53,6 +84,12 @@ class Paper < ActiveRecord::Base
       )
       pal.author_order = index
       pal.save
+    end
+
+    # The form submits the complete author list, so anyone not in it was removed.
+    kept_ids = auths.map(&:id)
+    self.paper_author_links.reload.each do |pal|
+      pal.destroy unless kept_ids.include?(pal.author_id)
     end
   end
 
@@ -92,7 +129,7 @@ class Paper < ActiveRecord::Base
       auth_str = authors[0..-2].join(", ") + " and " + authors[-1]
     end
 
-    [auth_str, self.title, self.venue, self.year.to_s].join(". ")
+    [auth_str, self.title, self.venue.presence || ("arXiv" if arxiv_url.present?), self.year.to_s].compact.join(". ")
   end
 
   # SF-18: srcset advertising only the responsive variants that actually exist on
@@ -125,6 +162,7 @@ class Paper < ActiveRecord::Base
       venue: self.venue,
       year: self.year,
       featured: self.featured,
+      status: self.status,
       downloads: self.downloads,
       summary: self.summary,
       likes: self.likes,
@@ -133,6 +171,8 @@ class Paper < ActiveRecord::Base
       slides: self.slides_url,
       html_slides_url: self.html_slides_url,
       html_paper_url: self.html_paper_url,
+      arxiv_url: self.arxiv_url,
+      arxiv_id: self.arxiv_id,
       doi: self.doi,
       bibtex: self.bibtex,
       thumbnail: self.thumbnail_url,

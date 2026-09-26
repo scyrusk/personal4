@@ -30,20 +30,21 @@ class PapersController < ApplicationController
   # POST /papers.json
   def create
     params = paper_params
-    authors = params.delete(:authors).split(",").map do |aname|
-      Author.find_or_create_by(name: aname.strip)
-    end
-
-    awards = params.delete(:awards).split(",").map do |abody|
-      Award.find_or_create_by(body: abody.strip, year: paper_params[:year])
-    end
+    author_names = params.delete(:authors).to_s
+    award_bodies = params.delete(:awards).to_s
 
     @paper = Paper.new(params)
-    @paper.authors = authors
-    @paper.awards = awards
 
     respond_to do |format|
       if @paper.save
+        # Authors must be linked after save: Paper#authors= writes
+        # PaperAuthorLink rows keyed on self.id, which is nil pre-save.
+        @paper.authors = author_names.split(",").map do |aname|
+          Author.find_or_create_by(name: aname.strip)
+        end
+        @paper.awards = award_bodies.split(",").map do |abody|
+          Award.find_or_create_by(body: abody.strip, year: params[:year])
+        end
         format.js { render json: @paper }
       else
         format.js { render json: { error: @paper.errors } }
@@ -133,7 +134,7 @@ class PapersController < ApplicationController
 
     #Never trust parameters from the scary internet, only allow the white list through.
     def paper_params
-      params.require(:paper).permit(
+      permitted = params.require(:paper).permit(
           :title,
           :venue,
           :year,
@@ -142,12 +143,14 @@ class PapersController < ApplicationController
           :awards,
           :backing_type,
           :featured,
+          :status,
           :thumbnail,
           :downloads,
           :pdf,
           :slides,
           :html_slides_url,
           :html_paper_url,
+          :arxiv_url,
           :doi,
           :bibtex,
           :summary,
@@ -157,5 +160,8 @@ class PapersController < ApplicationController
           :tags,
           :project_page_url
         )
+      # Rails 7.0 enums raise on unknown values; drop them instead of 500ing
+      permitted.delete(:status) unless Paper.statuses.key?(permitted[:status].to_s)
+      permitted
     end
 end

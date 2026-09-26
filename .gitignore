@@ -22,3 +22,5 @@
 
 .ui-design/*
 /.DS_Store
+.env
+voice.md

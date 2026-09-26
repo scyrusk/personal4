@@ -38,13 +38,9 @@ class FileField extends React.Component {
   }
 
   handleFile(e) {
-    var self = this;
-    var reader = new FileReader();
-    var file = e.target.files[0];
-    reader.onload = function(upload) {
-      if (self.props.onChange) self.props.onChange(upload.target.result);
-    };
-    reader.readAsDataURL(file);
+    // Hand back the File itself; the form submits it as a multipart part.
+    // (Base64 data URLs in a urlencoded body trip rack's 4MB body cap.)
+    if (this.props.onChange) this.props.onChange(e.target.files[0] || null);
   }
 
   render() {

@@ -11,6 +11,13 @@ var AWARD_FILTER = 'Award-winning';
 
 var PAGE_SIZE = 25;
 
+// Publication status ↔ URL slug: camera_ready ↔ ?status=camera-ready
+function statusToSlug(status) { return status ? status.replace(/_/g, '-') : null; }
+function slugToStatus(slug) {
+  var status = (slug || '').replace(/-/g, '_');
+  return PAPER_STATUSES[status] ? status : null;
+}
+
 class TabContainer extends React.Component {
   constructor(props) {
     super(props);
@@ -21,6 +28,7 @@ class TabContainer extends React.Component {
       tag: initialState.tag,
       sort: initialState.sort,
       year: initialState.year,
+      status: initialState.status,
       page: initialState.page,
       showAll: initialState.showAll,
       pendingTagSlug: initialState.pendingTagSlug,
@@ -48,6 +56,7 @@ class TabContainer extends React.Component {
     this.handleTagToggle = this.handleTagToggle.bind(this);
     this.handleSortToggle = this.handleSortToggle.bind(this);
     this.handleYearChange = this.handleYearChange.bind(this);
+    this.handleStatusChange = this.handleStatusChange.bind(this);
     this.handlePageChange = this.handlePageChange.bind(this);
     this.handleShowAllToggle = this.handleShowAllToggle.bind(this);
     this.handleYears = this.handleYears.bind(this);
@@ -77,6 +86,7 @@ class TabContainer extends React.Component {
       var sort = params.get('sort') === 'downloads' ? 'downloads' : 'newest';
       var year = null;
       if (/^20\d\d$/.test(params.get('year') || '')) year = parseInt(params.get('year'), 10);
+      var status = slugToStatus(params.get('status'));
 
       // SF-01/SF-15: page + view are URL state, so paged views are shareable and
       // reachable even without client-side interactivity (?page=2 links work).
@@ -99,9 +109,9 @@ class TabContainer extends React.Component {
       if (legacyFilter === 'Most downloaded') sort = 'downloads';
       else if (legacyFilter) tag = legacyFilter;
 
-      return { activeTab: validTab, query: query, tag: tag, sort: sort, year: year, page: page, showAll: showAll, pendingTagSlug: pendingTagSlug };
+      return { activeTab: validTab, query: query, tag: tag, sort: sort, year: year, status: status, page: page, showAll: showAll, pendingTagSlug: pendingTagSlug };
     } catch (_) {
-      return { activeTab: 'publications', query: '', tag: null, sort: 'newest', year: null, page: 1, showAll: false, pendingTagSlug: null };
+      return { activeTab: 'publications', query: '', tag: null, sort: 'newest', year: null, status: null, page: 1, showAll: false, pendingTagSlug: null };
     }
   }
 
@@ -183,7 +193,7 @@ class TabContainer extends React.Component {
 
     this.emitQueryChanged();
 
-    if ((this.state.tag || this.state.pendingTagSlug || this.state.year || this.state.sort === 'downloads') && !window.location.hash) {
+    if ((this.state.tag || this.state.pendingTagSlug || this.state.year || this.state.status || this.state.sort === 'downloads') && !window.location.hash) {
       this.scrollPublicationsToTop();
       window.requestAnimationFrame(this.scrollPublicationsToTop);
       window.setTimeout(this.scrollPublicationsToTop, 250);
@@ -226,6 +236,7 @@ class TabContainer extends React.Component {
       prevState.tag !== this.state.tag ||
       prevState.sort !== this.state.sort ||
       prevState.year !== this.state.year ||
+      prevState.status !== this.state.status ||
       prevState.page !== this.state.page ||
       prevState.showAll !== this.state.showAll
     ) {
@@ -264,6 +275,8 @@ class TabContainer extends React.Component {
     else params.delete('sort');
     if (this.state.year) params.set('year', String(this.state.year));
     else params.delete('year');
+    if (this.state.status) params.set('status', statusToSlug(this.state.status));
+    else params.delete('status');
     if (this.state.showAll) params.set('view', 'all');
     else params.delete('view');
     if (this.state.page > 1 && !this.state.showAll) params.set('page', String(this.state.page));
@@ -319,6 +332,11 @@ class TabContainer extends React.Component {
     this.setState({ year: year, page: 1, activeTab: 'publications' });
   }
 
+  handleStatusChange(status) {
+    this._pushNextSync = true;
+    this.setState({ status: status || null, page: 1, activeTab: 'publications' });
+  }
+
   // SF-01: explicit pagination — deliberate navigation, so push a history entry
   handlePageChange(page) {
     this._pushNextSync = true;
@@ -371,7 +389,7 @@ class TabContainer extends React.Component {
 
   handleResetFilters() {
     this._pushNextSync = true;
-    this.setState({ tag: null, pendingTagSlug: null, query: '', sort: 'newest', year: null, page: 1, activeTab: 'publications' });
+    this.setState({ tag: null, pendingTagSlug: null, query: '', sort: 'newest', year: null, status: null, page: 1, activeTab: 'publications' });
   }
 
   // SF-08: dialog focus management for the More-filters sheet — focus moves in
@@ -459,8 +477,10 @@ class TabContainer extends React.Component {
   }
 
   render() {
-    const { activeTab, query, tag, sort, year, page, showAll, rangeStart, rendered, total, years, topTags, allTags, chipCounts, moreFiltersOpen, tagQuery, sheetTag, copied } = this.state;
-    const hasActiveFilters = !!(query || tag || year || sort === 'downloads');
+    const { activeTab, query, tag, sort, year, status, page, showAll, rangeStart, rendered, total, years, topTags, allTags, chipCounts, moreFiltersOpen, tagQuery, sheetTag, copied } = this.state;
+    const hasActiveFilters = !!(query || tag || year || status || sort === 'downloads');
+    const isRecent = !tag && !year && !status && sort !== 'downloads';
+    const preprintCount = chipCounts['status:preprint'] || 0;
     const labelWithCount = (key, label) => {
       var c = chipCounts[key];
       return (c === null || c === undefined) ? label : label + ' ' + c;
@@ -480,6 +500,7 @@ class TabContainer extends React.Component {
     }
     // SF-09: name the active constraints (or say there are none) beside the count
     var filterBits = [];
+    if (status) filterBits.push(PAPER_STATUSES[status].plural);
     if (tag) filterBits.push(tag);
     if (year) filterBits.push(String(year));
     if (query) filterBits.push('“' + query + '”');
@@ -573,11 +594,19 @@ class TabContainer extends React.Component {
                 {/* One flat wrapping row: preset views, then topic chips, then More filters */}
                 <div className="pubs-filters" role="group" aria-label="Filter publications">
                   <button
-                    aria-pressed={!tag && !year && sort !== 'downloads'}
-                    className={'pubs-filter-chip' + (!tag && !year && sort !== 'downloads' ? ' active' : '')}
+                    aria-pressed={isRecent}
+                    className={'pubs-filter-chip' + (isRecent ? ' active' : '')}
                     onClick={this.handleResetFilters}
                   >{/* SF-29: the default newest-first state is the "Recent" intent */}
                   {labelWithCount('All', 'Recent')}</button>
+                  {/* Pre-prints: papers posted before they appear at their venue */}
+                  {(preprintCount > 0 || status === 'preprint') && (
+                    <button
+                      aria-pressed={status === 'preprint'}
+                      className={'pubs-filter-chip pubs-filter-chip-preprint' + (status === 'preprint' ? ' active' : '')}
+                      onClick={() => this.handleStatusChange(status === 'preprint' ? null : 'preprint')}
+                    >{labelWithCount('status:preprint', 'Pre-prints')}</button>
+                  )}
                   <button
                     aria-pressed={tag === AWARD_FILTER}
                     className={'pubs-filter-chip' + (tag === AWARD_FILTER ? ' active' : '')}
@@ -668,6 +697,20 @@ class TabContainer extends React.Component {
                       >›</button>
                     </div>
                   )}
+                  <label className="pubs-status-filter">
+                    <span className="sr-only">Filter by publication status</span>
+                    <select
+                      id="pubs-status-select"
+                      className="pubs-jump-select pubs-status-select"
+                      value={status || ''}
+                      onChange={e => this.handleStatusChange(e.target.value || null)}
+                    >
+                      <option value="">Status: All</option>
+                      {PAPER_STATUS_ORDER.map(st => (
+                        <option key={st} value={st}>{labelWithCount('status:' + st, PAPER_STATUSES[st].plural)}</option>
+                      ))}
+                    </select>
+                  </label>
                   {/* SF-27: jump-to-year promoted to a first-class shortcut */}
                   {years.length > 1 && (
                     <label className="pubs-jump-year">
@@ -738,6 +781,16 @@ class TabContainer extends React.Component {
 
         {activeTab === 'publications' && (
           <div id="panel-publications" role="tabpanel" aria-labelledby="tab-publications">
+            {/* Key for the status banner at the top of every card */}
+            <div className="pubs-status-legend">
+              <span className="pubs-status-legend-lead">Status shown on each card’s top banner</span>
+              {PAPER_STATUS_ORDER.map(st => (
+                <span key={st} className={'pubs-status-legend-item is-status-' + statusToSlug(st)}>
+                  <PaperStatusIcon status={st} />
+                  {PAPER_STATUSES[st].label}
+                </span>
+              ))}
+            </div>
             <PaperContainer
               url={this.props.papersUrl}
               assets={this.props.paperAssets}
@@ -749,12 +802,14 @@ class TabContainer extends React.Component {
               activeTag={tag}
               sort={sort}
               year={year}
+              status={status}
               page={page}
               showAll={showAll}
               pageSize={PAGE_SIZE}
               onResetFilters={this.handleResetFilters}
               onTagToggle={this.handleTagToggle}
               onYearChange={this.handleYearChange}
+              onStatusChange={this.handleStatusChange}
               onPageChange={this.handlePageChange}
               onShowAllToggle={this.handleShowAllToggle}
               onYears={this.handleYears}

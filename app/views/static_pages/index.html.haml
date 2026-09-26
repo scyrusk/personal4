@@ -187,14 +187,16 @@
         %li
           -# Same source order as the React card: hosted PDF → publisher page → Google Scholar,
           -# so every title is a working link even with JavaScript unavailable.
-          - noscript_href = paper.pdf.present? ? "/papers/#{paper.id}/serve" : (paper.html_paper_url.presence || "https://scholar.google.com/scholar?q=#{CGI.escape(paper.title.to_s)}")
+          - noscript_href = paper.pdf.present? ? "/papers/#{paper.id}/serve" : (paper.html_paper_url.presence || paper.arxiv_url.presence || "https://scholar.google.com/scholar?q=#{CGI.escape(paper.title.to_s)}")
           = link_to paper.title, noscript_href, target: "_blank", rel: "noopener noreferrer"
-          %span.noscript-paper-meta= " · #{paper.venue} · #{paper.year}"
+          %span.noscript-paper-meta= " · " + [paper.venue.presence || ("arXiv" if paper.arxiv_url.present?), paper.year, (paper.status_label unless paper.published?)].compact.join(" · ")
+          - if paper.arxiv_url.present? && noscript_href != paper.arxiv_url
+            = link_to "arXiv", paper.arxiv_url, target: "_blank", rel: "noopener noreferrer"
           - if paper.doi.present?
             = link_to "DOI", "https://doi.org/#{paper.doi}", target: "_blank", rel: "noopener noreferrer"
     %nav.noscript-pagination{"aria-label" => "Publications pages (no JavaScript)"}
       %span= "Page #{@noscript_page} of #{@noscript_total_pages}."
-      -# Page anchors carry the active ?tag/?sort/?q/?year filters through
+      -# Page anchors carry the active ?tag/?sort/?q/?year/?status filters through
       - noscript_page_href = ->(p) { "/publications?#{@noscript_link_params.merge(page: p).to_query}" }
       - if @noscript_page > 1
         = link_to "← Previous page", noscript_page_href.call(@noscript_page - 1), "data-turbolinks" => "false"

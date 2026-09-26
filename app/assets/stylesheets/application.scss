@@ -1299,6 +1299,16 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   &.active { background: var(--green); color: white; border-color: var(--green); }
 }
 
+/* Pre-prints chip wears the amber of the pre-print card banner */
+.pubs-filter-chip-preprint {
+  background: var(--amber-light);
+  border-color: var(--amber);
+  color: var(--amber-text);
+
+  &:hover { border-color: var(--amber-text); color: var(--amber-text); }
+  &.active { background: var(--amber-text); color: white; border-color: var(--amber-text); }
+}
+
 /* Results bar sort control ("⇅ Newest first ▾", mockup) */
 .pubs-sort-select {
   font-size: var(--fs-sm);
@@ -1632,6 +1642,92 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   pointer-events: none;
 }
 
+/* ─── STATUS BANNER (pre-print / camera-ready / published) ─ */
+/* Flush strip across the top of the card front; the face's padding is
+   pulled back so it spans edge to edge. */
+.pub-status-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 10px;
+  row-gap: 2px;
+  margin: -18px -20px 14px;
+  padding: 5px 14px;
+  border-bottom: 1px solid var(--border);
+  border-radius: 7px 7px 0 0;
+  background: #f3f3ef;
+  color: var(--text-mid);
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+
+  .pub-card.is-status-preprint & {
+    background: var(--amber-light);
+    border-bottom-color: var(--amber-mid);
+    color: var(--amber-text);
+  }
+}
+
+.pub-status-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pub-status-icon { flex-shrink: 0; }
+
+.pub-status-num {
+  margin-left: auto;
+  font-weight: 500;
+}
+
+.pub-card.is-status-preprint {
+  border-color: var(--amber-mid);
+
+  &:hover { border-color: var(--amber); box-shadow: 0 2px 8px rgba(183, 121, 31, 0.1); }
+}
+
+/* The title's first line wraps around the floating takeaway pill instead of
+   running underneath it */
+.pub-flip-cue-spacer {
+  float: right;
+  width: 112px;
+  height: 24px;
+  margin-left: 8px;
+}
+
+/* The corner badges sit below the banner rather than on top of it */
+.pub-status-banner ~ .pub-featured-badge,
+.pub-status-banner ~ .pub-flip-cue { top: 40px; }
+
+/* Key for the banners, above the list */
+.pubs-status-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 14px;
+  row-gap: 4px;
+  margin: 2px 0 4px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.pubs-status-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-mid);
+
+  &.is-status-preprint { color: var(--amber-text); }
+}
+
 /* SF-10: the hidden back face must never sit in front of the front face's
    targets — its close button was a phantom overlapping hit area */
 .pub-card:not(.is-flipped) .pub-card-back {
@@ -1868,7 +1964,7 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 
   &:hover { background: var(--green-dark); color: white; text-decoration: none; }
 
-  svg { display: inline-block; vertical-align: middle; }
+  svg { display: inline-block; vertical-align: middle; flex-shrink: 0; }
 }
 
 .pub-action-secondary {
@@ -2267,20 +2363,6 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   font-size: var(--fs-xs);
 }
 
-.pub-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 26px;
-  padding: 2px 6px;
-  margin-right: 6px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg);
-  color: var(--text-mid);
-  font-weight: 500;
-}
-
 .pub-quick-link {
   border: none;
   background: transparent;
@@ -2294,6 +2376,9 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 
   & + .pub-quick-link { border-left: 1px solid var(--border); }
   &:hover { text-decoration: underline; color: var(--green-dark); }
+
+  /* First link sits flush with the title's left edge */
+  &:first-child { padding-left: 0; justify-content: flex-start; }
 }
 
 .pub-actions-note {
@@ -2577,12 +2662,14 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 
   /* The floating takeaway pill overlaps wrapped titles on narrow cards; the
      quick-links row's "Takeaway" link covers the affordance on mobile */
-  .pub-flip-cue { display: none; }
+  .pub-flip-cue, .pub-flip-cue-spacer { display: none; }
 
   /* SF-10: ≥44px touch targets for the dense in-card actions on mobile */
   .pubs-mini-pager-btn { width: 44px; height: 44px; }
-  .pub-quick-links { column-gap: 8px; }
-  .pub-quick-link { min-width: 44px; min-height: 44px; padding: 12px 10px; display: inline-flex; align-items: center; justify-content: center; }
+  .pub-quick-links { column-gap: 0; }
+  /* "Scholar" alone keeps the quick-link row on one line (aria-label has the full name) */
+  .pub-quick-link-long { display: none; }
+  .pub-quick-link { min-width: 44px; min-height: 44px; padding: 12px 7px; display: inline-flex; align-items: center; justify-content: center; }
   .pub-tag, .pub-tag-more { min-height: 44px; }
   .pub-authors { line-height: 1.9; }
   .pub-author-link, .pub-venue-link { padding: 4px 0; }
@@ -3673,6 +3760,17 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   .site-footer-bottom { flex-direction: column; align-items: flex-start; }
 
   .pub-card-inner { flex-direction: column; }
+  /* Status note drops under the label; #N stays on the label's line */
+  .pub-status-note { order: 3; flex-basis: 100%; }
+  .pubs-status-legend-lead { flex-basis: 100%; }
+
+  /* Pager on its own row, then Status + Jump-to-year side by side */
+  .pubs-results-tools { width: 100%; }
+  .pubs-mini-pager { flex-basis: 100%; }
+  .pubs-status-filter,
+  .pubs-jump-year { flex: 1 1 0; min-width: 0; }
+  .pubs-status-select,
+  .pubs-jump-year .pubs-jump-select { width: 100%; min-width: 0; }
   /* SF-10: cap thumbnail height so titles/actions stay near the top of each card */
   .pub-thumb {
     width: 100%;
