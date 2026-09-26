@@ -1768,11 +1768,17 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   gap: 14px;
   padding: 36px 28px 24px;
   text-align: center;
+  overflow-y: auto;
+
+  /* Auto margins centre the content when it fits. Takeaways are budgeted to
+     fit the card; an over-long one scrolls from its first line rather than
+     being clipped off the top */
+  > .pub-takeaway-text { margin-top: auto; }
+  > .pub-takeaway-title { margin-bottom: auto; }
 }
 
 .pub-takeaway-text {
@@ -2674,6 +2680,8 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   .pub-authors { line-height: 1.9; }
   .pub-author-link, .pub-venue-link { padding: 4px 0; }
   .pub-back-close { min-height: 44px; padding: 10px 14px; }
+  /* Clear the 44px back button */
+  .pub-takeaway-back { padding-top: 64px; }
   .pubs-jump-select { min-height: 44px; }
 }
 
