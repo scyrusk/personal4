@@ -76,11 +76,8 @@ class StaticPagesController < ApplicationController
       @noscript_filters << params[:year].to_i.to_s
     end
     if params[:q].present?
-      q = params[:q].downcase
-      noscript_papers = noscript_papers.select do |p|
-        p.title.to_s.downcase.include?(q) || p.venue.to_s.downcase.include?(q) ||
-          p.authors.any? { |a| a.name.downcase.include?(q) }
-      end
+      patterns = Paper.query_word_patterns(params[:q])
+      noscript_papers = noscript_papers.select { |p| p.matches_query?(patterns) }
       @noscript_filters << "“#{params[:q]}”"
     end
     if params[:sort] == "downloads"

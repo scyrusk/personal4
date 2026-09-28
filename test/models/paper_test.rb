@@ -59,4 +59,37 @@ class PaperTest < ActiveSupport::TestCase
     assert_equal 'preprint', paper.as_json(nil)[:status]
     assert_equal '2509.01234', paper.as_json(nil)[:arxiv_id]
   end
+
+  test "search matches every query word, in any order" do
+    paper = Paper.create!(title: 'Do VLMs Respect Contextual Integrity in Location Disclosure?', venue: 'EMNLP',
+                          year: 2025, self_order: 1, tags: 'Privacy;AI')
+    matches = ->(q) { paper.matches_query?(Paper.query_word_patterns(q)) }
+
+    assert matches.('location privacy')
+    assert matches.('privacy location')
+    assert matches.('emnlp 2025')
+    assert matches.('“Location,')
+    assert matches.('   ')
+    assert_not matches.('location phishing')
+    assert matches.('ocation'), 'longer words match inside a word'
+  end
+
+  test "search matches short words only at the start of a word" do
+    paper = Paper.create!(title: 'A Chair Study', venue: 'CHI', year: 2024, self_order: 1)
+    matches = ->(q) { paper.matches_query?(Paper.query_word_patterns(q)) }
+
+    assert matches.('chi')
+    assert matches.('chai')
+    assert_not matches.('ai')
+    assert_not matches.('hair')
+  end
+
+  test "search treats a trailing s as optional on longer words" do
+    paper = Paper.create!(title: 'Password Managers in the Wild', year: 2020, self_order: 1)
+    matches = ->(q) { paper.matches_query?(Paper.query_word_patterns(q)) }
+
+    assert matches.('passwords')
+    assert matches.('password')
+    assert_not matches.('managerial')
+  end
 end

@@ -256,8 +256,9 @@ function PaperStatusIcon(props) {
 }
 
 function getVisiblePapers(papers, query, tag, sort, year) {
+  var matchers = queryWordMatchers(query);
   var base = papers.filter(function(paper) {
-    return paperMatchesQuery(paper, query) &&
+    return paperMatchesQuery(paper, matchers) &&
            paperMatchesTag(paper, tag) &&
            (!year || paper.year === year);
   });
@@ -276,18 +277,62 @@ function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function paperMatchesQuery(paper, ft) {
-  if (ft === "") return true;
-  var q = ft.toLowerCase();
-  var re = new RegExp(escapeRegExp(q), 'i');
-  return (
-    re.test(paper.title) ||
-    re.test(paper.venue || (paper.arxiv_url ? 'arXiv' : '')) ||
-    paper.year.toString().indexOf(q) >= 0 ||
-    paper.authors.some(function(a) { return re.test(a.name); }) ||
-    paper.awards.some(function(a) { return re.test(a.body); }) ||
-    re.test(paper.tags || "")
-  );
+// Search is word by word: every query word must appear somewhere in the paper's
+// title, venue, year, authors, awards or tags, in any order — so "location
+// privacy" finds a "…Location Disclosure" paper tagged Privacy. Short words
+// (up to 4 letters) must start a word, so "ai" doesn't match "chair"; longer
+// ones match inside words too, so "location" finds "Geolocation". A trailing
+// "s" is optional ("passwords" finds "password").
+// Paper.query_word_patterns mirrors this for the no-JS list.
+var WORD_EDGE_PUNCTUATION = new RegExp('^[^\\p{L}\\p{N}]+|[^\\p{L}\\p{N}]+$', 'gu');
+
+function queryWordMatchers(query) {
+  return (query || '').toLowerCase().split(/\s+/).map(function(word) {
+    return word.replace(WORD_EDGE_PUNCTUATION, '');
+  }).filter(Boolean).map(function(word) {
+    var pattern = word.length > 3 && word.slice(-1) === 's'
+      ? escapeRegExp(word.slice(0, -1)) + 's?'
+      : escapeRegExp(word);
+    var wordStart = word.length <= 4 ? '(^|[^\\p{L}\\p{N}])' : '';
+    return new RegExp(wordStart + pattern, 'iu');
+  });
+}
+
+function paperSearchText(paper) {
+  return [paper.title, paper.venue || (paper.arxiv_url ? 'arXiv' : ''), String(paper.year), paper.tags || '']
+    .concat(paper.authors.map(function(a) { return a.name; }))
+    .concat(paper.awards.map(function(a) { return a.body || ''; }))
+    .join('\n');
+}
+
+function countMatchedWords(paper, matchers) {
+  var text = paperSearchText(paper);
+  return matchers.filter(function(re) { return re.test(text); }).length;
+}
+
+function paperMatchesQuery(paper, matchers) {
+  return matchers.length === 0 || countMatchedWords(paper, matchers) === matchers.length;
+}
+
+// For a multi-word search with no full match: the papers matching the most
+// words, best first, so the visitor gets somewhere to go instead of a dead end.
+function closestPartialMatches(papers, query) {
+  var matchers = queryWordMatchers(query);
+  if (matchers.length < 2) return [];
+  return papers.map(function(paper) {
+    return { paper: paper, matched: countMatchedWords(paper, matchers) };
+  }).filter(function(m) { return m.matched > 0; }).sort(function(a, b) {
+    if (b.matched !== a.matched) return b.matched - a.matched;
+    return b.paper.year !== a.paper.year ? b.paper.year - a.paper.year : b.paper.id - a.paper.id;
+  }).map(function(m) { return m.paper; });
+}
+
+function countOfPapers(n) {
+  return n + (n === 1 ? ' paper' : ' papers');
+}
+
+function endOfListText(total) {
+  return 'End of list — ' + (total === 1 ? '1 paper shown' : 'all ' + total + ' papers shown');
 }
 
 // ── PAPER CONTAINER ──────────────────────────────────────
@@ -651,11 +696,11 @@ class PaperList extends React.Component {
     var explanation;
     if (constraints.length >= 2) {
       explanation = names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] +
-        ' are both on. Turn one off, or start again from all ' + allCount + ' papers.';
+        ' are both on. Turn one off, or start again from all ' + countOfPapers(allCount) + '.';
     } else if (constraints.length === 1) {
-      explanation = names[0] + ' matches nothing. Start again from all ' + allCount + ' papers.';
+      explanation = names[0] + ' matches nothing. Start again from all ' + countOfPapers(allCount) + '.';
     } else {
-      explanation = 'Start again from all ' + allCount + ' papers.';
+      explanation = 'Start again from all ' + countOfPapers(allCount) + '.';
     }
 
     // Fallback: drop the narrowest constraint and surface the closest matches
@@ -671,7 +716,10 @@ class PaperList extends React.Component {
       } else if (tag) {
         fallback = [];
       } else if (query) {
-        fallback = [];
+        fallback = closestPartialMatches(this.props.data, query);
+        if (fallback.length > 0) {
+          explanation = 'No paper matches every word of ' + names[0] + '. The closest ones below match some of them.';
+        }
       }
     }
     var assets = this.props.assets;
@@ -811,6 +859,7 @@ class PaperList extends React.Component {
     var self = this;
     var hasMore = total > renderedCount;
     var pct = total > 0 ? Math.round((renderedCount / total) * 100) : 0;
+    var nextBatch = Math.min(this.props.pageSize, total - renderedCount);
     return (
       <div className="papers-load-more-wrap">
         {hasMore && this.renderSkeleton('More papers render as you scroll')}
@@ -824,10 +873,10 @@ class PaperList extends React.Component {
         </div>
         {hasMore && (
           <button type="button" className="papers-load-more" onClick={this.props.onShowMore}>
-            <span aria-hidden="true">⌄</span> Load {Math.min(this.props.pageSize, total - renderedCount)} more papers
+            <span aria-hidden="true">⌄</span> Load {nextBatch} more {nextBatch === 1 ? 'paper' : 'papers'}
           </button>
         )}
-        {!hasMore && this.renderEndMarker('End of list — all ' + total + ' papers shown')}
+        {!hasMore && this.renderEndMarker(endOfListText(total))}
         <button
           type="button"
           className="papers-show-all papers-back-to-pages"
@@ -900,7 +949,7 @@ class PaperList extends React.Component {
         <div>
           {this.renderEndMarker(totalPages > 1
             ? 'End of page ' + page + ' — papers ' + start + '–' + end + ' of ' + total
-            : 'End of list — all ' + total + ' papers shown')}
+            : endOfListText(total))}
           {totalPages > 1 && this.renderPagination(page, totalPages, start, end, total)}
         </div>
       );

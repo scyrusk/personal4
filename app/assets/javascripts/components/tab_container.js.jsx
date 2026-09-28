@@ -520,6 +520,8 @@ class TabContainer extends React.Component {
       totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
       if (total === 0) {
         countText = 'No papers';
+      } else if (total === 1) {
+        countText = 'Showing 1 paper';
       } else {
         var start = rangeStart || 1;
         var end = start + rendered - 1;

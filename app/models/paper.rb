@@ -70,6 +70,27 @@ class Paper < ActiveRecord::Base
     arxiv_url.to_s[%r{\Ahttps://arxiv\.org/abs/#{ARXIV_ID}\z}, 1]
   end
 
+  # Word-by-word search for the no-JS publications list, mirroring
+  # queryWordMatchers in paper.js.jsx: each query word must appear somewhere in
+  # the title, venue, year, authors, awards or tags, in any order. Words of up
+  # to 4 letters must start a word ("ai" doesn't match "chair"); longer ones may
+  # match inside one ("location" finds "Geolocation"). A trailing "s" is
+  # optional ("passwords" finds "password").
+  def self.query_word_patterns(query)
+    query.to_s.downcase.split.filter_map do |word|
+      word = word.gsub(/\A[^[:alnum:]]+|[^[:alnum:]]+\z/, "")
+      next if word.empty?
+      stem = word.length > 3 && word.end_with?("s") ? "#{Regexp.escape(word.chop)}s?" : Regexp.escape(word)
+      word.length <= 4 ? /(?<![[:alnum:]])#{stem}/i : /#{stem}/i
+    end
+  end
+
+  def matches_query?(patterns)
+    text = [title, venue.presence || (arxiv_url.present? ? "arXiv" : ""), year, tags,
+            *authors.map(&:name), *awards.map(&:body)].join("\n")
+    patterns.all? { |pattern| pattern.match?(text) }
+  end
+
   def authors
     self.paper_author_links.sort { |a,b| a.author_order - b.author_order }.map do |pal|
       pal.author
