@@ -78,6 +78,19 @@ class SectionPagesTest < ActionDispatch::IntegrationTest
     assert_match(%r{hcii\.cmu\.edu/academics/phd-hci}, response.body)
   end
 
+  test "recruiting CTAs have a hidden collaborator set for the intent toggle" do
+    get "/recruiting"
+    assert_response :success
+    assert_select "#intentStudentCtas:not([hidden])" do
+      assert_select "a", text: "Apply via HCII"
+      assert_select "a", text: "Watch advice for applicants"
+    end
+    assert_select "#intentCollabCtas[hidden]" do
+      assert_select "a[href='mailto:sauvik@cmu.edu?subject=Collaboration']", text: "Email me about collaborating"
+      assert_select "a#seeDirectionsLink[href='/about']", text: "See research directions"
+    end
+  end
+
   test "footer exposes section sitemap and shareable publication views (SF-13/SF-14)" do
     get root_url
     assert_response :success

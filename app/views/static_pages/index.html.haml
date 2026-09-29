@@ -140,9 +140,12 @@
         My status for the next (2027–28) cycle will be posted here once decided — check back, or watch the
         = link_to "HCII admissions page", "https://www.hcii.cmu.edu/academics/phd-hci", target: "_blank", rel: "noopener noreferrer"
         for cycle timing.
-    .recruiting-ctas
+    .recruiting-ctas#intentStudentCtas
       = link_to "Apply via HCII", "https://www.hcii.cmu.edu/academics/phd-hci", class: "btn-sd btn-sd-primary", target: "_blank", rel: "noopener noreferrer"
       = link_to "Watch advice for applicants", "https://www.youtube.com/watch?v=JqD2arlzXVE", class: "recruiting-advice-link", target: "_blank", rel: "noopener noreferrer"
+    .recruiting-ctas#intentCollabCtas{hidden: true}
+      = mail_to "sauvik@cmu.edu", "Email me about collaborating", subject: "Collaboration", class: "btn-sd btn-sd-primary"
+      %a.recruiting-advice-link#seeDirectionsLink{href: "/about", "data-turbolinks" => "false"} See research directions
   %p.recruiting-updated
     = "Last updated #{@recruiting_status_updated_at}"
 
@@ -234,6 +237,8 @@
     var intentCollab = document.getElementById('intentCollabBtn');
     var studentPanel = document.getElementById('intentStudentPanel');
     var collabPanel = document.getElementById('intentCollabPanel');
+    var studentCtas = document.getElementById('intentStudentCtas');
+    var collabCtas = document.getElementById('intentCollabCtas');
     function pickIntent(studentActive) {
       if (!intentStudent || !intentCollab) return;
       intentStudent.classList.toggle('active', studentActive);
@@ -242,9 +247,19 @@
       intentCollab.setAttribute('aria-pressed', String(!studentActive));
       studentPanel.hidden = !studentActive;
       collabPanel.hidden = studentActive;
+      studentCtas.hidden = !studentActive;
+      collabCtas.hidden = studentActive;
     }
     if (intentStudent) intentStudent.addEventListener('click', function() { pickIntent(true); });
     if (intentCollab) intentCollab.addEventListener('click', function() { pickIntent(false); });
+
+    // The directions sit below the fold of #about on mobile, so land on them rather than the section top
+    var seeDirections = document.getElementById('seeDirectionsLink');
+    if (seeDirections) seeDirections.addEventListener('click', function(e) {
+      e.preventDefault();
+      history.pushState({}, '', '/about' + location.search);
+      document.getElementById('researchDirections').scrollIntoView({ behavior: 'smooth' });
+    });
 
     // SF-11: per-theme "Show N more" link reveal
     document.querySelectorAll('.research-dir-more').forEach(function(btn) {
