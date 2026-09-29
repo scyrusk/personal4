@@ -520,6 +520,8 @@ class TabContainer extends React.Component {
       totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
       if (total === 0) {
         countText = 'No papers';
+      } else if (total === 1) {
+        countText = 'Showing 1 paper';
       } else {
         var start = rangeStart || 1;
         var end = start + rendered - 1;
@@ -539,6 +541,12 @@ class TabContainer extends React.Component {
     var urlPillText = paramString ? '?' + paramString : '/publications';
     // A non-default tag (from the More-filters sheet) gets its own active chip
     var extraTagChip = tag && tag !== AWARD_FILTER ? tag : null;
+    // A topic narrows by category only; search refines within it (query and tag compose), which
+    // visitors don't discover unless the page offers it once a topic is on
+    var activeTopic = tag && tag !== AWARD_FILTER ? tag : null;
+    var searchPlaceholder = activeTopic
+      ? 'Search within ' + activeTopic + ' papers by keyword…'
+      : 'Search papers, authors, venues…';
 
     const density = this.state.density;
     return (
@@ -594,7 +602,7 @@ class TabContainer extends React.Component {
                     ref={this.searchRef}
                     type="text"
                     className="pubs-search"
-                    placeholder="Search papers, authors, venues…"
+                    placeholder={searchPlaceholder}
                     value={query}
                     onChange={e => this.handleQueryChange(e.target.value)}
                   />
@@ -648,20 +656,25 @@ class TabContainer extends React.Component {
                     className={'pubs-filter-chip' + (sort === 'downloads' ? ' active' : '')}
                     onClick={() => this.handleSortToggle(sort === 'downloads' ? 'newest' : 'downloads')}
                   >{labelWithCount('Most downloaded', 'Most downloaded')}</button>
+                  {(topTags.length > 0 || extraTagChip) && (
+                    <span className="pubs-filter-group-label" aria-hidden="true">Topics</span>
+                  )}
                   {topTags.map(t => (
                     <button
                       key={t}
                       aria-pressed={tag === t}
+                      aria-label={'Topic: ' + labelWithCount(t, t)}
                       className={'pubs-filter-chip' + (tag === t ? ' active' : '')}
                       onClick={() => this.handleTagToggle(t)}
-                    >{labelWithCount(t, t)}</button>
+                    >{tag === t && <span aria-hidden="true">✓ </span>}{labelWithCount(t, t)}</button>
                   ))}
                   {extraTagChip && topTags.indexOf(extraTagChip) < 0 && (
                     <button
                       aria-pressed="true"
+                      aria-label={'Topic: ' + labelWithCount(extraTagChip, extraTagChip)}
                       className="pubs-filter-chip active"
                       onClick={() => this.handleTagToggle(extraTagChip)}
-                    >{labelWithCount(extraTagChip, extraTagChip)}</button>
+                    ><span aria-hidden="true">✓ </span>{labelWithCount(extraTagChip, extraTagChip)}</button>
                   )}
                   {year && (
                     <button
@@ -706,6 +719,13 @@ class TabContainer extends React.Component {
                 <div className="pubs-results-summary">
                   <span className="pubs-result-count" aria-live="polite">{countText}</span>
                   <span className="pubs-result-filters">{filterSummary}</span>
+                  {activeTopic && !query && total > 1 && (
+                    <button
+                      type="button"
+                      className="pubs-refine-hint"
+                      onClick={() => { if (this.searchRef.current) this.searchRef.current.focus(); }}
+                    >Narrow these {total} {activeTopic} papers by keyword <span aria-hidden="true">→</span></button>
+                  )}
                 </div>
                 <div className="pubs-results-tools">
                   {/* SF-01: paging affordance mirrored in the sticky results bar */}

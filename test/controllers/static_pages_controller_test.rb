@@ -48,4 +48,17 @@ class StaticPagesControllerTest < ActionDispatch::IntegrationTest
     get root_url
     assert_select 'a[href=?]', '/publications?status=preprint', count: 0
   end
+
+  test "no-JS list searches word by word" do
+    Paper.create!(title: 'Location Disclosure by Vision-Language Models', venue: 'EMNLP', year: 2025,
+                  self_order: 1, tags: 'Privacy')
+    Paper.create!(title: 'A Chair Study', venue: 'CHI', year: 2024, self_order: 1)
+
+    get '/publications', params: { q: 'location privacy' }
+    assert_select '.noscript-paper-list li', 1
+    assert_select '.noscript-paper-list li', text: /Location Disclosure/
+
+    get '/publications', params: { q: 'ai' }
+    assert_select '.noscript-paper-list li', text: /A Chair Study/, count: 0
+  end
 end

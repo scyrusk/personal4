@@ -1235,6 +1235,17 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   min-width: 0;
 }
 
+/* Separates the preset views from the topic chips so the two kinds of filter read differently */
+.pubs-filter-group-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
 /* SF-13: crawlable address pill + one-click copy of the current view */
 .pubs-url-tools {
   display: flex;
@@ -2215,6 +2226,23 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Once a topic is on, offers keyword search within it (query and topic compose) */
+.pubs-refine-hint {
+  align-self: flex-start;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  font-family: var(--sans);
+  color: var(--green);
+  background: transparent;
+  border: none;
+  padding: 2px 0;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover { text-decoration: underline; }
+  &:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 }
 
 .pubs-results-tools {
