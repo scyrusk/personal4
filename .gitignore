@@ -24,3 +24,7 @@
 /.DS_Store
 .env
 voice.md
+
+# OpenHands `/add-skill` installs registry skills (e.g. qa-changes) here; only qa-guide.md is ours.
+/.agents/skills/*
+!/.agents/skills/qa-guide.md

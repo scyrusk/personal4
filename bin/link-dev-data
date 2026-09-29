@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Links the gitignored dev data (the sqlite database and uploaded files) from the
+# main checkout into a git worktree, so a dev server started in the worktree
+# renders the real site instead of an empty one. Safe to run repeatedly; does
+# nothing in the main checkout and never replaces a real file or directory.
+set -eo pipefail
+
+DEV_DATA_PATHS=(db/development.sqlite3 public/uploads)
+
+here=$(cd "$(git rev-parse --show-toplevel)" && pwd -P)
+worktrees=$(git worktree list --porcelain)
+main_line=$(head -n 1 <<< "$worktrees")
+main=$(cd "${main_line#worktree }" && pwd -P)
+
+if [[ "$here" == "$main" ]]; then
+  echo "In the main checkout ($main): nothing to link."
+  exit 0
+fi
+
+missing_source=0
+for rel in "${DEV_DATA_PATHS[@]}"; do
+  source="$main/$rel"
+  target="$here/$rel"
+
+  if [[ -L "$target" ]]; then
+    if [[ "$(readlink "$target")" == "$source" ]]; then
+      echo "ok      $rel (already linked to the main checkout)"
+    else
+      echo "skip    $rel is a symlink to $(readlink "$target"), not $source; leaving it" >&2
+    fi
+    continue
+  fi
+
+  if [[ -e "$target" ]]; then
+    echo "skip    $rel already exists here as a real file or directory; leaving it"
+    continue
+  fi
+
+  if [[ ! -e "$source" ]]; then
+    echo "missing $rel is not in the main checkout ($main) either; cannot link it" >&2
+    missing_source=1
+    continue
+  fi
+
+  mkdir -p "$(dirname "$target")"
+  ln -s "$source" "$target"
+  echo "linked  $rel -> $source"
+done
+
+exit "$missing_source"
