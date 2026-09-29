@@ -52,13 +52,14 @@
         We work at the intersection of HCI, AI and cybersecurity/privacy.
       -# SF-11: research directions as chunked, scannable theme rows — inside the
       -# grid's text column so they start right after the bio, beside the card
-      .research-directions#researchDirections
+      .research-directions#research-directions
         .research-directions-head
-          %p.research-directions-title Some key research directions include:
+          %h2.research-directions-title#researchDirectionsHeading{tabindex: "-1"} Research directions
           %button.research-directions-toggle#directionsToggle{type: "button", "aria-expanded" => "false"}
             = "+ #{@research_directions.length - 3} more directions"
             %svg{width: "12", height: "12", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden" => "true"}
               %polyline{points: "6 9 12 15 18 9"}
+        %a.research-directions-back#directionsBackLink{href: "/recruiting", "data-turbolinks" => "false", "data-section-link" => true, hidden: true} ← Back to recruiting guidance
         - @research_directions.each_with_index do |dir, i|
           .research-dir{class: (i >= 3 ? "is-collapsed" : nil)}
             %h3.research-dir-title= dir[:title]
@@ -130,8 +131,8 @@
           = mail_to "sauvik@cmu.edu", "Email me about collaborations or research questions", subject: "Collaboration"
           — those are always welcome, and don't depend on the recruiting cycle.
         %li
-          %a{href: "/about", "data-turbolinks" => "false", "data-section-link" => true} Skim the research directions
-          above to find overlap before reaching out.
+          %a.js-see-directions{href: "/about#research-directions", "data-turbolinks" => "false"} See research directions
+          to find overlap before reaching out.
         %li
           Visiting or press?
           = mail_to "sauvik@cmu.edu", "Email me", subject: "Visit / press inquiry"
@@ -145,7 +146,7 @@
       = link_to "Watch advice for applicants", "https://www.youtube.com/watch?v=JqD2arlzXVE", class: "recruiting-advice-link", target: "_blank", rel: "noopener noreferrer"
     .recruiting-ctas#intentCollabCtas{hidden: true}
       = mail_to "sauvik@cmu.edu", "Email me about collaborating", subject: "Collaboration", class: "btn-sd btn-sd-primary"
-      %a.recruiting-advice-link#seeDirectionsLink{href: "/about", "data-turbolinks" => "false"} See research directions
+      %a.recruiting-advice-link.js-see-directions#seeDirectionsLink{href: "/about#research-directions", "data-turbolinks" => "false"} See research directions
   %p.recruiting-updated
     = "Last updated #{@recruiting_status_updated_at}"
 
@@ -226,7 +227,7 @@
     // SF-11: "+ N more directions" reveals the collapsed themes
     var toggle = document.getElementById('directionsToggle');
     if (toggle) toggle.addEventListener('click', function() {
-      var container = document.getElementById('researchDirections');
+      var container = document.getElementById('research-directions');
       var expanded = container.classList.toggle('is-expanded');
       toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
       toggle.childNodes[0].textContent = expanded ? 'Show fewer directions' : '+ #{@research_directions.length - 3} more directions';
@@ -253,12 +254,24 @@
     if (intentStudent) intentStudent.addEventListener('click', function() { pickIntent(true); });
     if (intentCollab) intentCollab.addEventListener('click', function() { pickIntent(false); });
 
-    // The directions sit below the fold of #about on mobile, so land on them rather than the section top
-    var seeDirections = document.getElementById('seeDirectionsLink');
-    if (seeDirections) seeDirections.addEventListener('click', function(e) {
-      e.preventDefault();
-      history.pushState({}, '', '/about' + location.search);
-      document.getElementById('researchDirections').scrollIntoView({ behavior: 'smooth' });
+    // Every "See research directions" prompt lands on the directions heading itself (not the top
+    // of #about, where the bio fills the screen) and offers a way back to the recruiting guidance
+    var directionsBack = document.getElementById('directionsBackLink');
+    if (location.hash === '#research-directions') {
+      directionsBack.hidden = false;
+      // The native hash jump runs before the layout publishes --mobile-header-h, leaving the heading under the mobile header
+      window.addEventListener('load', function() {
+        document.getElementById('research-directions').scrollIntoView({ behavior: 'instant' });
+      });
+    }
+    document.querySelectorAll('.js-see-directions').forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        history.pushState({}, '', '/about' + location.search + '#research-directions');
+        directionsBack.hidden = false;
+        document.getElementById('research-directions').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('researchDirectionsHeading').focus({ preventScroll: true });
+      });
     });
 
     // SF-11: per-theme "Show N more" link reveal

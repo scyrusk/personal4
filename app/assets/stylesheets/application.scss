@@ -705,6 +705,15 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   margin: 0;
 }
 
+.research-directions-back {
+  align-self: flex-start;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--green);
+
+  &[hidden] { display: none; }
+}
+
 .research-directions-toggle {
   display: inline-flex;
   align-items: center;
