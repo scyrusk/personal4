@@ -687,6 +687,7 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  scroll-margin-top: calc(var(--mobile-header-h, 0px) + 16px);
 }
 
 .research-directions-head {
@@ -702,6 +703,15 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   font-weight: 600;
   color: var(--text);
   margin: 0;
+}
+
+.research-directions-back {
+  align-self: flex-start;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--green);
+
+  &[hidden] { display: none; }
 }
 
 .research-directions-toggle {
@@ -891,6 +901,8 @@ select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   flex-wrap: wrap;
   align-items: center;
   gap: 16px;
+
+  &[hidden] { display: none; }
 }
 
 /* SF-02: both recruiting CTAs are boxed ≥44px tap targets with instant touch response */

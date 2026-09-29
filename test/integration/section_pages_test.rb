@@ -78,6 +78,29 @@ class SectionPagesTest < ActionDispatch::IntegrationTest
     assert_match(%r{hcii\.cmu\.edu/academics/phd-hci}, response.body)
   end
 
+  test "recruiting CTAs have a hidden collaborator set for the intent toggle" do
+    get "/recruiting"
+    assert_response :success
+    assert_select "#intentStudentCtas:not([hidden])" do
+      assert_select "a", text: "Apply via HCII"
+      assert_select "a", text: "Watch advice for applicants"
+    end
+    assert_select "#intentCollabCtas[hidden]" do
+      assert_select "a[href='mailto:sauvik@cmu.edu?subject=Collaboration']", text: "Email me about collaborating"
+      assert_select "a#seeDirectionsLink[href='/about#research-directions']", text: "See research directions"
+    end
+  end
+
+  test "every research-directions prompt targets the labeled directions heading (fuguUX SF-01)" do
+    get "/recruiting"
+    assert_response :success
+    assert_select "#research-directions h2", text: "Research directions"
+    assert_select "#research-directions a#directionsBackLink[href='/recruiting'][hidden]"
+    assert_select "#intentCollabPanel a.js-see-directions[href='/about#research-directions']", text: "See research directions"
+    assert_select "#intentCollabCtas a.js-see-directions[href='/about#research-directions']", text: "See research directions"
+    assert_no_match(/Skim the research directions/, response.body)
+  end
+
   test "footer exposes section sitemap and shareable publication views (SF-13/SF-14)" do
     get root_url
     assert_response :success
