@@ -1108,33 +1108,42 @@ function scholarUrl(paper) {
   return 'https://scholar.google.com/scholar?q=' + encodeURIComponent('"' + paper.title + '"');
 }
 
+// SF-05: the card's byline names at most the two lead authors plus Sauvik, in
+// author order, so his position (lead, middle, senior) stays readable. Gaps
+// are marked with "…"; lists of four or fewer are shown whole.
+var BYLINE_FULL_MAX = 4;
+function compactAuthors(authors) {
+  if (authors.length <= BYLINE_FULL_MAX) {
+    return { items: authors.map(function(a) { return { author: a, gapBefore: false }; }), truncated: false, truncatedAfter: false };
+  }
+  var keep = [0, 1];
+  authors.forEach(function(a, i) { if (a.self && keep.indexOf(i) === -1) keep.push(i); });
+  var items = keep.map(function(idx, k) {
+    return { author: authors[idx], gapBefore: k > 0 && idx - keep[k - 1] > 1 };
+  });
+  return { items: items, truncated: true, truncatedAfter: keep[keep.length - 1] < authors.length - 1 };
+}
+
 // ── PAPER CARD ────────────────────────────────────────────
 class PaperCard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      tagsExpanded: false,
       citeOpen: false,
       citeFormat: 'BibTeX',
       copiedFormat: null,
-      flipped: false,
-      moreOpen: false,
+      detailsOpen: false,
       pdfOpening: false,
       pdfError: false
     };
     this.citeWrapRef = React.createRef();
     this.citePanelRef = React.createRef();
-    this.moreWrapRef = React.createRef();
     this.citeBtnRef = React.createRef();
-    this.moreBtnRef = React.createRef();
-    this.moreMenuRef = React.createRef();
     this.handleCiteToggle = this.handleCiteToggle.bind(this);
     this.handleCopyFormat = this.handleCopyFormat.bind(this);
     this.handleDocClick = this.handleDocClick.bind(this);
     this.handleDocKey = this.handleDocKey.bind(this);
-    this.handleCardClick = this.handleCardClick.bind(this);
-    this.handleMoreToggle = this.handleMoreToggle.bind(this);
-    this.handleMenuKeyDown = this.handleMenuKeyDown.bind(this);
+    this.handleDetailsToggle = this.handleDetailsToggle.bind(this);
     this.handlePdfClick = this.handlePdfClick.bind(this);
     this.handleDownloadBib = this.handleDownloadBib.bind(this);
   }
@@ -1155,23 +1164,14 @@ class PaperCard extends React.Component {
     var inCite = (this.citeWrapRef.current && this.citeWrapRef.current.contains(e.target)) ||
                  (this.citePanelRef.current && this.citePanelRef.current.contains(e.target));
     if (!inCite && this.state.citeOpen) this.setState({ citeOpen: false });
-    if (this.moreWrapRef.current && !this.moreWrapRef.current.contains(e.target)) {
-      if (this.state.moreOpen) this.setState({ moreOpen: false });
-    }
   }
 
-  // SF-08: Esc closes the open cite panel / More menu and restores focus to
-  // the trigger that opened it
+  // SF-08: Esc closes the open cite panel and restores focus to its trigger
   handleDocKey(e) {
     if (e.key !== 'Escape') return;
     if (this.state.citeOpen) {
       this.setState({ citeOpen: false }, function() {
         if (this.citeBtnRef.current) this.citeBtnRef.current.focus();
-      }.bind(this));
-    }
-    if (this.state.moreOpen) {
-      this.setState({ moreOpen: false }, function() {
-        if (this.moreBtnRef.current) this.moreBtnRef.current.focus();
       }.bind(this));
     }
   }
@@ -1183,8 +1183,7 @@ class PaperCard extends React.Component {
       return {
         citeOpen: fmt ? true : !prev.citeOpen,
         citeFormat: fmt || prev.citeFormat,
-        copiedFormat: null,
-        moreOpen: false
+        copiedFormat: null
       };
     }, function() {
       // Dialog pattern: focus moves into the panel when it opens
@@ -1240,35 +1239,11 @@ class PaperCard extends React.Component {
     gaSendEvent('Publications', 'DownloadBib', paper.id);
   }
 
-  handleMoreToggle(e) {
+  handleDetailsToggle(e) {
     e.stopPropagation();
-    this.setState(function(prev) {
-      return { moreOpen: !prev.moreOpen, citeOpen: false };
-    }, function() {
-      // Menu pattern: focus the first item on open
-      if (this.state.moreOpen && this.moreMenuRef.current) {
-        var first = this.moreMenuRef.current.querySelector('[role="menuitem"]');
-        if (first) first.focus();
-      }
-    }.bind(this));
-  }
-
-  // SF-08: ArrowUp/Down/Home/End move focus among the More menu's items
-  handleMenuKeyDown(e) {
-    var menu = this.moreMenuRef.current;
-    if (!menu) return;
-    var items = Array.prototype.slice.call(menu.querySelectorAll('[role="menuitem"]'));
-    if (!items.length) return;
-    var idx = items.indexOf(document.activeElement);
-    var next = null;
-    if (e.key === 'ArrowDown') next = items[(idx + 1) % items.length];
-    else if (e.key === 'ArrowUp') next = items[(idx - 1 + items.length) % items.length];
-    else if (e.key === 'Home') next = items[0];
-    else if (e.key === 'End') next = items[items.length - 1];
-    if (next) {
-      e.preventDefault();
-      next.focus();
-    }
+    var opening = !this.state.detailsOpen;
+    this.setState({ detailsOpen: opening });
+    if (opening) gaSendEvent('Publications', 'Details', this.props.paper.id);
   }
 
   handleCopyFormat(fmt, e) {
@@ -1283,55 +1258,38 @@ class PaperCard extends React.Component {
     gaSendEvent('Publications', 'CopyCitation', fmt);
   }
 
-  isInteractiveTarget(target) {
-    if (!target || !target.closest) return false;
-    return !!target.closest(
-      'a, button, input, textarea, select, label, [role="button"], [role="menuitem"], .pub-author-link, .pub-venue-link, .pub-tag, .pub-tag-more, .cite-dropdown, .cite-panel, .pub-more-menu'
-    );
-  }
-
-  handleCardClick(e) {
-    if (!this.props.paper.summary) return;
-    if (this.isInteractiveTarget(e.target)) return;
-    this.setState(function(prev) {
-      return { flipped: !prev.flipped, citeOpen: false };
-    });
-  }
-
   setFilter(value) {
     window.dispatchEvent(new CustomEvent('setSearchFilter', { detail: { value: value } }));
     gaSendEvent('Interaction', 'Search', value);
   }
 
-  renderMoreAction(href, label, iconPath, eventLabel) {
+  renderSourceLink(href, label, iconPath, eventLabel) {
     return (
-      <a className="pub-more-item" role="menuitem" href={href} target="_blank" rel="noopener noreferrer" onClick={eventLabel ? function() { gaSendEvent('Publications', eventLabel, this.props.paper.id); }.bind(this) : null}>
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d={iconPath} /></svg>
-        {label}
-      </a>
+      <li>
+        <a className="pub-source-link" href={href} target="_blank" rel="noopener noreferrer" onClick={eventLabel ? function() { gaSendEvent('Publications', eventLabel, this.props.paper.id); }.bind(this) : null}>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d={iconPath} /></svg>
+          {label}
+          <span className="pub-ext-cue" aria-hidden="true">↗</span>
+          <span className="sr-only">(opens in new tab)</span>
+        </a>
+      </li>
     );
   }
 
   render() {
     var paper = this.props.paper;
-    var tagsExpanded = this.state.tagsExpanded;
     var citeOpen = this.state.citeOpen;
     var copiedFormat = this.state.copiedFormat;
-    var flipped = this.state.flipped;
-    var moreOpen = this.state.moreOpen;
+    var detailsOpen = this.state.detailsOpen;
     var citeFormat = this.state.citeFormat;
     var pdfOpening = this.state.pdfOpening;
-    // SF-19: two tags at rest keeps cards scannable; the rest sit behind "+N more"
-    var MAX_TAGS = 2;
-    var isFlippable = !!paper.summary;
+    var detailsId = 'pub-details-' + paper.id + (this.props.featured ? '-featured' : '');
 
     var authors = paper.authors;
-    var displayAuthors = authors.slice();
+    var bylineAuthors = compactAuthors(authors);
 
     // Tags: split from semicolon string
     var allTags = paper.tags ? paper.tags.split(";").map(function(t) { return t.trim(); }).filter(Boolean) : [];
-    var visibleTags = tagsExpanded ? allTags : allTags.slice(0, MAX_TAGS);
-    var hiddenCount = allTags.length - MAX_TAGS;
 
     var allAwards = paper.awards && paper.awards.length > 0 ? paper.awards : [];
 
@@ -1348,29 +1306,18 @@ class PaperCard extends React.Component {
 
     var status = paperStatus(paper);
     var statusInfo = PAPER_STATUSES[status];
+    var venueLabel = paper.venue || (paper.arxiv_url ? 'arXiv' : null);
+    var downloads = formatDownloadCount(paper.downloads) ? parseDownloads(paper.downloads) : 0;
 
     return (
       <div className={
         'pub-card' +
-        (flipped ? ' is-flipped' : '') +
-        (isFlippable ? ' is-flippable' : '') +
         (this.props.featured ? ' is-featured' : '') +
+        (detailsOpen ? ' is-details-open' : '') +
         ' is-status-' + status.replace('_', '-') +
-        ((moreOpen || citeOpen) ? ' has-overlay-open' : '')
-      } onClick={this.handleCardClick}>
-        <div className="pub-card-flipper">
-
-        {/* Back face — one-sentence takeaway */}
-        <div className="pub-card-face pub-card-back">
-          <div className="pub-takeaway-back">
-            <button className="pub-back-close" onClick={() => this.setState({ flipped: false })}>↺ back</button>
-            <div className="pub-takeaway-text">{paper.summary}</div>
-            <div className="pub-takeaway-title">{paper.title}</div>
-          </div>
-        </div>
-
-        {/* Front face */}
-        <div className="pub-card-face pub-card-front">
+        (citeOpen ? ' has-overlay-open' : '')
+      }>
+        <div className="pub-card-face">
         {/* Status banner: where the paper is in its life cycle, plus its #N */}
         <div className="pub-status-banner">
           <span className="pub-status-label">
@@ -1383,11 +1330,6 @@ class PaperCard extends React.Component {
         {this.props.featured && (
           <div className="pub-featured-badge">Featured</div>
         )}
-        {isFlippable && (
-          <div className="pub-flip-cue" aria-hidden="true">↺ takeaway</div>
-        )}
-        {/* SF-28: the download micro-metric moved into the More menu so the
-            default card view stays title-first; nothing else claims the corner */}
         <div className="pub-card-inner">
           {/* SF-10: no thumbnail block at all when there is no real image;
               SF-04: lazy + explicit dimensions to avoid layout shift */}
@@ -1398,8 +1340,6 @@ class PaperCard extends React.Component {
           )}
 
           <div className="pub-content">
-            {/* Reserves the floating takeaway pill's corner so the first line wraps around it */}
-            {isFlippable && <span className="pub-flip-cue-spacer" aria-hidden="true"></span>}
             {allAwards.map(function(award) {
               return (
                 <div key={award.id || award.body} className="pub-award">
@@ -1421,123 +1361,35 @@ class PaperCard extends React.Component {
               {paper.title}
             </a>
 
-            <div className="pub-authors">
-              {displayAuthors.map(function(author, i) {
-                var name = author.name;
-                var isSelf = author.self;
-                var isPlaceholder = author.placeholder;
+            {/* SF-05: the default layer says what the paper is about — its
+                takeaway (clamped until Details opens), or failing that its
+                leading topics */}
+            {paper.summary ? (
+              <p className="pub-takeaway">{paper.summary}</p>
+            ) : (allTags.length > 0 && (
+              <p className="pub-topic"><span className="pub-topic-label">Topics:</span> {allTags.slice(0, 2).join(' · ')}</p>
+            ))}
+
+            {/* SF-05: long author lists collapse to the lead authors plus Sauvik's
+                position; the full, filterable list lives in Details */}
+            <p className="pub-authors">
+              {bylineAuthors.items.map(function(item, i) {
+                var author = item.author;
                 return (
                   <span key={i}>
-                    {i > 0 ? ', ' : ''}
-                    {isPlaceholder ? (
-                      <span style={{color: 'var(--text-muted)'}}>{name}</span>
-                    ) : isSelf ? (
-                      <strong>{name}</strong>
-                    ) : (
-                      <button
-                        type="button"
-                        className="pub-author-link"
-                        onClick={() => this.setFilter(name)}
-                        title={"Filter by " + name}
-                        aria-label={"Filter by author " + name}
-                      >{name}</button>
-                    )}
+                    {i > 0 ? (item.gapBefore ? ' … ' : ', ') : ''}
+                    {author.self ? <strong>{author.name}</strong> : author.name}
                   </span>
                 );
-              }.bind(this))}
-            </div>
+              })}
+              {bylineAuthors.truncated && (
+                <span className="pub-author-count">{bylineAuthors.truncatedAfter ? ' …' : ''} ({authors.length} authors)</span>
+              )}
+            </p>
 
-            <div className="pub-venue">
-              {paper.venue ? (
-                <button
-                  type="button"
-                  className="pub-venue-link"
-                  onClick={() => this.setFilter(paper.venue)}
-                  title={"Filter by venue"}
-                  aria-label={"Filter by venue " + paper.venue}
-                >{paper.venue}</button>
-              ) : (
-                paper.arxiv_url ? <span>arXiv</span> : null
-              )}
-              {(paper.venue || paper.arxiv_url) ? ' · ' : ''}
-              <button
-                type="button"
-                className="pub-venue-link"
-                onClick={() => this.setFilter(paper.year.toString())}
-                title={"Filter by year"}
-                aria-label={"Filter by year " + paper.year}
-              >{paper.year}</button>
-            </div>
-
-            {/* SF-28: compact expert quick-links; SF-32: #N anchors the card in the
-                current view (shown in the status banner); SF-31: BibTeX is one click
-                from the card surface */}
-            <div className="pub-quick-links">
-              {hasPDF && (
-                <a
-                  className="pub-quick-link"
-                  href={pdfLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={this.handlePdfClick}
-                >PDF</a>
-              )}
-              {paper.arxiv_url && (
-                <a
-                  className="pub-quick-link"
-                  href={paper.arxiv_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={paper.title + " on arXiv (opens in new tab)"}
-                  onClick={function() { gaSendEvent('Publications', 'ArXiv', paper.id); }}
-                >arXiv</a>
-              )}
-              <button
-                type="button"
-                className="pub-quick-link"
-                onClick={function(e) { this.handleCiteToggle(e, 'BibTeX'); }.bind(this)}
-                aria-label={"BibTeX citation for " + paper.title}
-              >BibTeX</button>
-              {isFlippable && (
-                <button
-                  type="button"
-                  className="pub-quick-link"
-                  onClick={function(e) { e.stopPropagation(); this.setState({ flipped: true }); }.bind(this)}
-                  aria-label={"One-sentence takeaway for " + paper.title}
-                >Takeaway</button>
-              )}
-              <a
-                className="pub-quick-link"
-                href={scholarUrl(paper)}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={"Find " + paper.title + " on Google Scholar (opens in new tab)"}
-              ><span className="pub-quick-link-long">Google </span>Scholar</a>
-            </div>
-
-            {allTags.length > 0 && (
-              <div className="pub-tags">
-                {visibleTags.map(function(tag) {
-                  return (
-                    <button
-                      type="button"
-                      key={tag}
-                      className="pub-tag"
-                      onClick={() => this.setFilter(tag)}
-                      title={"Filter by tag: " + tag}
-                      aria-label={"Filter by tag " + tag}
-                    >{tag}</button>
-                  );
-                }.bind(this))}
-                {!tagsExpanded && hiddenCount > 0 && (
-                  <button
-                    type="button"
-                    className="pub-tag-more"
-                    onClick={() => this.setState({ tagsExpanded: true })}
-                  >+{hiddenCount} more</button>
-                )}
-              </div>
-            )}
+            <p className="pub-venue">
+              {venueLabel}{venueLabel ? ' · ' : ''}{paper.year}
+            </p>
 
             <div className="pub-actions">
               <div aria-live="polite" aria-atomic="true" className="sr-only">
@@ -1584,21 +1436,6 @@ class PaperCard extends React.Component {
                 </a>
               )}
 
-              {paper.doi && (
-                <a
-                  className="pub-action-doi"
-                  href={"https://doi.org/" + paper.doi}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={"DOI for " + paper.title + " (opens in new tab)"}
-                  onClick={function() { gaSendEvent('Publications', 'DOI', paper.id); }}
-                >
-                  DOI
-                  <span className="pub-ext-cue" aria-hidden="true">↗</span>
-                  <span className="sr-only">(opens in new tab)</span>
-                </a>
-              )}
-
               <div className="cite-wrapper" ref={this.citeWrapRef}>
                 <button
                   ref={this.citeBtnRef}
@@ -1615,99 +1452,167 @@ class PaperCard extends React.Component {
                   {' '}Cite{citeOpen ? ' ▲' : ' ▾'}
                 </button>
               </div>
-              {/* SF-16: every card gets the same Cite + More pair — More always has
-                  alternate sources even when a paper has no extra materials */}
-              <div className="pub-more-wrap" ref={this.moreWrapRef}>
-                <button
-                  ref={this.moreBtnRef}
-                  type="button"
-                  className={'pub-action-secondary pub-action-more' + (moreOpen ? ' cite-active' : '')}
-                  aria-haspopup="menu"
-                  aria-expanded={moreOpen}
-                  aria-label={"More resources for " + paper.title}
-                  onClick={this.handleMoreToggle}
-                >
-                  More {moreOpen ? '▲' : '▾'}
-                </button>
-                {moreOpen && (
-                  <div className="pub-more-menu" role="menu" aria-label="Additional resources" ref={this.moreMenuRef} onKeyDown={this.handleMenuKeyDown}>
-                    {/* SF-28: micro-metric lives here now, out of the skim view */}
-                    {formatDownloadCount(paper.downloads) && (
-                      <div className="pub-more-meta" role="presentation">
-                        <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                          <path d="M8 1a.5.5 0 0 1 .5.5v7.793l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V1.5A.5.5 0 0 1 8 1zM2.5 12a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/>
-                        </svg>
-                        {' '}{parseDownloads(paper.downloads).toLocaleString()} downloads
-                      </div>
+              {/* SF-05: everything beyond the skim layer — full authors, topics,
+                  alternate sources — sits behind one disclosure */}
+              <button
+                type="button"
+                className={'pub-action-secondary pub-action-details' + (detailsOpen ? ' cite-active' : '')}
+                aria-expanded={detailsOpen}
+                aria-controls={detailsId}
+                aria-label={"Details for " + paper.title}
+                onClick={this.handleDetailsToggle}
+              >
+                Details {detailsOpen ? '▲' : '▾'}
+              </button>
+            </div>
+
+            {detailsOpen && (
+              <div className="pub-details" id={detailsId}>
+                <div className="pub-details-row">
+                  <h4 className="pub-details-label">Authors</h4>
+                  <p className="pub-details-authors">
+                    {authors.map(function(author, i) {
+                      return (
+                        <span key={i}>
+                          {i > 0 ? ', ' : ''}
+                          {author.placeholder ? (
+                            <span className="pub-details-placeholder">{author.name}</span>
+                          ) : author.self ? (
+                            <strong>{author.name}</strong>
+                          ) : (
+                            <button
+                              type="button"
+                              className="pub-author-link"
+                              onClick={() => this.setFilter(author.name)}
+                              aria-label={"Filter by author " + author.name}
+                            >{author.name}</button>
+                          )}
+                        </span>
+                      );
+                    }.bind(this))}
+                  </p>
+                </div>
+
+                {venueLabel && (
+                  <div className="pub-details-row">
+                    <h4 className="pub-details-label">Venue</h4>
+                    <p className="pub-details-venue">
+                      {paper.venue ? (
+                        <button
+                          type="button"
+                          className="pub-venue-link"
+                          onClick={() => this.setFilter(paper.venue)}
+                          aria-label={"Filter by venue " + paper.venue}
+                        >{paper.venue}</button>
+                      ) : venueLabel}
+                    </p>
+                  </div>
+                )}
+
+                <div className="pub-details-row">
+                  <h4 className="pub-details-label">Year</h4>
+                  <p className="pub-details-venue">
+                    <button
+                      type="button"
+                      className="pub-venue-link"
+                      onClick={() => this.setFilter(paper.year.toString())}
+                      aria-label={"Filter by year " + paper.year}
+                    >{paper.year}</button>
+                    {downloads > 0 && (
+                      <span className="pub-details-downloads"> · {downloads.toLocaleString()} downloads</span>
                     )}
-                    {this.renderMoreAction(
-                      scholarUrl(paper),
-                      'Find on Google Scholar',
-                      'M6.5 1a5.5 5.5 0 1 0 3.45 9.79l3.63 3.62a.75.75 0 1 0 1.06-1.06l-3.62-3.63A5.5 5.5 0 0 0 6.5 1zM2.5 6.5a4 4 0 1 1 8 0 4 4 0 0 1-8 0z'
-                    )}
-                    {paper.arxiv_url && this.renderMoreAction(
+                  </p>
+                </div>
+
+                {allTags.length > 0 && (
+                  <div className="pub-details-row">
+                    <h4 className="pub-details-label">Topics</h4>
+                    <div className="pub-tags">
+                      {allTags.map(function(tag) {
+                        return (
+                          <button
+                            type="button"
+                            key={tag}
+                            className="pub-tag"
+                            onClick={() => this.setFilter(tag)}
+                            aria-label={"Filter by topic " + tag}
+                          >{tag}</button>
+                        );
+                      }.bind(this))}
+                    </div>
+                  </div>
+                )}
+
+                {/* SF-04/SF-16: alternate sources stay one step away, and a broken
+                    link is recoverable and reportable from right here */}
+                <div className="pub-details-row">
+                  <h4 className="pub-details-label">Sources</h4>
+                  <ul className="pub-sources">
+                    {paper.arxiv_url && this.renderSourceLink(
                       paper.arxiv_url,
                       'arXiv pre-print',
                       'M9 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5L9 1zm0 1.5L12.5 5H9V2.5z',
                       'ArXiv'
                     )}
-                    {paper.doi && this.renderMoreAction(
+                    {paper.doi && this.renderSourceLink(
                       "https://doi.org/" + paper.doi,
                       'DOI (publisher page)',
-                      'M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287zM6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z'
+                      'M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287zM6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z',
+                      'DOI'
                     )}
-                    {paper.project_page_url && this.renderMoreAction(
+                    {this.renderSourceLink(
+                      scholarUrl(paper),
+                      'Google Scholar',
+                      'M6.5 1a5.5 5.5 0 1 0 3.45 9.79l3.63 3.62a.75.75 0 1 0 1.06-1.06l-3.62-3.63A5.5 5.5 0 0 0 6.5 1zM2.5 6.5a4 4 0 1 1 8 0 4 4 0 0 1-8 0z'
+                    )}
+                    {paper.project_page_url && this.renderSourceLink(
                       paper.project_page_url,
                       'Project page',
                       'M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v9a1.5 1.5 0 0 1-1.5 1.5H9v1h1.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1H7v-1H2.5A1.5 1.5 0 0 1 1 11.5v-9zM2.5 2a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-11z'
                     )}
-                    {summaryLink && this.renderMoreAction(
+                    {summaryLink && this.renderSourceLink(
                       summaryLink,
                       'Summary thread',
                       'M14 1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3.5l2.5 3 2.5-3H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z'
                     )}
-                    {paper.slides && this.renderMoreAction(
+                    {paper.slides && this.renderSourceLink(
                       paper.slides,
                       'Slides',
                       'M1 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9v1h1.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1H7v-1H2a1 1 0 0 1-1-1V3zm13 0H2v8h12V3zM4 6h8v1H4V6zm0 2.5h5v1H4v-1z',
                       'SlidesDownload'
                     )}
-                    {paper.video_url && this.renderMoreAction(
+                    {paper.video_url && this.renderSourceLink(
                       paper.video_url,
                       'Video',
                       'M3 2.5v11l10-5.5L3 2.5z'
                     )}
-                    {paper.presentation_url && this.renderMoreAction(
+                    {paper.presentation_url && this.renderSourceLink(
                       paper.presentation_url,
                       'Talk',
                       'M6 1a1 1 0 0 0-1 1v1H2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.5l-1 2h-1a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-1l-1-2H13a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-3V2a1 1 0 0 0-1-1H6zm0 1h4v1H6V2zm-4 2h12v6H2V4z'
                     )}
-                    {/* SF-04: a broken link is recoverable and reportable from right here */}
-                    <a
-                      className="pub-more-item"
-                      role="menuitem"
-                      href={"mailto:sauvik@cmu.edu?subject=" + encodeURIComponent('Paper copy request (paper ' + paper.id + '): ' + paper.title)}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/></svg>
-                      Email me for a copy
-                    </a>
-                    <a
-                      className="pub-more-item"
-                      role="menuitem"
-                      href={"mailto:sauvik@cmu.edu?subject=" + encodeURIComponent('Broken link report (paper ' + paper.id + ')') + "&body=" + encodeURIComponent('Page: ' + (typeof window !== 'undefined' ? window.location.href : '') + '\n\nPaper: ' + paper.title + '\nID: ' + paper.id + '\nProblem: ')}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
-                      Report broken link
-                    </a>
-                  </div>
-                )}
+                    <li>
+                      <a
+                        className="pub-source-link"
+                        href={"mailto:sauvik@cmu.edu?subject=" + encodeURIComponent('Paper copy request (paper ' + paper.id + '): ' + paper.title)}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/></svg>
+                        Email me for a copy
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        className="pub-source-link"
+                        href={"mailto:sauvik@cmu.edu?subject=" + encodeURIComponent('Broken link report (paper ' + paper.id + ')') + "&body=" + encodeURIComponent('Page: ' + (typeof window !== 'undefined' ? window.location.href : '') + '\n\nPaper: ' + paper.title + '\nID: ' + paper.id + '\nProblem: ')}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
+                        Report broken link
+                      </a>
+                    </li>
+                  </ul>
+                </div>
               </div>
-            </div>
-
-            {/* SF-22/SF-04: say what the tap will do, and where recovery lives */}
-            <p className="pub-actions-note">
-              {hasPDF ? 'PDF opens in a new tab · ' : ''}if a link is broken, More → alternate sources
-            </p>
+            )}
 
             {/* SF-04: in-card failure state when the hosted PDF probe comes back dead */}
             {this.state.pdfError && (
@@ -1810,9 +1715,7 @@ class PaperCard extends React.Component {
             )}
           </div>
         </div>
-        </div>{/* pub-card-front */}
-
-        </div>{/* pub-card-flipper */}
+        </div>
       </div>
     );
   }
